@@ -1,0 +1,27 @@
+services:
+  flight-frontend:
+    image: ${IMAGE_NAME_FRONTEND:-flight-frontend}:latest
+    container_name: flight-frontend
+    ports:
+      - "127.0.0.1:3010:3010"
+    networks:
+      - flight-app
+    depends_on:
+      - flight-backend
+    restart: unless-stopped
+
+  flight-backend:
+    image: ${IMAGE_NAME_BACKEND:-flight-backend}:latest
+    container_name: flight-backend
+    ports:
+      - "127.0.0.1:8010:8010"
+    volumes:
+      - ./data:/app/data
+    networks:
+      - flight-app
+    restart: unless-stopped
+
+networks:
+  flight-app:
+    name: flight-app
+    driver: bridge
