@@ -1,4 +1,3 @@
-
 from pydantic import BaseModel, EmailStr
 from datetime import date, datetime
 from typing import Optional, List
@@ -26,6 +25,19 @@ class AirportCode(str, Enum):
     YYZ = "YYZ"
 
 # ======================================================================================
+# AdminUser Schemas (User에서 참조하기 위해 위로 이동)
+# ======================================================================================
+class AdminUserBase(BaseModel):
+    user_id: str
+    approved: bool
+
+class AdminUser(AdminUserBase):
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+# ======================================================================================
 # User Schemas
 # ======================================================================================
 class UserBase(BaseModel):
@@ -38,24 +50,12 @@ class UserCreate(UserBase):
 class User(UserBase):
     id: str
     created_at: datetime
+    admin_info: Optional[AdminUser] = None
 
     class Config:
         from_attributes = True
 
 # ======================================================================================
-# AdminUser Schemas
-# ======================================================================================
-class AdminUserBase(BaseModel):
-    user_id: str
-    approved: bool
-
-class AdminUser(AdminUserBase):
-    created_at: datetime
-    
-    class Config:
-        from_attributes = True
-
-# =_====================================================================================
 # Ticket Schemas
 # ======================================================================================
 class TicketBase(BaseModel):
