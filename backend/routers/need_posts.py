@@ -12,7 +12,7 @@ router = APIRouter(
     tags=["Need Posts"]
 )
 
-@router.post("/", response_model=schemas.NeedPost, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=schemas.NeedPost, status_code=status.HTTP_201_CREATED)
 def create_need_post(
     post_in: schemas.NeedPostCreate,
     db: Session = Depends(get_db),
@@ -30,7 +30,7 @@ def create_need_post(
     db.refresh(db_post)
     return db_post
 
-@router.get("/", response_model=List[schemas.NeedPost])
+@router.get("", response_model=List[schemas.NeedPost])
 def list_need_posts(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     """
     List all 'need' posts. Any logged-in user can view them.

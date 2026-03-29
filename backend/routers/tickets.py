@@ -13,7 +13,7 @@ router = APIRouter(
     tags=["Tickets"]
 )
 
-@router.post("/", response_model=schemas.Ticket, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=schemas.Ticket, status_code=status.HTTP_201_CREATED)
 def create_ticket(
     ticket_in: schemas.TicketCreate,
     db: Session = Depends(get_db),
@@ -32,7 +32,7 @@ def create_ticket(
     db.refresh(db_ticket)
     return db_ticket
 
-@router.get("/", response_model=List[schemas.Ticket])
+@router.get("", response_model=List[schemas.Ticket])
 def list_tickets(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     """
     List tickets.
