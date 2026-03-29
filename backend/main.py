@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse # ✨ 추가
 from fastapi.staticfiles import StaticFiles # ✨ 추가
 from database import engine, Base
-from routers import schedules, auth
+from routers import auth, tickets, ticket_applications, need_posts
 
 Base.metadata.create_all(bind=engine)
 
@@ -19,7 +19,9 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
-app.include_router(schedules.router)
+app.include_router(tickets.router)
+app.include_router(ticket_applications.router)
+app.include_router(need_posts.router)
 
 # --- ✨ 배포용 프론트엔드 정적 파일 서빙 ---
 # 1. Vite가 빌드한 js, css 파일이 담긴 assets 폴더 마운트

@@ -1,52 +1,168 @@
-from fastapi import APIRouter, Depends, HTTPException
+from typing import List
+import os
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-import bcrypt # ✨ passlib 대신 bcrypt를 직접 import 합니다.
+from datetime import datetime, timedelta
+import bcrypt
 import jwt
-import datetime
 
 import models, schemas
 from database import get_db
+from email_utils import send_email
 
-router = APIRouter(prefix="/api/auth", tags=["auth"])
+# ======================================================================================
+# Configuration
+# ======================================================================================
+SECRET_KEY = os.environ.get("SECRET_KEY", "super-secret-key-for-dev")
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
 
-SECRET_KEY = "super-secret-key-mvp" 
+router = APIRouter(prefix="/api", tags=["Authentication"])
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/token")
 
-@router.post("/signup")
-def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    existing_user = db.query(models.User).filter(models.User.username == user.username).first()
-    if existing_user:
-        raise HTTPException(status_code=400, detail="이미 존재하는 아이디입니다.")
-    
-    # ✨ bcrypt를 사용한 안전한 암호화 (문자열을 byte로 변환 후 해싱)
+# ======================================================================================
+# Password & Token Utilities
+# ======================================================================================
+def get_password_hash(password: str) -> str:
     salt = bcrypt.gensalt()
-    hashed_password = bcrypt.hashpw(user.password.encode('utf-8'), salt).decode('utf-8')
+    return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
+
+def create_access_token(data: dict, expires_delta: timedelta | None = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+# ======================================================================================
+# User Dependencies
+# ======================================================================================
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> models.User:
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            raise credentials_exception
+    except jwt.PyJWTError:
+        raise credentials_exception
     
+    user = db.query(models.User).filter(models.User.email == email).first()
+    if user is None:
+        raise credentials_exception
+    return user
+
+def get_current_admin_user(current_user: models.User = Depends(get_current_user)) -> models.User:
+    if not current_user.admin_info or not current_user.admin_info.approved:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="The user does not have admin privileges"
+        )
+    return current_user
+
+# ======================================================================================
+# Authentication Endpoints
+# ======================================================================================
+@router.post("/token", response_model=schemas.Token)
+def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.email == form_data.username).first()
+    if not user or not verify_password(form_data.password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.email}, expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
+
+# ======================================================================================
+# User Management Endpoints
+# ======================================================================================
+@router.get("/users", response_model=List[schemas.User], dependencies=[Depends(get_current_admin_user)])
+def read_users(db: Session = Depends(get_db)):
+    """
+    Retrieve all users. Restricted to admin users.
+    """
+    users = db.query(models.User).all()
+    return users
+
+
+@router.post("/users", response_model=schemas.User, status_code=status.HTTP_201_CREATED)
+def create_user_by_admin(
+    user_in: schemas.UserCreate, 
+    db: Session = Depends(get_db),
+    admin_user: models.User = Depends(get_current_admin_user)
+):
+    """
+    Create a new user. Restricted to admin users.
+    An email will be sent to the new user with their credentials.
+    """
+    if db.query(models.User).filter(models.User.email == user_in.email).first():
+        raise HTTPException(status_code=400, detail="Email already registered")
+        
+    hashed_password = get_password_hash(user_in.password)
     db_user = models.User(
-        username=user.username, 
-        password_hash=hashed_password, 
-        org_name=user.org_name,
-        phone_number=user.phone_number 
+        email=user_in.email, 
+        name=user_in.name, 
+        hashed_password=hashed_password
     )
     db.add(db_user)
     db.commit()
-    return {"message": "회원가입 성공!"}
+    db.refresh(db_user)
+    
+    # Send email notification
+    subject = "해봉티켓 계정이 생성되었습니다."
+    body = f"""
+    <html>
+    <body>
+        <h2>안녕하세요, {user_in.name}님!</h2>
+        <p>해봉티켓 서비스의 계정이 생성되었습니다.</p>
+        <p>아래 정보를 사용하여 로그인 후, 즉시 비밀번호를 변경해주세요.</p>
+        <hr>
+        <p><strong>아이디:</strong> {user_in.email}</p>
+        <p><strong>임시 비밀번호:</strong> {user_in.password}</p>
+        <hr>
+        <p><a href="#">해봉티켓 바로가기</a></p>
+    </body>
+    </html>
+    """
+    send_email(receiver_email=user_in.email, subject=subject, body=body)
+    
+    return db_user
 
-@router.post("/login")
-def login(user: schemas.UserLogin, db: Session = Depends(get_db)):
-    db_user = db.query(models.User).filter(models.User.username == user.username).first()
-    
-    # ✨ bcrypt를 사용한 비밀번호 검증
-    if not db_user or not bcrypt.checkpw(user.password.encode('utf-8'), db_user.password_hash.encode('utf-8')):
-        raise HTTPException(status_code=401, detail="아이디 또는 비밀번호가 틀렸습니다.")
-    
-    payload = {
-        "sub": db_user.username,
-        "exp": datetime.datetime.utcnow() + datetime.timedelta(days=1)
-    }
-    token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
-    
-    return {
-        "access_token": token, 
-        "org_name": db_user.org_name,
-        "phone_number": db_user.phone_number 
-    }
+@router.get("/users/me", response_model=schemas.User)
+def read_users_me(current_user: models.User = Depends(get_current_user)):
+    """
+    Get current logged-in user's profile.
+    """
+    return current_user
+
+@router.put("/users/me/password", status_code=status.HTTP_204_NO_CONTENT)
+def update_password(
+    password_update: schemas.PasswordUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """
+    Update current user's password.
+    """
+    if not verify_password(password_update.old_password, current_user.hashed_password):
+        raise HTTPException(status_code=400, detail="Incorrect old password")
+        
+    current_user.hashed_password = get_password_hash(password_update.new_password)
+    db.add(current_user)
+    db.commit()

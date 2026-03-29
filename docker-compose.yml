@@ -17,6 +17,8 @@ services:
       - "127.0.0.1:8010:8010"
     volumes:
       - ./data:/app/data
+    env_file:
+      - .env
     networks:
       - flight-app
     restart: unless-stopped
@@ -24,4 +26,4 @@ services:
 networks:
   flight-app:
     name: flight-app
-    driver: bridge
+    external: true
