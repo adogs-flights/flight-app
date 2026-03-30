@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import Calendar from 'react-calendar';
+import CalendarView from '../components/CalendarView';
 import { useAuth } from '../contexts/AuthContext';
 import TicketCard from '../components/TicketCard';
 import TicketFormModal from '../components/modals/TicketFormModal';
 import ApplyModal from '../components/modals/ApplyModal';
 import ApplicantListModal from '../components/modals/ApplicantListModal';
+import TicketDetailModal from '../components/modals/TicketDetailModal';
 import { useModal } from '../hooks/useModal';
 
 export default function ScheduleView() {
@@ -14,10 +15,12 @@ export default function ScheduleView() {
     const [error, setError] = useState('');
     const [view, setView] = useState('list');
     const [currentTicket, setCurrentTicket] = useState(null);
+    const [searchQuery, setSearchQuery] = useState('');
     
     const { isOpen: isFormOpen, openModal: openFormModal, closeModal: closeFormModal } = useModal();
     const { isOpen: isApplyOpen, openModal: openApplyModal, closeModal: closeApplyModal } = useModal();
     const { isOpen: isApplicantsOpen, openModal: openApplicantsModal, closeModal: closeApplicantsModal } = useModal();
+    const { isOpen: isDetailOpen, openModal: openDetailModal, closeModal: closeDetailModal } = useModal();
 
     const fetchTickets = () => {
         setLoading(true);
@@ -52,6 +55,11 @@ export default function ScheduleView() {
         openApplicantsModal();
     };
 
+    const handleTicketClick = (ticket) => {
+        setCurrentTicket(ticket);
+        openDetailModal();
+    };
+
     const handleDeleteClick = async (ticketId) => {
         if (window.confirm('정말로 이 티켓을 삭제하시겠습니까?')) {
             try {
@@ -68,12 +76,17 @@ export default function ScheduleView() {
     const handleApplicationSaved = () => { fetchTickets(); };
     const handleStatusChanged = () => { fetchTickets(); };
 
+    const filteredTickets = tickets.filter(t => 
+        t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        t.flight_info.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
     const renderListContent = () => {
         if (loading) return <div className="empty"><div>Loading...</div></div>;
         if (error) return <div className="empty"><div className="text-red-500">{error}</div></div>;
-        if (tickets.length === 0) return <div className="empty"><div className="empty-icon">📭</div><div className="empty-text">표시할 일정이 없습니다</div></div>;
+        if (filteredTickets.length === 0) return <div className="empty"><div className="empty-icon">📭</div><div className="empty-text">표시할 일정이 없습니다</div></div>;
         
-        return tickets.map(ticket => (
+        return filteredTickets.map(ticket => (
             <TicketCard 
                 key={ticket.id} 
                 ticket={ticket} 
@@ -81,32 +94,9 @@ export default function ScheduleView() {
                 onDeleteClick={handleDeleteClick}
                 onApplyClick={handleApplyClick}
                 onViewApplicantsClick={handleViewApplicantsClick}
+                onClick={() => handleTicketClick(ticket)}
             />
         ));
-    };
-
-    const tileContent = ({ date, view }) => {
-        if (view === 'month') {
-            const dayTickets = tickets.filter(t => {
-                const ticketDate = new Date(t.departure_date);
-                return date.getFullYear() === ticketDate.getFullYear() &&
-                       date.getMonth() === ticketDate.getMonth() &&
-                       date.getDate() === ticketDate.getDate();
-            });
-
-            if (dayTickets.length > 0) {
-                return (
-                    <div style={{ paddingTop: '4px' }}>
-                        {dayTickets.map(t => (
-                            <div key={t.id} className={`cal-event ${t.status === 'sharing' ? 'type-share-give' : 'type-regular'}`}>
-                                <span className="cal-event-name">{t.title}</span>
-                            </div>
-                        ))}
-                    </div>
-                );
-            }
-        }
-        return null;
     };
 
     return (
@@ -121,15 +111,13 @@ export default function ScheduleView() {
                         </div>
                     </div>
                     <div className="toolbar-right">
-                        <div className="search-box">🔍<input placeholder="검색..." /></div>
+                        <div className="search-box">🔍<input placeholder="검색..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} /></div>
                         <button className="btn btn-primary" onClick={handleCreateClick}>+ 티켓 등록</button>
                     </div>
                 </div>
                 
                 {view === 'cal' && (
-                    <div className="calendar-view">
-                        <Calendar tileContent={tileContent} />
-                    </div>
+                    <CalendarView tickets={tickets} onTicketClick={handleTicketClick} />
                 )}
 
                 {view === 'list' && (
@@ -140,6 +128,14 @@ export default function ScheduleView() {
             <TicketFormModal isOpen={isFormOpen} onClose={closeFormModal} ticket={currentTicket} onTicketSaved={handleTicketSaved} />
             <ApplyModal isOpen={isApplyOpen} onClose={closeApplyModal} ticket={currentTicket} onApplicationSaved={handleApplicationSaved} />
             <ApplicantListModal isOpen={isApplicantsOpen} onClose={closeApplicantsModal} ticket={currentTicket} onStatusChanged={handleStatusChanged} />
+            <TicketDetailModal 
+                isOpen={isDetailOpen} 
+                onClose={closeDetailModal} 
+                ticket={currentTicket} 
+                onEditClick={handleEditClick} 
+                onApplyClick={handleApplyClick} 
+                onViewApplicantsClick={handleViewApplicantsClick} 
+            />
         </>
     );
 }

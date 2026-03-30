@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 :root {
     --sky: #0ea5e9; --sky-light: #e0f2fe; --sky-dark: #0369a1;
     --earth: #92400e; --earth-light: #fef3c7; --earth-mid: #d97706;
@@ -210,16 +212,3 @@
     .sidebar { width: 100%; }
     .form-grid { grid-template-columns: 1fr; }
   }
-
-@import "tailwindcss";
-
-.react-calendar {
-  width: 100%;
-  border: none !important;
-  font-family: inherit;
-}
-.react-calendar__tile--active {
-  background: #3b82f6 !important;
-  color: white;
-  border-radius: 8px;
-}

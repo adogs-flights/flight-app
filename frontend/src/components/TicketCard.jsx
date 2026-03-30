@@ -13,7 +13,7 @@ const TicketStatusBadge = ({ status }) => {
     }
 };
 
-const TicketCard = ({ ticket, onEditClick, onDeleteClick, onApplyClick, onViewApplicantsClick }) => {
+const TicketCard = ({ ticket, onEditClick, onDeleteClick, onApplyClick, onViewApplicantsClick, onClick }) => {
     const { user } = useAuth();
     const isOwner = ticket.owner_id === user.id;
 
@@ -32,7 +32,7 @@ const TicketCard = ({ ticket, onEditClick, onDeleteClick, onApplyClick, onViewAp
     const handleViewApplicants = (e) => { e.stopPropagation(); onViewApplicantsClick(ticket); };
 
     return (
-        <div className={`ticket-card ${cardCls}`}>
+        <div className={`ticket-card ${cardCls}`} onClick={onClick}>
             <div className="ticket-top">
                 <div className="ticket-title">{ticket.title}</div>
                 <div className="ticket-badges">
