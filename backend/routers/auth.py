@@ -1,5 +1,6 @@
 from typing import List
 import os
+import secrets
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -16,7 +17,8 @@ from email_utils import send_email
 # ======================================================================================
 SECRET_KEY = os.environ.get("SECRET_KEY", "super-secret-key-for-dev")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
+ACCESS_TOKEN_EXPIRE_MINUTES = 30  # Short-lived for security
+REFRESH_TOKEN_EXPIRE_DAYS = 14    # Long-lived for convenience
 
 router = APIRouter(prefix="/api", tags=["Authentication"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/token")
@@ -40,6 +42,19 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
+def create_refresh_token(db: Session, user_id: str):
+    token = secrets.token_urlsafe(32)
+    expires_at = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    db_refresh_token = models.RefreshToken(
+        token=token,
+        user_id=user_id,
+        expires_at=expires_at
+    )
+    db.add(db_refresh_token)
+    db.commit()
+    db.refresh(db_refresh_token)
+    return token
+
 # ======================================================================================
 # User Dependencies
 # ======================================================================================
@@ -54,6 +69,12 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         email: str = payload.get("sub")
         if email is None:
             raise credentials_exception
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has expired",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     except jwt.PyJWTError:
         raise credentials_exception
     
@@ -87,19 +108,60 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
     access_token = create_access_token(
         data={"sub": user.email}, expires_delta=access_token_expires
     )
-    return {"access_token": access_token, "token_type": "bearer"}
+    refresh_token = create_refresh_token(db, user.id)
+    
+    return {
+        "access_token": access_token, 
+        "refresh_token": refresh_token, 
+        "token_type": "bearer"
+    }
+
+@router.post("/refresh", response_model=schemas.Token)
+def refresh_access_token(refresh_in: schemas.TokenRefresh, db: Session = Depends(get_db)):
+    db_token = db.query(models.RefreshToken).filter(
+        models.RefreshToken.token == refresh_in.refresh_token,
+        models.RefreshToken.expires_at > datetime.utcnow()
+    ).first()
+    
+    if not db_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token"
+        )
+    
+    user = db_token.user
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    new_access_token = create_access_token(
+        data={"sub": user.email}, expires_delta=access_token_expires
+    )
+    
+    # Optional: Refresh Token Rotation
+    # Delete old token and create new one
+    db.delete(db_token)
+    new_refresh_token = create_refresh_token(db, user.id)
+    
+    return {
+        "access_token": new_access_token,
+        "refresh_token": new_refresh_token,
+        "token_type": "bearer"
+    }
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+def logout(refresh_in: schemas.TokenRefresh, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    db.query(models.RefreshToken).filter(
+        models.RefreshToken.token == refresh_in.refresh_token,
+        models.RefreshToken.user_id == current_user.id
+    ).delete()
+    db.commit()
+    return
 
 # ======================================================================================
 # User Management Endpoints
 # ======================================================================================
 @router.get("/users", response_model=List[schemas.User], dependencies=[Depends(get_current_admin_user)])
 def read_users(db: Session = Depends(get_db)):
-    """
-    Retrieve all users. Restricted to admin users.
-    """
     users = db.query(models.User).all()
     return users
-
 
 @router.post("/users", response_model=schemas.User, status_code=status.HTTP_201_CREATED)
 def create_user_by_admin(
@@ -107,10 +169,6 @@ def create_user_by_admin(
     db: Session = Depends(get_db),
     admin_user: models.User = Depends(get_current_admin_user)
 ):
-    """
-    Create a new user. Restricted to admin users.
-    An email will be sent to the new user with their credentials.
-    """
     if db.query(models.User).filter(models.User.email == user_in.email).first():
         raise HTTPException(status_code=400, detail="Email already registered")
         
@@ -124,31 +182,14 @@ def create_user_by_admin(
     db.commit()
     db.refresh(db_user)
     
-    # Send email notification
     subject = "해봉티켓 계정이 생성되었습니다."
-    body = f"""
-    <html>
-    <body>
-        <h2>안녕하세요, {user_in.name}님!</h2>
-        <p>해봉티켓 서비스의 계정이 생성되었습니다.</p>
-        <p>아래 정보를 사용하여 로그인 후, 즉시 비밀번호를 변경해주세요.</p>
-        <hr>
-        <p><strong>아이디:</strong> {user_in.email}</p>
-        <p><strong>임시 비밀번호:</strong> {user_in.password}</p>
-        <hr>
-        <p><a href="#">해봉티켓 바로가기</a></p>
-    </body>
-    </html>
-    """
+    body = f"<html><body><h2>안녕하세요, {user_in.name}님!</h2><p>해봉티켓 계정이 생성되었습니다. 즉시 비밀번호를 변경해주세요.</p><hr><p>ID: {user_in.email}</p><p>임시 PW: {user_in.password}</p></body></html>"
     send_email(receiver_email=user_in.email, subject=subject, body=body)
     
     return db_user
 
 @router.get("/users/me", response_model=schemas.User)
 def read_users_me(current_user: models.User = Depends(get_current_user)):
-    """
-    Get current logged-in user's profile.
-    """
     return current_user
 
 @router.put("/users/me/password", status_code=status.HTTP_204_NO_CONTENT)
@@ -157,9 +198,6 @@ def update_password(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    """
-    Update current user's password.
-    """
     if not verify_password(password_update.old_password, current_user.hashed_password):
         raise HTTPException(status_code=400, detail="Incorrect old password")
         

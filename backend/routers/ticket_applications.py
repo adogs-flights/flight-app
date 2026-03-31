@@ -154,6 +154,29 @@ def update_application_status(
     db.refresh(application)
     return application
 
+@router.get("/applications/{application_id}", response_model=schemas.TicketApplication)
+def get_application(
+    application_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """
+    Get details of a specific application. 
+    Only visible to the ticket owner, the applicant, or an admin.
+    """
+    application = db.query(models.TicketApplication).filter(models.TicketApplication.id == application_id).first()
+    if not application:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Application not found")
+        
+    is_owner = application.ticket.owner_id == current_user.id
+    is_applicant = application.applicant_id == current_user.id
+    is_admin = current_user.admin_info and current_user.admin_info.approved
+    
+    if not any([is_owner, is_applicant, is_admin]):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to view this application")
+        
+    return application
+
 @router.delete("/applications/{application_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_application(
     application_id: str,

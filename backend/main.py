@@ -1,4 +1,5 @@
 import os
+import sys
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse 
@@ -8,30 +9,50 @@ from routers import auth, tickets, ticket_applications, need_posts
 from alembic.config import Config
 from alembic import command
 
+# --- 🔒 필수 환경변수 검증 ---
+SECRET_KEY = os.environ.get("SECRET_KEY")
+if not SECRET_KEY:
+    if os.environ.get("ENV") == "production":
+        print("CRITICAL: SECRET_KEY environment variable is NOT SET in production!")
+        sys.exit(1)
+    else:
+        print("WARNING: SECRET_KEY is not set. Using default for development.")
+        SECRET_KEY = "super-secret-key-for-dev"
+
+# CORS 허용 도메인 설정
+ALLOWED_ORIGINS = os.environ.get("ALLOWED_ORIGINS", "*").split(",")
+
 # --- ✨ Alembic 마이그레이션 자동 실행 ---
 def run_migrations():
     try:
-        # backend/alembic.ini 경로 설정
-        # 현재 실행 위치가 backend 폴더이므로 'alembic.ini'를 찾음
         alembic_cfg = Config("alembic.ini")
-        # 마이그레이션 실행 (최신 버전인 head로 업그레이드)
         command.upgrade(alembic_cfg, "head")
         print("Database migrations applied successfully via Alembic.")
     except Exception as e:
         print(f"Error applying migrations via Alembic: {e}")
-        # 마이그레이션 실패 시에도 서비스는 띄울 수 있게 예외 처리
 
 # 기존 테이블 생성 (Alembic이 관리하지 않는 초기 생성용)
 Base.metadata.create_all(bind=engine)
-# Alembic 마이그레이션 자동 실행
-run_manual_migration_backup = False # 이전 방식 방지용 플래그 (옵션)
 run_migrations()
 
-app = FastAPI()
+app = FastAPI(
+    title="해봉티켓 API",
+    description="보안이 강화된 이동봉사 일정 관리 API",
+    version="1.3.0"
+)
+
+# --- 🔒 전역 에러 핸들러 (보안 강화) ---
+if os.environ.get("ENV") == "production":
+    @app.exception_handler(Exception)
+    async def global_exception_handler(request, exc):
+        return HTTPException(
+            status_code=500,
+            detail="서버 내부 오류가 발생했습니다. 관리자에게 문의하세요."
+        )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -53,23 +74,18 @@ async def get_airports():
     return AIRPORTS
 
 # --- ✨ 배포용 프론트엔드 정적 파일 서빙 ---
-# 1. Vite가 빌드한 js, css 파일이 담긴 assets 폴더 마운트
 if os.path.exists("static/assets"):
     app.mount("/assets", StaticFiles(directory="static/assets"), name="assets")
 
-# 2. SPA(Single Page Application) 라우팅 처리
 @app.get("/{full_path:path}")
 async def serve_spa(full_path: str):
-    # API 경로는 무시 (프론트엔드로 넘기지 않음)
     if full_path.startswith("api/"):
         raise HTTPException(status_code=404, detail="API route not found")
     
-    # 루트에 있는 정적 파일(favicon.svg 등) 요청 시 반환
     file_path = os.path.join("static", full_path)
     if os.path.isfile(file_path):
         return FileResponse(file_path)
     
-    # 그 외 모든 요청은 React의 index.html로 연결
     index_file = os.path.join("static", "index.html")
     if os.path.exists(index_file):
         return FileResponse(index_file)

@@ -1,4 +1,5 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator
+import re
 from datetime import date, datetime
 from typing import Optional, List
 from enum import Enum
@@ -40,6 +41,19 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str
 
+    @field_validator("password")
+    @classmethod
+    def password_complexity(cls, v: str) -> str:
+        if len(v) < 8:
+            raise ValueError("Password must be at least 8 characters long")
+        if not re.search(r"[A-Za-z]", v):
+            raise ValueError("Password must contain at least one letter")
+        if not re.search(r"[0-9]", v):
+            raise ValueError("Password must contain at least one number")
+        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", v):
+            raise ValueError("Password must contain at least one special character")
+        return v
+
 class User(UserBase):
     id: str
     created_at: datetime
@@ -53,7 +67,7 @@ class User(UserBase):
 # ======================================================================================
 class TicketBase(BaseModel):
     title: str
-    arrival_airport: str # country -> arrival_airport
+    arrival_airport: str 
     departure_date: date
     return_date: date
     departure_time: Optional[str] = ""
@@ -168,7 +182,11 @@ class NeedPost(NeedPostBase):
 # ======================================================================================
 class Token(BaseModel):
     access_token: str
+    refresh_token: str
     token_type: str
+
+class TokenRefresh(BaseModel):
+    refresh_token: str
 
 class TokenData(BaseModel):
     email: Optional[EmailStr] = None
@@ -180,3 +198,16 @@ class UserLogin(BaseModel):
 class PasswordUpdate(BaseModel):
     old_password: str
     new_password: str
+
+    @field_validator("new_password")
+    @classmethod
+    def password_complexity(cls, v: str) -> str:
+        if len(v) < 8:
+            raise ValueError("Password must be at least 8 characters long")
+        if not re.search(r"[A-Za-z]", v):
+            raise ValueError("Password must contain at least one letter")
+        if not re.search(r"[0-9]", v):
+            raise ValueError("Password must contain at least one number")
+        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", v):
+            raise ValueError("Password must contain at least one special character")
+        return v

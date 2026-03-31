@@ -35,6 +35,19 @@ class User(Base):
     tickets_owned = relationship("Ticket", back_populates="owner", foreign_keys="[Ticket.owner_id]")
     applications = relationship("TicketApplication", back_populates="applicant", cascade="all, delete-orphan")
     need_posts = relationship("NeedPost", back_populates="author", cascade="all, delete-orphan")
+    refresh_tokens = relationship("RefreshToken", back_populates="user", cascade="all, delete-orphan")
+
+
+class RefreshToken(Base):
+    __tablename__ = "refresh_tokens"
+
+    id = Column(Integer, primary_key=True, index=True)
+    token = Column(String, unique=True, index=True, nullable=False)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User", back_populates="refresh_tokens")
 
 
 class AdminUser(Base):
