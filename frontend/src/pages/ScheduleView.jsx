@@ -13,7 +13,7 @@ export default function ScheduleView() {
     const [tickets, setTickets] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [view, setView] = useState('list');
+    const [view, setView] = useState('cal');
     const [currentTicket, setCurrentTicket] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
     
