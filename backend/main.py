@@ -23,6 +23,16 @@ app.include_router(tickets.router)
 app.include_router(ticket_applications.router)
 app.include_router(need_posts.router)
 
+@app.get("/api/static/airlines")
+async def get_airlines():
+    from static_data import AIRLINES
+    return AIRLINES
+
+@app.get("/api/static/airports")
+async def get_airports():
+    from static_data import AIRPORTS
+    return AIRPORTS
+
 # --- ✨ 배포용 프론트엔드 정적 파일 서빙 ---
 # 1. Vite가 빌드한 js, css 파일이 담긴 assets 폴더 마운트
 if os.path.exists("static/assets"):

@@ -10,6 +10,8 @@ const apiClient = axios.create({
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [airlines, setAirlines] = useState([]);
+    const [airports, setAirports] = useState([]);
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -28,6 +30,21 @@ export const AuthProvider = ({ children }) => {
             setLoading(false);
         }
     }, []);
+
+    const fetchStaticData = async () => {
+        try {
+            if (airlines.length === 0) {
+                const airRes = await apiClient.get('/static/airlines');
+                setAirlines(airRes.data);
+            }
+            if (airports.length === 0) {
+                const portRes = await apiClient.get('/static/airports');
+                setAirports(portRes.data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch static data", error);
+        }
+    };
 
     const login = async (email, password) => {
         const response = await apiClient.post('/token', new URLSearchParams({
@@ -48,7 +65,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, loading, apiClient }}>
+        <AuthContext.Provider value={{ user, login, logout, loading, apiClient, airlines, airports, fetchStaticData }}>
             {children}
         </AuthContext.Provider>
     );

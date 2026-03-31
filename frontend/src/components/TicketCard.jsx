@@ -36,7 +36,7 @@ const TicketCard = ({ ticket, onEditClick, onDeleteClick, onApplyClick, onViewAp
             <div className="ticket-top">
                 <div className="ticket-title">{ticket.title}</div>
                 <div className="ticket-badges">
-                    <span className="badge badge-airport">{ticket.country}</span>
+                    <span className="badge badge-airport">{ticket.arrival_airport}</span>
                     <TicketStatusBadge status={ticket.status} />
                     {isOwner && ticket.status !== 'regular' && <span className="badge badge-mine">👤 내 등록</span>}
                 </div>

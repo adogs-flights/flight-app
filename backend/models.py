@@ -52,12 +52,16 @@ class Ticket(Base):
 
     id = Column(String, primary_key=True, default=generate_uuid)
     title = Column(Text, nullable=False)
-    country = Column(Text, nullable=False)
+    arrival_airport = Column(Text, nullable=False, index=True) # country -> arrival_airport
     departure_date = Column(Date, nullable=False, index=True)
     return_date = Column(Date, nullable=False)
+    departure_time = Column(String, default="") # 신규
+    arrival_time = Column(String, default="")   # 신규
     flight_info = Column(Text, default="")
     airline = Column(Text, default="", index=True)
     capacity = Column(Integer, default=1)
+    cabin_capacity = Column(Integer, default=0) # 신규 (기내)
+    cargo_capacity = Column(Integer, default=0) # 신규 (수하물)
     status = Column(String, nullable=False, default="owned", index=True)  # 'owned', 'sharing', 'shared'
     manager_name = Column(Text, nullable=False)
     contact = Column(Text, nullable=False)

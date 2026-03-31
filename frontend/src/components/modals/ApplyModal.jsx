@@ -48,7 +48,7 @@ export default function ApplyModal({ isOpen, onClose, ticket, onApplicationSaved
                 <div className="info-box green">
                     🎁 <strong>{ticket.title}</strong>
                     <br />
-                    {ticket.country} · {ticket.departure_date?.split('T')[0]} ~ {ticket.return_date?.split('T')[0]}
+                    {ticket.arrival_airport} · {ticket.departure_date?.split('T')[0]} ~ {ticket.return_date?.split('T')[0]}
                 </div>
             )}
             <div className="form-grid">

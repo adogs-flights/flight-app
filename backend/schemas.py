@@ -17,13 +17,6 @@ class TicketApplicationStatus(str, Enum):
     confirmed = "confirmed"
     rejected = "rejected"
 
-class AirportCode(str, Enum):
-    JFK = "JFK"
-    EWR = "EWR"
-    LAX = "LAX"
-    YVR = "YVR"
-    YYZ = "YYZ"
-
 # ======================================================================================
 # AdminUser Schemas (User에서 참조하기 위해 위로 이동)
 # ======================================================================================
@@ -60,12 +53,16 @@ class User(UserBase):
 # ======================================================================================
 class TicketBase(BaseModel):
     title: str
-    country: str
+    arrival_airport: str # country -> arrival_airport
     departure_date: date
     return_date: date
+    departure_time: Optional[str] = ""
+    arrival_time: Optional[str] = ""
     flight_info: Optional[str] = ""
     airline: Optional[str] = ""
     capacity: Optional[int] = 1
+    cabin_capacity: Optional[int] = 0
+    cargo_capacity: Optional[int] = 0
     manager_name: str
     contact: str
     memo: Optional[str] = None
@@ -75,12 +72,16 @@ class TicketCreate(TicketBase):
 
 class TicketUpdate(BaseModel):
     title: Optional[str] = None
-    country: Optional[str] = None
+    arrival_airport: Optional[str] = None
     departure_date: Optional[date] = None
     return_date: Optional[date] = None
+    departure_time: Optional[str] = None
+    arrival_time: Optional[str] = None
     flight_info: Optional[str] = None
     airline: Optional[str] = None
     capacity: Optional[int] = None
+    cabin_capacity: Optional[int] = None
+    cargo_capacity: Optional[int] = None
     status: Optional[TicketStatus] = None
     manager_name: Optional[str] = None
     contact: Optional[str] = None
@@ -129,7 +130,7 @@ class TicketApplication(TicketApplicationBase):
 # ======================================================================================
 class NeedPostBase(BaseModel):
     title: str
-    airport_code: AirportCode
+    airport_code: str
     desired_date: Optional[date] = None
     flight_route: Optional[str] = ""
     seats_needed: Optional[int] = 1
@@ -142,7 +143,7 @@ class NeedPostCreate(NeedPostBase):
 
 class NeedPostUpdate(BaseModel):
     title: Optional[str] = None
-    airport_code: Optional[AirportCode] = None
+    airport_code: Optional[str] = None
     desired_date: Optional[date] = None
     flight_route: Optional[str] = None
     seats_needed: Optional[int] = None

@@ -22,8 +22,6 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick
         'owned': '🔒 소유중'
     }[ticket.status] || ticket.status;
 
-    const airportLabel = ticket.country; // Assuming country field stores airport label like "JFK" or "🗽 JFK"
-
     const pendingCount = ticket.applications?.filter(a => a.status === 'pending').length || 0;
 
     const footer = (
@@ -49,21 +47,43 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick
                     <div className="detail-value">{statusLabel}</div>
                 </div>
                 <div>
-                    <div className="detail-label">공항</div>
-                    <div className="detail-value">{airportLabel}</div>
+                    <div className="detail-label">도착 공항</div>
+                    <div className="detail-value">{ticket.arrival_airport}</div>
                 </div>
                 <div>
                     <div className="detail-label">출발</div>
-                    <div className="detail-value">{formatDate(ticket.departure_date)}</div>
+                    <div className="detail-value">
+                        {formatDate(ticket.departure_date)}
+                        {ticket.departure_time && <span style={{ marginLeft: '6px', fontSize: '12px', color: 'var(--ink-mute)' }}>({ticket.departure_time})</span>}
+                    </div>
                 </div>
                 <div>
                     <div className="detail-label">귀국</div>
-                    <div className="detail-value">{formatDate(ticket.return_date)}</div>
+                    <div className="detail-value">
+                        {formatDate(ticket.return_date)}
+                        {ticket.arrival_time && <span style={{ marginLeft: '6px', fontSize: '12px', color: 'var(--ink-mute)' }}>({ticket.arrival_time})</span>}
+                    </div>
                 </div>
-                <div style={{ gridColumn: '1/-1' }}>
-                    <div className="detail-label">항공편</div>
-                    <div className="detail-value">{ticket.flight_info}</div>
+                
+                <div style={{ gridColumn: '1/-1', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', padding: '12px', background: 'var(--paper-warm)', borderRadius: 'var(--radius-sm)' }}>
+                    <div>
+                        <div className="detail-label" style={{ marginBottom: '2px' }}>항공사</div>
+                        <div className="detail-value" style={{ fontSize: '13px' }}>{ticket.airline || '-'}</div>
+                    </div>
+                    <div>
+                        <div className="detail-label" style={{ marginBottom: '2px' }}>항공편</div>
+                        <div className="detail-value" style={{ fontSize: '13px' }}>{ticket.flight_info || '-'}</div>
+                    </div>
+                    <div>
+                        <div className="detail-label" style={{ marginBottom: '2px' }}>기내 여유</div>
+                        <div className="detail-value" style={{ fontSize: '13px' }}>{ticket.cabin_capacity || 0} 마리</div>
+                    </div>
+                    <div>
+                        <div className="detail-label" style={{ marginBottom: '2px' }}>수하물 여유</div>
+                        <div className="detail-value" style={{ fontSize: '13px' }}>{ticket.cargo_capacity || 0} 마리</div>
+                    </div>
                 </div>
+
                 <div>
                     <div className="detail-label">등록자</div>
                     <div className="detail-value">{ticket.creator?.name || '알 수 없음'}</div>
@@ -72,10 +92,11 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick
                     <div className="detail-label">현 소유자</div>
                     <div className="detail-value">{ticket.owner?.name || '알 수 없음'}</div>
                 </div>
+
                 {ticket.memo && (
                     <div style={{ gridColumn: '1/-1' }}>
                         <div className="detail-label">메모</div>
-                        <div className="detail-value" style={{ background: 'var(--paper-warm)', padding: '10px 12px', borderRadius: 'var(--radius-sm)', fontSize: '13px', lineHeight: '1.7' }}>
+                        <div className="detail-value" style={{ whiteSpace: 'pre-wrap', fontSize: '13px', lineHeight: '1.6' }}>
                             {ticket.memo}
                         </div>
                     </div>
