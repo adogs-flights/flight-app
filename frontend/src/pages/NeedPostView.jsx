@@ -10,7 +10,11 @@ export default function NeedPostView() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [currentPost, setCurrentPost] = useState(null);
+    const [activeFilter, setActiveFilter] = useState('ALL');
+    const [searchText, setSearchText] = useState('');
     const { isOpen, openModal, closeModal } = useModal();
+
+    const MAJOR_AIRPORTS = ['ICN', 'JFK', 'LAX', 'SFO', 'NRT', 'CDG'];
 
     const fetchPosts = () => {
         setLoading(true);
@@ -45,6 +49,19 @@ export default function NeedPostView() {
         fetchPosts();
     };
 
+    const filteredPosts = posts.filter(post => {
+        const matchesSearch = post.title.toLowerCase().includes(searchText.toLowerCase()) || 
+                             post.airport_code.toLowerCase().includes(searchText.toLowerCase());
+        
+        if (!matchesSearch) return false;
+        
+        if (activeFilter === 'ALL') return true;
+        if (activeFilter === 'OTHERS') {
+            return !MAJOR_AIRPORTS.includes(post.airport_code.toUpperCase());
+        }
+        return post.airport_code.toUpperCase() === activeFilter;
+    });
+
     const renderContent = () => {
         if (loading) {
             return <div className="empty"><div>Loading...</div></div>;
@@ -52,10 +69,10 @@ export default function NeedPostView() {
         if (error) {
             return <div className="empty"><div className="text-red-500">{error}</div></div>;
         }
-        if (posts.length === 0) {
-            return <div className="empty"><div className="empty-icon">🔍</div><div className="empty-text">등록된 구해요가 없습니다</div></div>;
+        if (filteredPosts.length === 0) {
+            return <div className="empty"><div className="empty-icon">🔍</div><div className="empty-text">조건에 맞는 게시글이 없습니다</div></div>;
         }
-        return posts.map(post => (
+        return filteredPosts.map(post => (
             <div key={post.id} onClick={() => (post.author_id === user.id) && handleEditClick(post)} style={{ cursor: (post.author_id === user.id) ? 'pointer' : 'default' }}>
                 <NeedPostItem post={post} />
             </div>
@@ -68,15 +85,26 @@ export default function NeedPostView() {
                 <div className="toolbar" style={{ marginBottom: '16px' }}>
                     <div className="toolbar-left"><span className="page-title">🙏 구해요 게시판</span></div>
                     <div className="toolbar-right">
-                        <div className="search-box">🔍<input placeholder="검색..." /></div>
+                        <div className="search-box">🔍<input placeholder="공항 코드 또는 제목 검색..." value={searchText} onChange={e => setSearchText(e.target.value)} /></div>
                         <button className="btn btn-primary" onClick={handleCreateClick}>+ 구해요 등록</button>
                     </div>
                 </div>
-                <div style={{ display: 'flex', gap: 0, borderBottom: '2px solid var(--border)', overflowX: 'auto' }}>
-                    <button className="need-tab active">전체</button>
-                    <button className="need-tab">🗽 JFK</button>
-                    <button className="need-tab">✈️ EWR</button>
-                    {/* ... other tabs */}
+                <div style={{ display: 'flex', gap: 0, borderBottom: '2px solid var(--border)', overflowX: 'auto', paddingBottom: '2px' }}>
+                    <button 
+                        className={`need-tab ${activeFilter === 'ALL' ? 'active' : ''}`}
+                        onClick={() => setActiveFilter('ALL')}
+                    >전체</button>
+                    {MAJOR_AIRPORTS.map(code => (
+                        <button 
+                            key={code}
+                            className={`need-tab ${activeFilter === code ? 'active' : ''}`}
+                            onClick={() => setActiveFilter(code)}
+                        >✈️ {code}</button>
+                    ))}
+                    <button 
+                        className={`need-tab ${activeFilter === 'OTHERS' ? 'active' : ''}`}
+                        onClick={() => setActiveFilter('OTHERS')}
+                    >🌐 기타</button>
                 </div>
                 <div id="needBoardList" style={{ background: 'white', border: '1px solid var(--border)', borderTop: 'none', borderRadius: '0 0 var(--radius) var(--radius)', minHeight: '160px' }}>
                     {renderContent()}

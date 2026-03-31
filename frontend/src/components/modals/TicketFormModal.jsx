@@ -7,7 +7,7 @@ export default function TicketFormModal({ isOpen, onClose, ticket, onTicketSaved
     const { apiClient, user, airlines, airports, fetchStaticData } = useAuth();
     
     const [title, setTitle] = useState('');
-    const [arrivalAirport, setArrivalAirport] = useState('JFK');
+    const [arrivalAirport, setArrivalAirport] = useState('');
     const [departureDate, setDepartureDate] = useState('');
     const [returnDate, setReturnDate] = useState('');
     const [departureTime, setDepartureTime] = useState('');
@@ -32,7 +32,7 @@ export default function TicketFormModal({ isOpen, onClose, ticket, onTicketSaved
     useEffect(() => {
         if (isEditing) {
             setTitle(ticket.title || '');
-            setArrivalAirport(ticket.arrival_airport || 'JFK');
+            setArrivalAirport(ticket.arrival_airport || '');
             setDepartureDate(ticket.departure_date?.split('T')[0] || '');
             setReturnDate(ticket.return_date?.split('T')[0] || '');
             setDepartureTime(ticket.departure_time || '');
@@ -46,7 +46,7 @@ export default function TicketFormModal({ isOpen, onClose, ticket, onTicketSaved
             setMemo(ticket.memo || '');
         } else {
             setTitle('');
-            setArrivalAirport('JFK');
+            setArrivalAirport('');
             setDepartureDate('');
             setReturnDate('');
             setDepartureTime('');
