@@ -14,13 +14,25 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Noto Sans KR', sans-serif; background: var(--paper); color: var(--ink); min-height: 100vh; }
 
+  /* UTILS */
+  .mobile-only { display: none !important; }
+  @media (max-width: 768px) {
+    .mobile-only { display: flex !important; }
+    .hide-mobile { display: none !important; }
+  }
+
   /* HEADER */
   header { background: var(--white); border-bottom: 1px solid var(--border); padding: 0 24px; height: 60px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow); }
+  .header-left { display: flex; align-items: center; gap: 12px; }
   .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; cursor: pointer; }
   .logo-icon { width: 34px; height: 34px; background: linear-gradient(135deg, var(--sky), var(--sky-dark)); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
   .logo-text { font-family: 'Gowun Batang', serif; font-size: 18px; font-weight: 700; color: var(--ink); }
   .logo-sub { font-size: 10px; color: var(--ink-mute); font-weight: 300; }
-  .header-nav { display: flex; align-items: center; gap: 8px; }
+  .header-nav { display: flex; align-items: center; gap: 12px; }
+  .user-profile { display: flex; align-items: center; gap: 8px; }
+  .menu-btn { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 6px; cursor: pointer; color: var(--ink-soft); display: none; }
+  .menu-btn:hover { background: var(--paper-warm); }
+
   .btn { padding: 7px 16px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: all .15s; font-family: 'Noto Sans KR', sans-serif; }
   .btn-ghost { background: transparent; color: var(--ink-soft); }
   .btn-ghost:hover { background: var(--paper-warm); }
@@ -34,15 +46,21 @@
   .badge-admin { font-size: 10px; background: var(--earth-light); color: var(--earth); border: 1px solid var(--earth-mid); padding: 2px 7px; border-radius: 20px; font-weight: 600; }
 
   /* LAYOUT */
-  .layout { display: flex; max-width: 1200px; margin: 0 auto; padding: 24px 16px; gap: 24px; }
-  .sidebar { width: 220px; flex-shrink: 0; }
+  .layout-root { min-height: 100vh; display: flex; flex-direction: column; }
+  .layout { display: flex; max-width: 1200px; margin: 0 auto; padding: 24px 16px; gap: 24px; width: 100%; flex: 1; }
+  .sidebar { width: 220px; flex-shrink: 0; transition: transform .3s ease, visibility .3s; }
   .main { flex: 1; min-width: 0; }
+  .sidebar-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 150; animation: fadeIn .2s; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
   /* SIDEBAR */
+  .sidebar-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 20px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+  .sidebar-logo { display: flex; align-items: center; gap: 10px; }
+  .sidebar-close { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 6px; cursor: pointer; color: var(--ink-soft); }
   .sidebar-section { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 16px; }
   .sidebar-title { font-size: 11px; font-weight: 700; letter-spacing: 0.8px; color: var(--ink-mute); text-transform: uppercase; margin-bottom: 10px; }
   .sidebar-nav { display: flex; flex-direction: column; gap: 2px; }
-  .nav-item { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: var(--radius-sm); font-size: 13.5px; color: var(--ink-soft); cursor: pointer; transition: all .12s; }
+  .nav-item { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: var(--radius-sm); font-size: 13.5px; color: var(--ink-soft); cursor: pointer; transition: all .12s; text-decoration: none; }
   .nav-item:hover { background: var(--paper-warm); }
   .nav-item.active { background: var(--sky-light); color: var(--sky-dark); font-weight: 600; }
   .nav-count { margin-left: auto; font-size: 11px; background: var(--sky-light); color: var(--sky-dark); padding: 1px 7px; border-radius: 20px; font-weight: 600; }
@@ -208,7 +226,60 @@
   .empty-text { font-size: 14px; font-weight: 600; color: var(--ink-soft); }
 
   @media (max-width: 768px) {
-    .layout { flex-direction: column; padding: 12px; gap: 12px; }
-    .sidebar { width: 100%; }
+    header { padding: 0 16px; }
+    .menu-btn { display: flex; }
+    .layout { padding: 12px; gap: 12px; }
+    .sidebar { 
+      position: fixed; top: 0; left: 0; bottom: 0; z-index: 200; 
+      background: var(--paper); width: 260px; padding: 20px;
+      transform: translateX(-100%); visibility: hidden;
+      box-shadow: var(--shadow-lg);
+    }
+    .sidebar.open { transform: translateX(0); visibility: visible; }
+    .sidebar-section { border: none; padding: 0; background: none; display: block; margin-bottom: 24px; } /* 수직 정렬 강제 */
+    .sidebar-nav { display: flex; flex-direction: column; gap: 4px; }
+    
+    /* 버튼 타입 nav-item 스타일 초기화 */
+    button.nav-item { background: none; border: none; width: 100%; text-align: left; font-family: inherit; }
+    
+    .main { padding-top: 0; }
+    .toolbar { flex-direction: column; align-items: stretch; gap: 16px; }
+    .toolbar-left { flex-direction: column; align-items: flex-start; gap: 12px; } /* 제목 아래로 탭 배치 */
+    .toolbar-right { flex-direction: column; align-items: stretch; gap: 10px; }
+    .search-box { width: 100%; }
+    .view-tabs { width: 100%; }
+    .page-title { font-size: 22px; }
+    .modal { max-width: 95%; margin: 0; border-radius: 20px 20px 0 0; position: fixed; bottom: 0; }
+    .modal-overlay { align-items: flex-end; padding: 0; }
     .form-grid { grid-template-columns: 1fr; }
+    
+    /* 5.2 컴포넌트 반응형 고도화 */
+    .ticket-card { padding: 14px; }
+    .ticket-top { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .ticket-badges { justify-content: flex-start; width: 100%; }
+    .ticket-meta { gap: 8px; font-size: 11.5px; }
+    .ticket-footer { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .ticket-actions { width: 100%; justify-content: flex-end; gap: 8px; }
+    .btn-xs { padding: 8px 14px; font-size: 12px; flex: 1; text-align: center; }
+
+    .board-post { padding: 12px; align-items: flex-start; }
+    .board-post-icon { width: 32px; height: 32px; font-size: 14px; }
+    .board-post-body { padding-right: 0; }
+    .board-post-title { font-size: 14px; white-space: normal; }
+    .board-post-meta { flex-direction: column; gap: 4px; font-size: 11px; }
+    .board-post-right { position: absolute; top: 12px; right: 12px; align-items: flex-end; }
+    .board-post-date { display: none; }
+
+    .view-tabs { width: 100%; margin-bottom: 12px; }
+    .view-tab { flex: 1; text-align: center; }
+
+    /* 5.3 폼 및 모달 사용성 개선 */
+    .form-input, .btn, .select-field { min-height: 44px; font-size: 16px !important; }
+    .form-label { font-size: 13px; margin-bottom: 6px; }
+    .radio-group { gap: 10px; width: 100%; }
+    .radio-label { flex: 1; justify-content: center; min-height: 44px; padding: 10px; }
+    .modal-header { padding: 16px 20px; }
+    .modal-body { padding: 16px 20px 24px; }
+    .modal-footer { padding: 12px 20px; flex-direction: column; gap: 8px; }
+    .modal-footer .btn { width: 100%; margin: 0; }
   }

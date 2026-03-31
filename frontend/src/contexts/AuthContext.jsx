@@ -8,8 +8,13 @@ const apiClient = axios.create({
 });
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [user, setUser] = useState(import.meta.env.DEV ? {
+        id: "dev-user-id",
+        name: "개발용 관리자",
+        email: "dev@example.com",
+        admin_info: { approved: true }
+    } : null);
+    const [loading, setLoading] = useState(import.meta.env.DEV ? false : true);
     const [airlines, setAirlines] = useState([]);
     const [airports, setAirports] = useState([]);
 
