@@ -1,12 +1,31 @@
 import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse # ✨ 추가
-from fastapi.staticfiles import StaticFiles # ✨ 추가
+from fastapi.responses import FileResponse 
+from fastapi.staticfiles import StaticFiles 
 from database import engine, Base
 from routers import auth, tickets, ticket_applications, need_posts
+from alembic.config import Config
+from alembic import command
 
+# --- ✨ Alembic 마이그레이션 자동 실행 ---
+def run_migrations():
+    try:
+        # backend/alembic.ini 경로 설정
+        # 현재 실행 위치가 backend 폴더이므로 'alembic.ini'를 찾음
+        alembic_cfg = Config("alembic.ini")
+        # 마이그레이션 실행 (최신 버전인 head로 업그레이드)
+        command.upgrade(alembic_cfg, "head")
+        print("Database migrations applied successfully via Alembic.")
+    except Exception as e:
+        print(f"Error applying migrations via Alembic: {e}")
+        # 마이그레이션 실패 시에도 서비스는 띄울 수 있게 예외 처리
+
+# 기존 테이블 생성 (Alembic이 관리하지 않는 초기 생성용)
 Base.metadata.create_all(bind=engine)
+# Alembic 마이그레이션 자동 실행
+run_manual_migration_backup = False # 이전 방식 방지용 플래그 (옵션)
+run_migrations()
 
 app = FastAPI()
 
