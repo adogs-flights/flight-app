@@ -26,10 +26,10 @@ export default function Header({ onMenuClick, onPwChangeClick }) {
             <div className="header-nav">
                 {user && (
                     <>
-                        <div className="user-profile hide-mobile">
+                        <div className="user-profile">
                             <div className="avatar">{user.name ? user.name[0].toUpperCase() : ''}</div>
-                            <span className="user-name">{user.name}</span>
-                            {user.admin_info?.approved && <span className="badge-admin">관리자</span>}
+                            <span className="user-name hide-mobile">{user.name}</span>
+                            {user.admin_info?.approved && <span className="badge-admin hide-mobile">관리자</span>}
                         </div>
                         {/* PC 환경에서만 비밀번호 변경 노출 */}
                         <button className="btn btn-ghost hide-mobile" style={{ fontSize: '12px' }} onClick={onPwChangeClick}>🔑 비밀번호 변경</button>
