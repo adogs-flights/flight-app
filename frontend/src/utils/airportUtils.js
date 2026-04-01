@@ -4,12 +4,12 @@
 export const MAJOR_AIRPORTS = ['JFK', 'LAX', 'YVR', 'YYZ', 'ORD'];
 
 export const AIRPORT_COLORS = {
-  'JFK': { bg: '#3b82f6', text: '#ffffff' }, // Blue
-  'LAX': { bg: '#f97316', text: '#ffffff' }, // Orange
-  'YVR': { bg: '#ef4444', text: '#ffffff' }, // Red
-  'YYZ': { bg: '#10b981', text: '#ffffff' }, // Green
-  'ORD': { bg: '#a855f7', text: '#ffffff' }, // Purple
-  'OTHER': { bg: '#64748b', text: '#ffffff' } // Slate/Gray
+  'JFK': { bg: '#e0f2fe', text: '#0369a1' }, // Sky Light / Sky Dark
+  'LAX': { bg: '#fef3c7', text: '#92400e' }, // Earth Light / Earth
+  'YVR': { bg: '#fee2e2', text: '#dc2626' }, // Red Light / Red
+  'YYZ': { bg: '#dcfce7', text: '#16a34a' }, // Green Light / Green
+  'ORD': { bg: '#ede9fe', text: '#7c3aed' }, // Purple Light / Purple
+  'OTHER': { bg: '#f1f5f9', text: '#475569' } // Slate Light / Slate Dark
 };
 
 /**
