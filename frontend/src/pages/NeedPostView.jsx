@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import NeedPostItem from '../components/NeedPostItem';
 import NeedPostFormModal from '../components/modals/NeedPostFormModal';
 import { useModal } from '../hooks/useModal';
+import { MAJOR_AIRPORTS } from '../utils/airportUtils';
 
 export default function NeedPostView() {
     const { apiClient, user } = useAuth();
@@ -13,8 +14,6 @@ export default function NeedPostView() {
     const [activeFilter, setActiveFilter] = useState('ALL');
     const [searchText, setSearchText] = useState('');
     const { isOpen, openModal, closeModal } = useModal();
-
-    const MAJOR_AIRPORTS = ['ICN', 'JFK', 'LAX', 'SFO', 'NRT', 'CDG'];
 
     const fetchPosts = () => {
         setLoading(true);

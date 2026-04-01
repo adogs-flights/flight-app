@@ -1,5 +1,6 @@
 import { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
+import { MAJOR_AIRPORTS } from '../utils/airportUtils';
 
 const AuthContext = createContext();
 
@@ -108,7 +109,17 @@ export const AuthProvider = ({ children }) => {
             }
             if (airports.length === 0) {
                 const portRes = await apiClient.get('/static/airports');
-                setAirports(portRes.data);
+                // MAJOR_AIRPORTS를 상단으로 정렬
+                const sortedAirports = [...portRes.data].sort((a, b) => {
+                    const aIdx = MAJOR_AIRPORTS.indexOf(a.value);
+                    const bIdx = MAJOR_AIRPORTS.indexOf(b.value);
+                    
+                    if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+                    if (aIdx !== -1) return -1;
+                    if (bIdx !== -1) return 1;
+                    return a.label.localeCompare(b.label);
+                });
+                setAirports(sortedAirports);
             }
         } catch (error) {
             console.error("Failed to fetch static data", error);

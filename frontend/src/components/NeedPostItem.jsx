@@ -1,3 +1,4 @@
+import { getAirportColor } from '../utils/airportUtils';
 
 const NeedPostItem = ({ post }) => {
     // A simple date formatter
@@ -13,8 +14,19 @@ const NeedPostItem = ({ post }) => {
                 {post.is_urgent ? '🚨' : '✈️'}
             </div>
             <div className="board-post-body">
-                <div className={`board-post-title ${post.is_resolved ? 'line-through text-stone-500' : ''}`}>
+                <div className={`board-post-title ${post.is_resolved ? 'line-through text-stone-500' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {post.title}
+                    {(() => {
+                        const colors = getAirportColor(post.airport_code);
+                        return (
+                            <span 
+                                className="badge badge-airport" 
+                                style={{ backgroundColor: colors.bg, color: colors.text, borderColor: colors.bg, padding: '1px 6px', fontSize: '10px' }}
+                            >
+                                {post.airport_code}
+                            </span>
+                        );
+                    })()}
                 </div>
                 <div className="board-post-meta">
                     <span>📅 {formatDate(post.desired_date)}</span>

@@ -1,4 +1,5 @@
 import { useAuth } from '../contexts/AuthContext';
+import { getAirportColor } from '../utils/airportUtils';
 
 const TicketStatusBadge = ({ status }) => {
     switch (status) {
@@ -36,7 +37,17 @@ const TicketCard = ({ ticket, onEditClick, onDeleteClick, onApplyClick, onViewAp
             <div className="ticket-top">
                 <div className="ticket-title">{ticket.title}</div>
                 <div className="ticket-badges">
-                    <span className="badge badge-airport">{ticket.arrival_airport}</span>
+                    {(() => {
+                        const colors = getAirportColor(ticket.arrival_airport);
+                        return (
+                            <span 
+                                className="badge badge-airport" 
+                                style={{ backgroundColor: colors.bg, color: colors.text, borderColor: colors.bg }}
+                            >
+                                {ticket.arrival_airport}
+                            </span>
+                        );
+                    })()}
                     <TicketStatusBadge status={ticket.status} />
                     {isOwner && ticket.status !== 'regular' && <span className="badge badge-mine">👤 내 등록</span>}
                 </div>

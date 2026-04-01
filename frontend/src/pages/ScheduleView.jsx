@@ -25,7 +25,9 @@ export default function ScheduleView() {
     const fetchTickets = () => {
         setLoading(true);
         apiClient.get('/tickets')
-            .then(response => setTickets(response.data))
+            .then(response => {
+                setTickets(response.data);
+            })
             .catch(err => {
                 console.error(err);
                 setError('티켓을 불러오는 데 실패했습니다.');
