@@ -66,19 +66,29 @@ export default function CalendarView({ tickets, onTicketClick }) {
                         <div className={`cal-date ${d.isSunday ? 'sunday' : ''} ${d.isSaturday ? 'saturday' : ''}`}>
                             {d.day}
                         </div>
-                        {d.tickets && d.tickets.map(t => {
-                            const colors = getAirportColor(t.arrival_airport);
-                            return (
-                                <div 
-                                    key={t.id} 
-                                    className={`cal-event ${t.status === 'sharing' ? 'type-share-give' : 'type-regular'}`}
-                                    onClick={() => onTicketClick(t)}
-                                    style={{ backgroundColor: colors.bg, color: colors.text, border: 'none' }}
-                                >
-                                    <span className="cal-event-name">{t.title}</span>
-                                </div>
-                            );
-                        })}
+                        {d.tickets && (
+                            <>
+                                {d.tickets.slice(0, d.tickets.length > 3 ? 2 : 3).map(t => {
+                                    const colors = getAirportColor(t.arrival_airport);
+                                    return (
+                                        <div 
+                                            key={t.id} 
+                                            className={`cal-event ${t.status === 'sharing' ? 'type-share-give' : 'type-regular'}`}
+                                            onClick={() => onTicketClick(t)}
+                                            style={{ backgroundColor: colors.bg, color: colors.text, border: 'none' }}
+                                            title={t.title}
+                                        >
+                                            <span className="cal-event-name">{t.title}</span>
+                                        </div>
+                                    );
+                                })}
+                                {d.tickets.length > 3 && (
+                                    <div className="cal-more">
+                                        + {d.tickets.length - 2}
+                                    </div>
+                                )}
+                            </>
+                        )}
                     </div>
                 ))}
             </div>

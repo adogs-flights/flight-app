@@ -106,7 +106,10 @@ export default function ScheduleView() {
             <div id="sectionSchedule">
                 <div className="toolbar">
                     <div className="toolbar-left">
-                        <span className="page-title">일정 관리</span>
+                        <div className="title-row">
+                            <span className="page-title">일정 관리</span>
+                            <button className="btn btn-primary mobile-only" onClick={handleCreateClick}>+ 티켓 등록</button>
+                        </div>
                         <div className="view-tabs">
                             <button className={`view-tab ${view === 'cal' ? 'active' : ''}`} onClick={() => setView('cal')}>📅 달력</button>
                             <button className={`view-tab ${view === 'list' ? 'active' : ''}`} onClick={() => setView('list')}>📋 리스트</button>
@@ -114,7 +117,7 @@ export default function ScheduleView() {
                     </div>
                     <div className="toolbar-right">
                         <div className="search-box">🔍<input placeholder="검색..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} /></div>
-                        <button className="btn btn-primary" onClick={handleCreateClick}>+ 티켓 등록</button>
+                        <button className="btn btn-primary desktop-only" onClick={handleCreateClick}>+ 티켓 등록</button>
                     </div>
                 </div>
                 
