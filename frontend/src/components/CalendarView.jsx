@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { getAirportColor } from '../utils/airportUtils';
 
-export default function CalendarView({ tickets, onTicketClick }) {
+export default function CalendarView({ tickets, onTicketClick, onMoreClick }) {
     const [currentDate, setCurrentDate] = useState(new Date());
 
     const year = currentDate.getFullYear();
@@ -29,6 +29,7 @@ export default function CalendarView({ tickets, onTicketClick }) {
         days.push({ 
             day: i, 
             date: dateObj,
+            dateStr: dateStr,
             isSunday: dateObj.getDay() === 0,
             isSaturday: dateObj.getDay() === 6,
             tickets: dayTickets
@@ -83,7 +84,7 @@ export default function CalendarView({ tickets, onTicketClick }) {
                                     );
                                 })}
                                 {d.tickets.length > 3 && (
-                                    <div className="cal-more">
+                                    <div className="cal-more" onClick={() => onMoreClick(d.tickets, d.dateStr)}>
                                         + {d.tickets.length - 2}
                                     </div>
                                 )}

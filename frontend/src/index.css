@@ -108,7 +108,9 @@
   .cal-event.type-regular { background: var(--sky-light); color: var(--sky-dark); border-left: 3px solid var(--sky); }
   .cal-event.type-share-give { background: var(--green-light); color: var(--green); border-left: 3px solid var(--green); }
   .cal-event-name { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; flex: 1; }
-  .cal-more { font-size: 10px; color: var(--ink-mute); padding: 2px 7px; font-weight: 500; cursor: default; }
+  .cal-more { font-size: 10px; color: var(--ink-mute); padding: 2px 7px; font-weight: 500; cursor: pointer; }
+  .cal-more:hover { color: var(--sky-dark); text-decoration: underline; }
+  .day-ticket-item:hover { border-color: var(--sky) !important; background: var(--sky-light) !important; }
 
   /* LIST VIEW */
   .list-view { display: none; flex-direction: column; }

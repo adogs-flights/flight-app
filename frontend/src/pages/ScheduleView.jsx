@@ -6,6 +6,7 @@ import TicketFormModal from '../components/modals/TicketFormModal';
 import ApplyModal from '../components/modals/ApplyModal';
 import ApplicantListModal from '../components/modals/ApplicantListModal';
 import TicketDetailModal from '../components/modals/TicketDetailModal';
+import DayTicketsModal from '../components/modals/DayTicketsModal';
 import { useModal } from '../hooks/useModal';
 
 export default function ScheduleView() {
@@ -16,11 +17,14 @@ export default function ScheduleView() {
     const [view, setView] = useState('cal');
     const [currentTicket, setCurrentTicket] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [selectedDateTickets, setSelectedDateTickets] = useState([]);
+    const [selectedDate, setSelectedDate] = useState(null);
     
     const { isOpen: isFormOpen, openModal: openFormModal, closeModal: closeFormModal } = useModal();
     const { isOpen: isApplyOpen, openModal: openApplyModal, closeModal: closeApplyModal } = useModal();
     const { isOpen: isApplicantsOpen, openModal: openApplicantsModal, closeModal: closeApplicantsModal } = useModal();
     const { isOpen: isDetailOpen, openModal: openDetailModal, closeModal: closeDetailModal } = useModal();
+    const { isOpen: isDayMoreOpen, openModal: openDayMoreModal, closeModal: closeDayMoreModal } = useModal();
 
     const fetchTickets = () => {
         setLoading(true);
@@ -58,6 +62,18 @@ export default function ScheduleView() {
     };
 
     const handleTicketClick = (ticket) => {
+        setCurrentTicket(ticket);
+        openDetailModal();
+    };
+
+    const handleDayMoreClick = (dayTickets, date) => {
+        setSelectedDateTickets(dayTickets);
+        setSelectedDate(date);
+        openDayMoreModal();
+    };
+
+    const handleTicketSelectFromList = (ticket) => {
+        closeDayMoreModal();
         setCurrentTicket(ticket);
         openDetailModal();
     };
@@ -122,7 +138,11 @@ export default function ScheduleView() {
                 </div>
                 
                 {view === 'cal' && (
-                    <CalendarView tickets={tickets} onTicketClick={handleTicketClick} />
+                    <CalendarView 
+                        tickets={tickets} 
+                        onTicketClick={handleTicketClick} 
+                        onMoreClick={handleDayMoreClick}
+                    />
                 )}
 
                 {view === 'list' && (
@@ -141,6 +161,14 @@ export default function ScheduleView() {
                 onApplyClick={handleApplyClick} 
                 onViewApplicantsClick={handleViewApplicantsClick} 
             />
+            <DayTicketsModal 
+                isOpen={isDayMoreOpen} 
+                onClose={closeDayMoreModal} 
+                tickets={selectedDateTickets} 
+                onTicketClick={handleTicketSelectFromList}
+                date={selectedDate}
+            />
         </>
     );
 }
+
