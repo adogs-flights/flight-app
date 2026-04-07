@@ -2,12 +2,14 @@ import React from 'react';
 import Modal from '../ui/Modal';
 import { useAuth } from '../../contexts/AuthContext';
 
-export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick, onApplyClick, onViewApplicantsClick }) {
+export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick, onApplyClick, onViewApplicantsClick, onDeleteClick }) {
     const { user } = useAuth();
     if (!ticket) return null;
 
+    const isAdmin = user.admin_info && user.admin_info.approved;
     const isOwner = ticket.owner_id === user.id;
-    const canEdit = ticket.created_by_id === user.id;
+    const canEdit = ticket.created_by_id === user.id || isAdmin;
+    const canDelete = isOwner || isAdmin;
 
     const formatDate = (dateString) => {
         if (!dateString) return '';
@@ -16,25 +18,32 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick
     };
 
     const statusLabel = {
-        'regular': '📅 일반 일정',
-        'sharing': '🟢 나눔중',
-        'shared': '✅ 나눔 완료',
-        'owned': '🔒 소유중'
+        'regular': '정규',
+        'sharing': '나눔중',
+        'shared': '나눔 완료',
+        'owned': '개인 소장중'
     }[ticket.status] || ticket.status;
 
     const pendingCount = ticket.applications?.filter(a => a.status === 'pending').length || 0;
 
+    const handleDelete = () => {
+        if (window.confirm('정말 이 티켓을 삭제하시겠습니까?')) {
+            onClose();
+            onDeleteClick(ticket.id);
+        }
+    };
+
     const footer = (
         <>
-            <button className="btn btn-ghost" onClick={onClose}>닫기</button>
+            {/* <button className="btn btn-ghost" onClick={onClose}>닫기</button> */}
+            {canDelete && (
+                <button className="btn btn-del" onClick={handleDelete}>삭제</button>
+            )}
             {canEdit && (
                 <button className="btn btn-outline" onClick={() => { onClose(); onEditClick(ticket); }}>수정</button>
             )}
             {isOwner && ticket.status === 'sharing' && (
-                <button className="btn btn-primary" onClick={() => { onClose(); onViewApplicantsClick(ticket); }}>📋 신청자 {ticket.applications?.length || 0}건</button>
-            )}
-            {!isOwner && ticket.status === 'sharing' && (
-                <button className="btn btn-green" onClick={() => { onClose(); onApplyClick(ticket); }}>🎁 나눔 신청</button>
+                <button className="btn btn-primary" onClick={() => { onClose(); onViewApplicantsClick(ticket); }}>신청자 목록</button>
             )}
         </>
     );
@@ -51,20 +60,20 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick
                     <div className="detail-value">{ticket.arrival_airport}</div>
                 </div>
                 <div>
-                    <div className="detail-label">출발</div>
+                    <div className="detail-label">출발일</div>
                     <div className="detail-value">
                         {formatDate(ticket.departure_date)}
                         {ticket.departure_time && <span style={{ marginLeft: '6px', fontSize: '12px', color: 'var(--ink-mute)' }}>({ticket.departure_time})</span>}
                     </div>
                 </div>
                 <div>
-                    <div className="detail-label">귀국</div>
+                    <div className="detail-label">귀국일</div>
                     <div className="detail-value">
                         {formatDate(ticket.return_date)}
                         {ticket.arrival_time && <span style={{ marginLeft: '6px', fontSize: '12px', color: 'var(--ink-mute)' }}>({ticket.arrival_time})</span>}
                     </div>
                 </div>
-                
+
                 <div style={{ gridColumn: '1/-1', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', padding: '12px', background: 'var(--paper-warm)', borderRadius: 'var(--radius-sm)' }}>
                     <div>
                         <div className="detail-label" style={{ marginBottom: '2px' }}>항공사</div>
@@ -75,22 +84,22 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick
                         <div className="detail-value" style={{ fontSize: '13px' }}>{ticket.flight_info || '-'}</div>
                     </div>
                     <div>
-                        <div className="detail-label" style={{ marginBottom: '2px' }}>기내 여유</div>
-                        <div className="detail-value" style={{ fontSize: '13px' }}>{ticket.cabin_capacity || 0} 마리</div>
+                        <div className="detail-label" style={{ marginBottom: '2px' }}>기내 수하물</div>
+                        <div className="detail-value" style={{ fontSize: '13px' }}>{ticket.cabin_capacity || 0} kg</div>
                     </div>
                     <div>
-                        <div className="detail-label" style={{ marginBottom: '2px' }}>수하물 여유</div>
-                        <div className="detail-value" style={{ fontSize: '13px' }}>{ticket.cargo_capacity || 0} 마리</div>
+                        <div className="detail-label" style={{ marginBottom: '2px' }}>위탁 수하물</div>
+                        <div className="detail-value" style={{ fontSize: '13px' }}>{ticket.cargo_capacity || 0} kg</div>
                     </div>
                 </div>
 
-                <div>
-                    <div className="detail-label">등록자</div>
-                    <div className="detail-value">{ticket.creator?.name || '알 수 없음'}</div>
+                <div style={{ gridColumn: '1/2' }}>
+                    <div className="detail-label">담당자</div>
+                    <div className="detail-value">{ticket.manager_name}</div>
                 </div>
-                <div>
-                    <div className="detail-label">현 소유자</div>
-                    <div className="detail-value">{ticket.owner?.name || '알 수 없음'}</div>
+                <div style={{ gridColumn: '2/3' }}>
+                    <div className="detail-label">연락처</div>
+                    <div className="detail-value">{ticket.contact}</div>
                 </div>
 
                 {ticket.memo && (
@@ -104,7 +113,7 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick
                 {isOwner && pendingCount > 0 && (
                     <div style={{ gridColumn: '1/-1' }}>
                         <div className="info-box yellow" style={{ margin: 0 }}>
-                            🔔 새 나눔 신청 <strong>{pendingCount}건</strong>이 들어왔습니다.
+                            이 티켓에 <strong>{pendingCount}건</strong>의 신청이 대기 중입니다.
                         </div>
                     </div>
                 )}

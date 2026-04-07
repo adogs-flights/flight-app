@@ -1,15 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import { toPng, toBlob } from 'html-to-image';
 import { getAirportColor } from '../utils/airportUtils';
 
 export default function CalendarView({ tickets, onTicketClick, onMoreClick }) {
     const [currentDate, setCurrentDate] = useState(new Date());
+    const [isSaving, setIsSaving] = useState(false);
+    const calendarRef = useRef(null);
 
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
 
     const firstDay = new Date(year, month, 1).getDay();
     const lastDate = new Date(year, month + 1, 0).getDate();
-    
+
     const prevLastDate = new Date(year, month, 0).getDate();
     const prevLastDay = new Date(year, month, 0).getDay();
 
@@ -24,10 +27,10 @@ export default function CalendarView({ tickets, onTicketClick, onMoreClick }) {
     for (let i = 1; i <= lastDate; i++) {
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
         const dayTickets = tickets.filter(t => t.departure_date === dateStr);
-        
+
         const dateObj = new Date(year, month, i);
-        days.push({ 
-            day: i, 
+        days.push({
+            day: i,
             date: dateObj,
             dateStr: dateStr,
             isSunday: dateObj.getDay() === 0,
@@ -45,53 +48,189 @@ export default function CalendarView({ tickets, onTicketClick, onMoreClick }) {
     const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
     const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
 
+    const handleSaveImage = async () => {
+        if (!calendarRef.current || isSaving) return;
+        setIsSaving(true);
+        try {
+            const dataUrl = await toPng(calendarRef.current, {
+                pixelRatio: 2,
+                backgroundColor: '#ffffff',
+                cacheBust: false,
+                // 이미지 렌더링에 필요한 최소한의 폰트 설정만 수동으로 삽입
+                fontEmbedCSS: `
+                    @font-face {
+                        font-family: 'Gowun Batang';
+                        src: url('/fonts/GowunBatang-Regular.woff2') format('woff2');
+                        font-weight: 400;
+                    }
+                    @font-face {
+                        font-family: 'Gowun Batang';
+                        src: url('/fonts/GowunBatang-Bold.woff2') format('woff2');
+                        font-weight: 700;
+                    }
+                    @font-face {
+                        font-family: 'Noto Sans KR';
+                        src: url('/fonts/NotoSansKR-Regular.woff2') format('woff2');
+                        font-weight: 400;
+                    }
+                    @font-face {
+                        font-family: 'Noto Sans KR';
+                        src: url('/fonts/NotoSansKR-Bold.woff2') format('woff2');
+                        font-weight: 700;
+                    }
+                `,
+                style: { transform: 'scale(1)' }
+            });
+            const link = document.createElement('a');
+            link.download = `calendar-${year}-${month + 1}.png`;
+            link.href = dataUrl;
+            link.click();
+        } catch (err) {
+            console.error('Image capture failed:', err);
+            alert('이미지 저장에 실패했습니다.');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleShare = async () => {
+        if (!calendarRef.current || isSaving) return;
+        
+        if (!navigator.share) {
+            alert('이 브라우저에서는 공유 기능을 지원하지 않습니다.');
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            const blob = await toBlob(calendarRef.current, {
+                pixelRatio: 2,
+                backgroundColor: '#ffffff',
+                cacheBust: false,
+                fontEmbedCSS: `
+                    @font-face {
+                        font-family: 'Gowun Batang';
+                        src: url('/fonts/GowunBatang-Regular.woff2') format('woff2');
+                        font-weight: 400;
+                    }
+                    @font-face {
+                        font-family: 'Gowun Batang';
+                        src: url('/fonts/GowunBatang-Bold.woff2') format('woff2');
+                        font-weight: 700;
+                    }
+                    @font-face {
+                        font-family: 'Noto Sans KR';
+                        src: url('/fonts/NotoSansKR-Regular.woff2') format('woff2');
+                        font-weight: 400;
+                    }
+                    @font-face {
+                        font-family: 'Noto Sans KR';
+                        src: url('/fonts/NotoSansKR-Bold.woff2') format('woff2');
+                        font-weight: 700;
+                    }
+                `,
+            });
+
+            if (!blob) throw new Error('이미지 생성 실패');
+
+            const file = new File([blob], `calendar-${year}-${month + 1}.png`, { type: 'image/png' });
+
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    files: [file],
+                    title: '달력 공유',
+                    text: `${year}년 ${month + 1}월 일정표입니다.`
+                });
+            } else {
+                await navigator.share({
+                    title: '달력 공유',
+                    text: `${year}년 ${month + 1}월 일정표입니다.`,
+                    url: window.location.href
+                });
+            }
+        } catch (err) {
+            console.error('Share failed:', err);
+            if (err.name !== 'AbortError') {
+                alert('공유에 실패했습니다. 이미지가 너무 크거나 생성 시간이 초과되었습니다.');
+            }
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     return (
-        <div className="calendar-view">
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: '1px solid var(--border)' }}>
-                <button className="btn btn-ghost" style={{ padding: '5px 12px', border: '1px solid var(--border)', borderRadius: '8px', background: 'white' }} onClick={prevMonth}>‹ 이전</button>
-                <span style={{ fontSize: '16px', fontWeight: 700, fontFamily: "'Gowun Batang', serif" }}>{year}년 {month + 1}월</span>
-                <button className="btn btn-ghost" style={{ padding: '5px 12px', border: '1px solid var(--border)', borderRadius: '8px', background: 'white' }} onClick={nextMonth}>다음 ›</button>
-            </div>
-            <div className="cal-header">
-                <div className="cal-day-name">일</div>
-                <div className="cal-day-name">월</div>
-                <div className="cal-day-name">화</div>
-                <div className="cal-day-name">수</div>
-                <div className="cal-day-name">목</div>
-                <div className="cal-day-name">금</div>
-                <div className="cal-day-name">토</div>
-            </div>
-            <div className="cal-grid">
-                {days.map((d, idx) => (
-                    <div key={idx} className={`cal-cell ${d.otherMonth ? 'other-month' : ''}`}>
-                        <div className={`cal-date ${d.isSunday ? 'sunday' : ''} ${d.isSaturday ? 'saturday' : ''}`}>
-                            {d.day}
-                        </div>
-                        {d.tickets && (
-                            <>
-                                {d.tickets.slice(0, d.tickets.length > 3 ? 2 : 3).map(t => {
-                                    const colors = getAirportColor(t.arrival_airport);
-                                    return (
-                                        <div 
-                                            key={t.id} 
-                                            className={`cal-event ${t.status === 'sharing' ? 'type-share-give' : 'type-regular'}`}
-                                            onClick={() => onTicketClick(t)}
-                                            style={{ backgroundColor: colors.bg, color: colors.text, border: 'none' }}
-                                            title={t.title}
-                                        >
-                                            <span className="cal-event-name">{t.title}</span>
+        <div className="calendar-container">
+            {isSaving && (
+                <div className="loading-overlay">
+                    <div className="spinner"></div>
+                    <div className="loading-text">이미지 저장 중</div>
+                </div>
+            )}
+            <div className="calendar-view" ref={calendarRef}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: '1px solid var(--border)' }}>
+                    <button className="btn btn-ghost" style={{ padding: '5px 12px', border: '1px solid var(--border)', borderRadius: '8px', background: 'white' }} onClick={prevMonth}>이전 달</button>
+                    <span style={{ fontSize: '16px', fontWeight: 700, fontFamily: "'Gowun Batang', serif" }}>{year}년 {month + 1}월</span>
+                    <button className="btn btn-ghost" style={{ padding: '5px 12px', border: '1px solid var(--border)', borderRadius: '8px', background: 'white' }} onClick={nextMonth}>다음 달</button>
+                </div>
+                <div className="cal-header">
+                    <div className="cal-day-name">일</div>
+                    <div className="cal-day-name">월</div>
+                    <div className="cal-day-name">화</div>
+                    <div className="cal-day-name">수</div>
+                    <div className="cal-day-name">목</div>
+                    <div className="cal-day-name">금</div>
+                    <div className="cal-day-name">토</div>
+                </div>
+                <div className="cal-grid">
+                    {days.map((d, idx) => (
+                        <div key={idx} className={`cal-cell ${d.otherMonth ? 'other-month' : ''}`}>
+                            <div className={`cal-date ${d.isSunday ? 'sunday' : ''} ${d.isSaturday ? 'saturday' : ''}`}>
+                                {d.day}
+                            </div>
+                            {d.tickets && (
+                                <>
+                                    {d.tickets.slice(0, d.tickets.length > 3 ? 2 : 3).map(t => {
+                                        const colors = getAirportColor(t.arrival_airport);
+                                        return (
+                                            <div
+                                                key={t.id}
+                                                className={`cal-event ${t.status === 'sharing' ? 'type-share-give' : 'type-regular'}`}
+                                                onClick={() => onTicketClick(t)}
+                                                style={{ backgroundColor: colors.bg, color: colors.text, border: 'none' }}
+                                                title={t.title}
+                                            >
+                                                <span className="cal-event-name">{t.title}</span>
+                                            </div>
+                                        );
+                                    })}
+                                    {d.tickets.length > 3 && (
+                                        <div className="cal-more" onClick={() => onMoreClick(d.tickets, d.dateStr)}>
+                                            + {d.tickets.length - 2}
                                         </div>
-                                    );
-                                })}
-                                {d.tickets.length > 3 && (
-                                    <div className="cal-more" onClick={() => onMoreClick(d.tickets, d.dateStr)}>
-                                        + {d.tickets.length - 2}
-                                    </div>
-                                )}
-                            </>
-                        )}
-                    </div>
-                ))}
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Mobile-only Action Buttons Below Calendar */}
+            <div className="mobile-only" style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                <button 
+                    className="btn btn-outline" 
+                    style={{ flex: 1, height: '44px', fontWeight: 600 }} 
+                    onClick={handleSaveImage}
+                >
+                    💾 이미지로 저장
+                </button>
+                <button 
+                    className="btn btn-primary" 
+                    style={{ flex: 1, height: '44px', fontWeight: 600 }} 
+                    onClick={handleShare}
+                >
+                    📲 일정 공유하기
+                </button>
             </div>
         </div>
     );

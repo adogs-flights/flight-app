@@ -132,7 +132,7 @@ export default function ScheduleView() {
                         </div>
                     </div>
                     <div className="toolbar-right">
-                        <div className="search-box">🔍<input placeholder="검색..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} /></div>
+                        <div className={`search-box ${view === 'cal' ? 'hide-mobile' : ''}`}>🔍<input placeholder="검색..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} /></div>
                         <button className="btn btn-primary desktop-only" onClick={handleCreateClick}>+ 티켓 등록</button>
                     </div>
                 </div>
@@ -153,15 +153,15 @@ export default function ScheduleView() {
             <TicketFormModal isOpen={isFormOpen} onClose={closeFormModal} ticket={currentTicket} onTicketSaved={handleTicketSaved} />
             <ApplyModal isOpen={isApplyOpen} onClose={closeApplyModal} ticket={currentTicket} onApplicationSaved={handleApplicationSaved} />
             <ApplicantListModal isOpen={isApplicantsOpen} onClose={closeApplicantsModal} ticket={currentTicket} onStatusChanged={handleStatusChanged} />
-            <TicketDetailModal 
-                isOpen={isDetailOpen} 
-                onClose={closeDetailModal} 
-                ticket={currentTicket} 
-                onEditClick={handleEditClick} 
-                onApplyClick={handleApplyClick} 
-                onViewApplicantsClick={handleViewApplicantsClick} 
-            />
-            <DayTicketsModal 
+            <TicketDetailModal
+                isOpen={isDetailOpen}
+                onClose={closeDetailModal}
+                ticket={currentTicket}
+                onEditClick={handleEditClick}
+                onApplyClick={handleApplyClick}
+                onViewApplicantsClick={handleViewApplicantsClick}
+                onDeleteClick={handleDeleteClick}
+            />            <DayTicketsModal 
                 isOpen={isDayMoreOpen} 
                 onClose={closeDayMoreModal} 
                 tickets={selectedDateTickets} 
