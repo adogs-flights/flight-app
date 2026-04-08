@@ -7,12 +7,19 @@ export default function Modal({ isOpen, onClose, title, children, footer }) {
                 onClose();
             }
         };
-        window.addEventListener('keydown', handleEsc);
+        
+        if (isOpen) {
+            window.addEventListener('keydown', handleEsc);
+            // 배경 스크롤 방지
+            document.body.style.overflow = 'hidden';
+        }
 
         return () => {
             window.removeEventListener('keydown', handleEsc);
+            // 모달 닫힐 때 스크롤 복구
+            document.body.style.overflow = 'unset';
         };
-    }, [onClose]);
+    }, [isOpen, onClose]);
 
     if (!isOpen) {
         return null;

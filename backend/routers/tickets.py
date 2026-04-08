@@ -1,7 +1,7 @@
 
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_
 
 import models, schemas
@@ -43,7 +43,7 @@ def list_tickets(db: Session = Depends(get_db), current_user: models.User = Depe
     
     # Non-admin users
     if not is_admin:
-        tickets = db.query(models.Ticket).filter(
+        tickets = db.query(models.Ticket).options(joinedload(models.Ticket.owner)).filter(
             or_(
                 models.Ticket.status != 'owned',
                 models.Ticket.owner_id == current_user.id
@@ -51,7 +51,7 @@ def list_tickets(db: Session = Depends(get_db), current_user: models.User = Depe
         ).order_by(models.Ticket.created_at.desc()).all()
     # Admin users can see all tickets
     else:
-        tickets = db.query(models.Ticket).order_by(models.Ticket.created_at.desc()).all()
+        tickets = db.query(models.Ticket).options(joinedload(models.Ticket.owner)).order_by(models.Ticket.created_at.desc()).all()
         
     return tickets
 
@@ -60,7 +60,7 @@ def get_ticket(ticket_id: str, db: Session = Depends(get_db), current_user: mode
     """
     Get a single ticket by ID, respecting visibility rules.
     """
-    ticket = db.query(models.Ticket).filter(models.Ticket.id == ticket_id).first()
+    ticket = db.query(models.Ticket).options(joinedload(models.Ticket.owner)).filter(models.Ticket.id == ticket_id).first()
     if not ticket:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ticket not found")
 

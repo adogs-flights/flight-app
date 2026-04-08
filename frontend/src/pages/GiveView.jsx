@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import TicketCard from '../components/TicketCard';
 import ApplyModal from '../components/modals/ApplyModal';
+import TicketDetailModal from '../components/modals/TicketDetailModal';
 import { useModal } from '../hooks/useModal';
 
 export default function GiveView() {
@@ -11,6 +12,7 @@ export default function GiveView() {
     const [error, setError] = useState('');
     const [currentTicket, setCurrentTicket] = useState(null);
     const { isOpen: isApplyOpen, openModal: openApplyModal, closeModal: closeApplyModal } = useModal();
+    const { isOpen: isDetailOpen, openModal: openDetailModal, closeModal: closeDetailModal } = useModal();
 
     const fetchTickets = () => {
         setLoading(true);
@@ -33,6 +35,11 @@ export default function GiveView() {
         openApplyModal();
     };
 
+    const handleTicketClick = (ticket) => {
+        setCurrentTicket(ticket);
+        openDetailModal();
+    };
+
     const handleApplicationSaved = () => { fetchTickets(); };
 
     const renderListContent = () => {
@@ -45,6 +52,7 @@ export default function GiveView() {
                 key={ticket.id} 
                 ticket={ticket} 
                 onApplyClick={handleApplyClick}
+                onClick={() => handleTicketClick(ticket)}
             />
         ));
     };
@@ -65,6 +73,13 @@ export default function GiveView() {
                 ticket={currentTicket}
                 onApplicationSaved={handleApplicationSaved}
             />
+            <TicketDetailModal
+                isOpen={isDetailOpen}
+                onClose={closeDetailModal}
+                ticket={currentTicket}
+                onApplyClick={handleApplyClick}
+            />
         </>
     );
 }
+

@@ -57,7 +57,7 @@ const TicketCard = ({ ticket, onEditClick, onDeleteClick, onApplyClick, onViewAp
                 <span>✈️ {ticket.flight_info}</span>
             </div>
             <div className="ticket-footer">
-                <span className="ticket-contact">👤 현 소유자: {ticket.owner?.name || '알 수 없음'}</span>
+                <span className="ticket-contact">👤 소유자: {ticket.owner?.name || ticket.manager_name || '알 수 없음'}</span>
                 <div className="ticket-actions">
                     {isOwner && (
                         <>

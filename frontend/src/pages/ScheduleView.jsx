@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import CalendarView from '../components/CalendarView';
 import { useAuth } from '../contexts/AuthContext';
+import { getCountryByAirport } from '../utils/airportUtils';
 import TicketCard from '../components/TicketCard';
 import TicketFormModal from '../components/modals/TicketFormModal';
 import ApplyModal from '../components/modals/ApplyModal';
@@ -16,7 +17,7 @@ export default function ScheduleView() {
     const [error, setError] = useState('');
     const [view, setView] = useState('cal');
     const [currentTicket, setCurrentTicket] = useState(null);
-    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedCountry, setSelectedCountry] = useState('전체');
     const [selectedDateTickets, setSelectedDateTickets] = useState([]);
     const [selectedDate, setSelectedDate] = useState(null);
     
@@ -94,10 +95,11 @@ export default function ScheduleView() {
     const handleApplicationSaved = () => { fetchTickets(); };
     const handleStatusChanged = () => { fetchTickets(); };
 
-    const filteredTickets = tickets.filter(t => 
-        t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        t.flight_info.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredTickets = tickets.filter(t => {
+        if (selectedCountry === '전체') return true;
+        const country = getCountryByAirport(t.arrival_airport);
+        return country === selectedCountry;
+    });
 
     const renderListContent = () => {
         if (loading) return <div className="empty"><div>Loading...</div></div>;
@@ -132,14 +134,26 @@ export default function ScheduleView() {
                         </div>
                     </div>
                     <div className="toolbar-right">
-                        <div className={`search-box ${view === 'cal' ? 'hide-mobile' : ''}`}>🔍<input placeholder="검색..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} /></div>
                         <button className="btn btn-primary desktop-only" onClick={handleCreateClick}>+ 티켓 등록</button>
                     </div>
+                </div>
+
+                <div className="filter-bar" style={{ marginBottom: '16px', overflowX: 'auto', whiteSpace: 'nowrap', paddingBottom: '4px' }}>
+                    {['전체', '미국', '캐나다', '기타'].map(country => (
+                        <button
+                            key={country}
+                            className={`chip ${selectedCountry === country ? 'active' : ''}`}
+                            onClick={() => setSelectedCountry(country)}
+                            style={{ flexShrink: 0 }}
+                        >
+                            {country}
+                        </button>
+                    ))}
                 </div>
                 
                 {view === 'cal' && (
                     <CalendarView 
-                        tickets={tickets} 
+                        tickets={filteredTickets} 
                         onTicketClick={handleTicketClick} 
                         onMoreClick={handleDayMoreClick}
                     />
