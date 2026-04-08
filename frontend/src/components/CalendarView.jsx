@@ -169,10 +169,14 @@ export default function CalendarView({ tickets, onTicketClick, onMoreClick }) {
                 </div>
             )}
             <div className="calendar-view" ref={calendarRef}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: '1px solid var(--border)' }}>
-                    <button className="btn btn-ghost" style={{ padding: '5px 12px', border: '1px solid var(--border)', borderRadius: '8px', background: 'white' }} onClick={prevMonth}>이전 달</button>
-                    <span style={{ fontSize: '16px', fontWeight: 700, fontFamily: "'Gowun Batang', serif" }}>{year}년 {month + 1}월</span>
-                    <button className="btn btn-ghost" style={{ padding: '5px 12px', border: '1px solid var(--border)', borderRadius: '8px', background: 'white' }} onClick={nextMonth}>다음 달</button>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px 16px', borderBottom: '1px solid var(--border)', gap: '20px' }}>
+                    <button className="btn btn-ghost" style={{ padding: '4px', background: 'white', display: 'flex', alignItems: 'center' }} onClick={prevMonth}>
+                        <img src="/icon/back.png" alt="이전 달" style={{ width: '20px', height: '20px' }} />
+                    </button>
+                    <span style={{ fontSize: '18px', fontWeight: 700, fontFamily: "'Gowun Batang', serif"}}>{year}년 {month + 1}월</span>
+                    <button className="btn btn-ghost" style={{ padding: '4px', background: 'white', display: 'flex', alignItems: 'center' }} onClick={nextMonth}>
+                        <img src="/icon/next.png" alt="다음 달" style={{ width: '20px', height: '20px' }} />
+                    </button>
                 </div>
                 <div className="cal-header">
                     <div className="cal-day-name">일</div>
