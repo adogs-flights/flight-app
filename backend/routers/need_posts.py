@@ -1,7 +1,7 @@
 
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 import models, schemas
 from database import get_db
@@ -35,14 +35,14 @@ def list_need_posts(db: Session = Depends(get_db), current_user: models.User = D
     """
     List all 'need' posts. Any logged-in user can view them.
     """
-    return db.query(models.NeedPost).order_by(models.NeedPost.created_at.desc()).all()
+    return db.query(models.NeedPost).options(joinedload(models.NeedPost.author)).order_by(models.NeedPost.created_at.desc()).all()
 
 @router.get("/{post_id}", response_model=schemas.NeedPost)
 def get_need_post(post_id: str, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     """
     Get a single 'need' post by ID.
     """
-    post = db.query(models.NeedPost).filter(models.NeedPost.id == post_id).first()
+    post = db.query(models.NeedPost).options(joinedload(models.NeedPost.author)).filter(models.NeedPost.id == post_id).first()
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
     return post

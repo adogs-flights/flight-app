@@ -27,10 +27,8 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick
     const pendingCount = ticket.applications?.filter(a => a.status === 'pending').length || 0;
 
     const handleDelete = () => {
-        if (window.confirm('정말 이 티켓을 삭제하시겠습니까?')) {
-            onClose();
-            onDeleteClick(ticket.id);
-        }
+        onClose();
+        onDeleteClick(ticket.id);
     };
 
     const footer = (
@@ -84,22 +82,22 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick
                         <div className="detail-value" style={{ fontSize: '13px' }}>{ticket.flight_info || '-'}</div>
                     </div>
                     <div>
-                        <div className="detail-label" style={{ marginBottom: '2px' }}>기내 수하물</div>
-                        <div className="detail-value" style={{ fontSize: '13px' }}>{ticket.cabin_capacity || 0} kg</div>
+                        <div className="detail-label" style={{ marginBottom: '2px' }}>기내 여유</div>
+                        <div className="detail-value" style={{ fontSize: '13px' }}>{Number(ticket.cabin_capacity || 0)} 석</div>
                     </div>
                     <div>
-                        <div className="detail-label" style={{ marginBottom: '2px' }}>위탁 수하물</div>
-                        <div className="detail-value" style={{ fontSize: '13px' }}>{ticket.cargo_capacity || 0} kg</div>
+                        <div className="detail-label" style={{ marginBottom: '2px' }}>수하물 여유</div>
+                        <div className="detail-value" style={{ fontSize: '13px' }}>{Number(ticket.cargo_capacity || 0)} 석</div>
                     </div>
                 </div>
 
                 <div style={{ gridColumn: '1/2' }}>
-                    <div className="detail-label">담당자</div>
-                    <div className="detail-value">{ticket.manager_name}</div>
+                    <div className="detail-label">소유자</div>
+                    <div className="detail-value">{ticket.owner?.name || ticket.manager_name || '-'}</div>
                 </div>
                 <div style={{ gridColumn: '2/3' }}>
                     <div className="detail-label">연락처</div>
-                    <div className="detail-value">{ticket.contact}</div>
+                    <div className="detail-value">{ticket.owner?.email || ticket.contact || '-'}</div>
                 </div>
 
                 {ticket.memo && (

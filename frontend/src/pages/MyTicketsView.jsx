@@ -4,6 +4,7 @@ import TicketCard from '../components/TicketCard';
 // We'll reuse all the modals from ScheduleView
 import TicketFormModal from '../components/modals/TicketFormModal';
 import ApplicantListModal from '../components/modals/ApplicantListModal';
+import TicketDetailModal from '../components/modals/TicketDetailModal';
 import { useModal } from '../hooks/useModal';
 
 export default function MyTicketsView() {
@@ -15,6 +16,7 @@ export default function MyTicketsView() {
 
     const { isOpen: isFormOpen, openModal: openFormModal, closeModal: closeFormModal } = useModal();
     const { isOpen: isApplicantsOpen, openModal: openApplicantsModal, closeModal: closeApplicantsModal } = useModal();
+    const { isOpen: isDetailOpen, openModal: openDetailModal, closeModal: closeDetailModal } = useModal();
 
     const fetchMyTickets = () => {
         setLoading(true);
@@ -40,6 +42,11 @@ export default function MyTicketsView() {
     const handleViewApplicantsClick = (ticket) => {
         setCurrentTicket(ticket);
         openApplicantsModal();
+    };
+
+    const handleTicketClick = (ticket) => {
+        setCurrentTicket(ticket);
+        openDetailModal();
     };
 
     const handleDeleteClick = async (ticketId) => {
@@ -70,6 +77,7 @@ export default function MyTicketsView() {
                 onEditClick={handleEditClick}
                 onDeleteClick={handleDeleteClick}
                 onViewApplicantsClick={handleViewApplicantsClick}
+                onClick={() => handleTicketClick(ticket)}
             />
         ));
     };
@@ -98,6 +106,15 @@ export default function MyTicketsView() {
                 ticket={currentTicket}
                 onStatusChanged={handleStatusChanged}
             />
+            <TicketDetailModal
+                isOpen={isDetailOpen}
+                onClose={closeDetailModal}
+                ticket={currentTicket}
+                onEditClick={handleEditClick}
+                onViewApplicantsClick={handleViewApplicantsClick}
+                onDeleteClick={handleDeleteClick}
+            />
         </>
     );
 }
+

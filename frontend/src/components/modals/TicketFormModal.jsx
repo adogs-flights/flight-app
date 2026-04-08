@@ -63,13 +63,26 @@ export default function TicketFormModal({ isOpen, onClose, ticket, onTicketSaved
 
     const handleSubmit = async () => {
         setError('');
-        if (!title.trim() || !departureDate || !returnDate || !arrivalAirport) {
-            setError('제목, 도착 공항, 출발일, 귀국일은 필수입니다.');
+        if (!departureDate || !returnDate || !arrivalAirport) {
+            setError('도도착 공항, 출발일, 귀국일은 필수입니다.');
             return;
         }
 
+        let finalTitle = title.trim();
+        if (!finalTitle) {
+            if (cabinCapacity > 0 && cargoCapacity > 0) {
+                finalTitle = `기내 ${cabinCapacity}석 / 수화물 ${cargoCapacity}석`;
+            } else if (cargoCapacity > 0) {
+                finalTitle = `수화물 ${cargoCapacity}석`;
+            } else if (cabinCapacity > 0) {
+                finalTitle = `기내 ${cabinCapacity}석`;
+            } else {
+                finalTitle = "티켓 나눔 (상세 확인)";
+            }
+        }
+
         const ticketData = {
-            title, 
+            title: finalTitle, 
             arrival_airport: arrivalAirport, 
             departure_date: departureDate, 
             return_date: returnDate,
@@ -101,8 +114,8 @@ export default function TicketFormModal({ isOpen, onClose, ticket, onTicketSaved
 
     const footer = (
         <>
-            <button className="btn btn-ghost" onClick={onClose}>취소</button>
             <button className="btn btn-primary" onClick={handleSubmit}>{isEditing ? '수정하기' : '등록하기'}</button>
+            <button className="btn btn-ghost" onClick={onClose}>취소</button>
         </>
     );
 
@@ -110,13 +123,19 @@ export default function TicketFormModal({ isOpen, onClose, ticket, onTicketSaved
         <Modal isOpen={isOpen} onClose={onClose} title={isEditing ? '✈️ 티켓 수정' : '✈️ 티켓 등록'} footer={footer}>
             <div className="form-grid">
                 <div className="form-group full">
-                    <label className="form-label">티켓 제목</label>
+                    <label className="form-label">티켓 제목 (미입력 시 자동 생성)</label>
                     <input className="form-input" value={title} onChange={e => setTitle(e.target.value)} placeholder="예: 4월 뉴욕행 티켓 나눔합니다" />
                 </div>
                 
                 <div className="form-group">
                     <label className="form-label">출발일</label>
-                    <input className="form-input" type="date" value={departureDate} onChange={e => setDepartureDate(e.target.value)} />
+                    <input className="form-input" type="date" value={departureDate} onChange={e => {
+                        const newDate = e.target.value;
+                        setDepartureDate(newDate);
+                        if (!returnDate || returnDate < newDate) {
+                            setReturnDate(newDate);
+                        }
+                    }} />
                 </div>
                 <div className="form-group">
                     <label className="form-label">출발 시간</label>

@@ -48,6 +48,7 @@ export default function CalendarView({ tickets, onTicketClick, onMoreClick }) {
     const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
     const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
 
+    /* 
     const handleSaveImage = async () => {
         if (!calendarRef.current || isSaving) return;
         setIsSaving(true);
@@ -92,6 +93,7 @@ export default function CalendarView({ tickets, onTicketClick, onMoreClick }) {
             setIsSaving(false);
         }
     };
+    */
 
     const handleShare = async () => {
         if (!calendarRef.current || isSaving) return;
@@ -216,17 +218,10 @@ export default function CalendarView({ tickets, onTicketClick, onMoreClick }) {
             </div>
 
             {/* Mobile-only Action Buttons Below Calendar */}
-            <div className="mobile-only" style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                <button 
-                    className="btn btn-outline" 
-                    style={{ flex: 1, height: '44px', fontWeight: 600 }} 
-                    onClick={handleSaveImage}
-                >
-                    💾 이미지로 저장
-                </button>
+            <div className="mobile-only" style={{ display: 'flex', marginTop: '12px' }}>
                 <button 
                     className="btn btn-primary" 
-                    style={{ flex: 1, height: '44px', fontWeight: 600 }} 
+                    style={{ width: '100%', height: '44px', fontWeight: 600 }} 
                     onClick={handleShare}
                 >
                     📲 일정 공유하기
