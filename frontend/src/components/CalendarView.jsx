@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { toPng, toBlob } from 'html-to-image';
+import { toBlob } from 'html-to-image';
 import { getAirportColor } from '../utils/airportUtils';
 
 export default function CalendarView({ tickets, onTicketClick, onMoreClick }) {
@@ -10,7 +10,6 @@ export default function CalendarView({ tickets, onTicketClick, onMoreClick }) {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
 
-    const firstDay = new Date(year, month, 1).getDay();
     const lastDate = new Date(year, month + 1, 0).getDate();
 
     const prevLastDate = new Date(year, month, 0).getDate();

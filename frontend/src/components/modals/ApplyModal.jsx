@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 
 export default function ApplyModal({ isOpen, onClose, ticket, onApplicationSaved }) {
     const { apiClient, user } = useAuth();

@@ -1,8 +1,8 @@
 
 import os
 import smtplib
-from email.mime.text import MIMEText
 from email.header import Header
+from email.mime.text import MIMEText
 
 # ======================================================================================
 # Email Configuration
@@ -49,7 +49,7 @@ def send_email(receiver_email: str, subject: str, body: str):
         smtp = smtplib.SMTP(SMTP_SERVER, int(SMTP_PORT))
         smtp.starttls()
         smtp.login(SMTP_USERNAME, SMTP_PASSWORD)
-        
+
         msg = MIMEText(body, 'html', 'utf-8')
         msg['Subject'] = Header(subject, 'utf-8')
         msg['From'] = SENDER_EMAIL

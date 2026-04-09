@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 
 const ApplicantItem = ({ application, onConfirm, onReject }) => {
     const { applicant } = application;
@@ -40,7 +40,7 @@ export default function ApplicantListModal({ isOpen, onClose, ticket, onStatusCh
             setLoading(true);
             apiClient.get(`/tickets/${ticket.id}/applications`)
                 .then(res => setApplications(res.data))
-                .catch(err => setError('신청자 목록을 불러오는데 실패했습니다.'))
+                .catch(() => setError('신청자 목록을 불러오는데 실패했습니다.'))
                 .finally(() => setLoading(false));
         }
     }, [isOpen, ticket, apiClient]);
@@ -50,8 +50,8 @@ export default function ApplicantListModal({ isOpen, onClose, ticket, onStatusCh
             await apiClient.put(`/applications/${applicationId}`, { status });
             onStatusChanged(); // This should refetch tickets and applications
             onClose(); // Close modal after action
-        } catch (err) {
-            alert(`상태 변경에 실패했습니다: ${err.response?.data?.detail}`);
+        } catch {
+            alert('상태 변경에 실패했습니다.');
         }
     };
 

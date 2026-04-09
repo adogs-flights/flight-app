@@ -1,12 +1,9 @@
-import { createContext, useState, useContext, useEffect } from 'react';
+import { createContext, useState, useEffect } from 'react';
 import axios from 'axios';
+import apiClient from '../utils/api';
 import { MAJOR_AIRPORTS } from '../utils/airportUtils';
 
 const AuthContext = createContext();
-
-const apiClient = axios.create({
-    baseURL: '/api'
-});
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(import.meta.env.DEV ? {
@@ -162,4 +159,4 @@ export const AuthProvider = ({ children }) => {
     );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export default AuthContext;

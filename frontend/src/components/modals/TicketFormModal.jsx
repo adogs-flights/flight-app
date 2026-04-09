@@ -1,24 +1,26 @@
 import { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import SelectField from '../ui/SelectField';
 
 export default function TicketFormModal({ isOpen, onClose, ticket, onTicketSaved }) {
     const { apiClient, user, airlines, airports, fetchStaticData } = useAuth();
     
-    const [title, setTitle] = useState('');
-    const [arrivalAirport, setArrivalAirport] = useState('');
-    const [departureDate, setDepartureDate] = useState('');
-    const [returnDate, setReturnDate] = useState('');
-    const [departureTime, setDepartureTime] = useState('');
-    const [arrivalTime, setArrivalTime] = useState('');
-    const [flightInfo, setFlightInfo] = useState('');
-    const [airline, setAirline] = useState('');
-    const [capacity, setCapacity] = useState(1);
-    const [cabinCapacity, setCabinCapacity] = useState(0);
-    const [cargoCapacity, setCargoCapacity] = useState(0);
-    const [status, setStatus] = useState('owned');
-    const [memo, setMemo] = useState('');
+    const [form, setForm] = useState({
+        title: '',
+        arrivalAirport: '',
+        departureDate: '',
+        returnDate: '',
+        departureTime: '',
+        arrivalTime: '',
+        flightInfo: '',
+        airline: '',
+        capacity: 1,
+        cabinCapacity: 0,
+        cargoCapacity: 0,
+        status: 'owned',
+        memo: ''
+    });
     const [error, setError] = useState('');
 
     const isEditing = ticket != null;
@@ -27,55 +29,63 @@ export default function TicketFormModal({ isOpen, onClose, ticket, onTicketSaved
         if (isOpen) {
             fetchStaticData();
         }
-    }, [isOpen]);
+    }, [isOpen, fetchStaticData]);
 
     useEffect(() => {
         if (isEditing) {
-            setTitle(ticket.title || '');
-            setArrivalAirport(ticket.arrival_airport || '');
-            setDepartureDate(ticket.departure_date?.split('T')[0] || '');
-            setReturnDate(ticket.return_date?.split('T')[0] || '');
-            setDepartureTime(ticket.departure_time || '');
-            setArrivalTime(ticket.arrival_time || '');
-            setFlightInfo(ticket.flight_info || '');
-            setAirline(ticket.airline || '');
-            setCapacity(ticket.capacity || 1);
-            setCabinCapacity(ticket.cabin_capacity || 0);
-            setCargoCapacity(ticket.cargo_capacity || 0);
-            setStatus(ticket.status || 'owned');
-            setMemo(ticket.memo || '');
+            setForm({
+                title: ticket.title || '',
+                arrivalAirport: ticket.arrival_airport || '',
+                departureDate: ticket.departure_date?.split('T')[0] || '',
+                returnDate: ticket.return_date?.split('T')[0] || '',
+                departureTime: ticket.departure_time || '',
+                arrivalTime: ticket.arrival_time || '',
+                flightInfo: ticket.flight_info || '',
+                airline: ticket.airline || '',
+                capacity: ticket.capacity || 1,
+                cabinCapacity: ticket.cabin_capacity || 0,
+                cargoCapacity: ticket.cargo_capacity || 0,
+                status: ticket.status || 'owned',
+                memo: ticket.memo || ''
+            });
         } else {
-            setTitle('');
-            setArrivalAirport('');
-            setDepartureDate('');
-            setReturnDate('');
-            setDepartureTime('');
-            setArrivalTime('');
-            setFlightInfo('');
-            setAirline('');
-            setCapacity(1);
-            setCabinCapacity(0);
-            setCargoCapacity(0);
-            setStatus('owned');
-            setMemo('');
+            setForm({
+                title: '',
+                arrivalAirport: '',
+                departureDate: '',
+                returnDate: '',
+                departureTime: '',
+                arrivalTime: '',
+                flightInfo: '',
+                airline: '',
+                capacity: 1,
+                cabinCapacity: 0,
+                cargoCapacity: 0,
+                status: 'owned',
+                memo: ''
+            });
         }
     }, [ticket, isEditing, isOpen]);
 
+    const handleChange = (field, value) => {
+        setForm(prev => ({ ...prev, [field]: value }));
+    };
+
     const handleSubmit = async () => {
         setError('');
-        if (!departureDate || !returnDate || !arrivalAirport) {
-            setError('도도착 공항, 출발일, 귀국일은 필수입니다.');
+        if (!form.departureDate || !form.returnDate || !form.arrivalAirport) {
+            setError('도착 공항, 출발일, 귀국일은 필수입니다.');
             return;
         }
 
-        let finalTitle = title.trim();
+        let finalTitle = form.title.trim();
         if (!finalTitle) {
-            if (cabinCapacity > 0 && cargoCapacity > 0) {
-                finalTitle = `기내 ${cabinCapacity}석 / 수화물 ${cargoCapacity}석`;
-            } else if (cargoCapacity > 0) {
-                finalTitle = `수화물 ${cargoCapacity}석`;
-            } else if (cabinCapacity > 0) {
-                finalTitle = `기내 ${cabinCapacity}석`;
+            if (form.cabinCapacity > 0 && form.cargoCapacity > 0) {
+                finalTitle = `기내 ${form.cabinCapacity}석 / 수화물 ${form.cargoCapacity}석`;
+            } else if (form.cargoCapacity > 0) {
+                finalTitle = `수화물 ${form.cargoCapacity}석`;
+            } else if (form.cabinCapacity > 0) {
+                finalTitle = `기내 ${form.cabinCapacity}석`;
             } else {
                 finalTitle = "티켓 나눔 (상세 확인)";
             }
@@ -83,18 +93,18 @@ export default function TicketFormModal({ isOpen, onClose, ticket, onTicketSaved
 
         const ticketData = {
             title: finalTitle, 
-            arrival_airport: arrivalAirport, 
-            departure_date: departureDate, 
-            return_date: returnDate,
-            departure_time: departureTime,
-            arrival_time: arrivalTime,
-            flight_info: flightInfo, 
-            airline,
-            capacity,
-            cabin_capacity: cabinCapacity,
-            cargo_capacity: cargoCapacity,
-            status, 
-            memo,
+            arrival_airport: form.arrivalAirport, 
+            departure_date: form.departureDate, 
+            return_date: form.returnDate,
+            departure_time: form.departureTime,
+            arrival_time: form.arrivalTime,
+            flight_info: form.flightInfo, 
+            airline: form.airline,
+            capacity: form.capacity,
+            cabin_capacity: form.cabinCapacity,
+            cargo_capacity: form.cargoCapacity,
+            status: form.status, 
+            memo: form.memo,
             manager_name: user.name, 
             contact: user.email,
         };
@@ -124,78 +134,78 @@ export default function TicketFormModal({ isOpen, onClose, ticket, onTicketSaved
             <div className="form-grid">
                 <div className="form-group full">
                     <label className="form-label">티켓 제목 (미입력 시 자동 생성)</label>
-                    <input className="form-input" value={title} onChange={e => setTitle(e.target.value)} placeholder="예: 4월 뉴욕행 티켓 나눔합니다" />
+                    <input className="form-input" value={form.title} onChange={e => handleChange('title', e.target.value)} placeholder="예: 4월 뉴욕행 티켓 나눔합니다" />
                 </div>
                 
                 <div className="form-group">
                     <label className="form-label">출발일</label>
-                    <input className="form-input" type="date" value={departureDate} onChange={e => {
+                    <input className="form-input" type="date" value={form.departureDate} onChange={e => {
                         const newDate = e.target.value;
-                        setDepartureDate(newDate);
-                        if (!returnDate || returnDate < newDate) {
-                            setReturnDate(newDate);
+                        handleChange('departureDate', newDate);
+                        if (!form.returnDate || form.returnDate < newDate) {
+                            handleChange('returnDate', newDate);
                         }
                     }} />
                 </div>
                 <div className="form-group">
                     <label className="form-label">출발 시간</label>
-                    <input className="form-input" type="time" value={departureTime} onChange={e => setDepartureTime(e.target.value)} />
+                    <input className="form-input" type="time" value={form.departureTime} onChange={e => handleChange('departureTime', e.target.value)} />
                 </div>
 
                 <div className="form-group">
                     <label className="form-label">귀국일</label>
-                    <input className="form-input" type="date" value={returnDate} onChange={e => setReturnDate(e.target.value)} />
+                    <input className="form-input" type="date" value={form.returnDate} onChange={e => handleChange('returnDate', e.target.value)} />
                 </div>
                 <div className="form-group">
                     <label className="form-label">도착 시간</label>
-                    <input className="form-input" type="time" value={arrivalTime} onChange={e => setArrivalTime(e.target.value)} />
+                    <input className="form-input" type="time" value={form.arrivalTime} onChange={e => handleChange('arrivalTime', e.target.value)} />
                 </div>
 
                 <SelectField 
                     label="도착 공항"
                     options={airports}
-                    value={arrivalAirport}
-                    onChange={setArrivalAirport}
+                    value={form.arrivalAirport}
+                    onChange={val => handleChange('arrivalAirport', val)}
                     placeholder="공항 선택 또는 직접 입력"
                 />
 
                 <SelectField 
                     label="항공사"
                     options={airlines}
-                    value={airline}
-                    onChange={setAirline}
+                    value={form.airline}
+                    onChange={val => handleChange('airline', val)}
                     placeholder="항공사 선택 또는 직접 입력"
                 />
 
                 <div className="form-group full">
                     <label className="form-label">항공편 정보</label>
-                    <input className="form-input" value={flightInfo} onChange={e => setFlightInfo(e.target.value)} placeholder="예: ICN → JFK KE081" />
+                    <input className="form-input" value={form.flightInfo} onChange={e => handleChange('flightInfo', e.target.value)} placeholder="예: ICN → JFK KE081" />
                 </div>
 
                 <div className="form-group">
                     <label className="form-label">기내 여유 (마리)</label>
-                    <input className="form-input" type="number" min="0" value={cabinCapacity} onChange={e => setCabinCapacity(parseInt(e.target.value) || 0)} />
+                    <input className="form-input" type="number" min="0" value={form.cabinCapacity} onChange={e => handleChange('cabinCapacity', parseInt(e.target.value) || 0)} />
                 </div>
                 <div className="form-group">
                     <label className="form-label">수하물 여유 (마리)</label>
-                    <input className="form-input" type="number" min="0" value={cargoCapacity} onChange={e => setCargoCapacity(parseInt(e.target.value) || 0)} />
+                    <input className="form-input" type="number" min="0" value={form.cargoCapacity} onChange={e => handleChange('cargoCapacity', parseInt(e.target.value) || 0)} />
                 </div>
 
                 <div className="form-group full">
                     <label className="form-label">티켓 상태</label>
                     <div className="radio-group">
-                        <label className={`radio-label ${status === 'owned' ? 'checked' : ''}`} onClick={() => setStatus('owned')}>
-                            <input type="radio" name="t-status" value="owned" />🔒 소유중
+                        <label className={`radio-label ${form.status === 'owned' ? 'checked' : ''}`} onClick={() => handleChange('status', 'owned')}>
+                            <input type="radio" name="t-status" value="owned" readOnly checked={form.status === 'owned'} />🔒 소유중
                         </label>
-                        <label className={`radio-label ${status === 'sharing' ? 'checked' : ''}`} onClick={() => setStatus('sharing')}>
-                            <input type="radio" name="t-status" value="sharing" />🎁 나눔중
+                        <label className={`radio-label ${form.status === 'sharing' ? 'checked' : ''}`} onClick={() => handleChange('status', 'sharing')}>
+                            <input type="radio" name="t-status" value="sharing" readOnly checked={form.status === 'sharing'} />🎁 나눔중
                         </label>
                     </div>
                 </div>
 
                 <div className="form-group full">
                     <label className="form-label">메모</label>
-                    <textarea className="form-input" value={memo} onChange={e => setMemo(e.target.value)} placeholder="추가 정보(좌석 등급, 경유 여부 등)..."></textarea>
+                    <textarea className="form-input" value={form.memo} onChange={e => handleChange('memo', e.target.value)} placeholder="추가 정보(좌석 등급, 경유 여부 등)..."></textarea>
                 </div>
 
                 {error && <div className="form-group full"><div className="login-error" style={{display: 'block'}}>{error}</div></div>}

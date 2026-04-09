@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '../hooks/useAuth';
 import NeedPostItem from '../components/NeedPostItem';
 import NeedPostFormModal from '../components/modals/NeedPostFormModal';
 import { useModal } from '../hooks/useModal';
@@ -7,32 +7,33 @@ import { MAJOR_AIRPORTS } from '../utils/airportUtils';
 
 export default function NeedPostView() {
     const { apiClient, user } = useAuth();
-    const [posts, setPosts] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
+    
+    // 상태 통합 관리
+    const [postsState, setPostsState] = useState({
+        data: [],
+        loading: true,
+        error: ''
+    });
+    
     const [currentPost, setCurrentPost] = useState(null);
     const [activeFilter, setActiveFilter] = useState('ALL');
     const [searchText, setSearchText] = useState('');
     const { isOpen, openModal, closeModal } = useModal();
 
-    const fetchPosts = () => {
-        setLoading(true);
-        apiClient.get('/need-posts')
-            .then(response => {
-                setPosts(response.data);
-            })
-            .catch(err => {
-                console.error(err);
-                setError('게시글을 불러오는 데 실패했습니다.');
-            })
-            .finally(() => {
-                setLoading(false);
-            });
-    };
+    const fetchPosts = useCallback(async () => {
+        setPostsState(prev => ({ ...prev, loading: true }));
+        try {
+            const response = await apiClient.get('/need-posts');
+            setPostsState({ data: response.data, loading: false, error: '' });
+        } catch (err) {
+            console.error(err);
+            setPostsState({ data: [], loading: false, error: '게시글을 불러오는 데 실패했습니다.' });
+        }
+    }, [apiClient]);
 
     useEffect(() => {
         fetchPosts();
-    }, [apiClient]);
+    }, [fetchPosts]);
 
     const handleCreateClick = () => {
         setCurrentPost(null);
@@ -48,7 +49,7 @@ export default function NeedPostView() {
         fetchPosts();
     };
 
-    const filteredPosts = posts.filter(post => {
+    const filteredPosts = postsState.data.filter(post => {
         const matchesSearch = post.title.toLowerCase().includes(searchText.toLowerCase()) || 
                              post.airport_code.toLowerCase().includes(searchText.toLowerCase());
         
@@ -62,11 +63,11 @@ export default function NeedPostView() {
     });
 
     const renderContent = () => {
-        if (loading) {
+        if (postsState.loading) {
             return <div className="empty"><div>Loading...</div></div>;
         }
-        if (error) {
-            return <div className="empty"><div className="text-red-500">{error}</div></div>;
+        if (postsState.error) {
+            return <div className="empty"><div className="text-red-500">{postsState.error}</div></div>;
         }
         if (filteredPosts.length === 0) {
             return <div className="empty"><div className="empty-icon">🔍</div><div className="empty-text">조건에 맞는 게시글이 없습니다</div></div>;

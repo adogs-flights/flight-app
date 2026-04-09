@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '../hooks/useAuth';
 import TicketCard from '../components/TicketCard';
 import ApplyModal from '../components/modals/ApplyModal';
 import TicketDetailModal from '../components/modals/TicketDetailModal';
@@ -7,28 +7,33 @@ import { useModal } from '../hooks/useModal';
 
 export default function GiveView() {
     const { apiClient } = useAuth();
-    const [tickets, setTickets] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
+    
+    // 상태 통합 관리
+    const [ticketsState, setTicketsState] = useState({
+        data: [],
+        loading: true,
+        error: ''
+    });
+    
     const [currentTicket, setCurrentTicket] = useState(null);
     const { isOpen: isApplyOpen, openModal: openApplyModal, closeModal: closeApplyModal } = useModal();
     const { isOpen: isDetailOpen, openModal: openDetailModal, closeModal: closeDetailModal } = useModal();
 
-    const fetchTickets = () => {
-        setLoading(true);
-        apiClient.get('/tickets')
-            .then(response => {
-                const giveTickets = response.data.filter(t => t.status === 'sharing' || t.status === 'shared');
-                setTickets(giveTickets);
-            })
-            .catch(err => {
-                console.error(err);
-                setError('나눔 티켓을 불러오는 데 실패했습니다.');
-            })
-            .finally(() => setLoading(false));
-    };
+    const fetchTickets = useCallback(async () => {
+        setTicketsState(prev => ({ ...prev, loading: true }));
+        try {
+            const response = await apiClient.get('/tickets');
+            const giveTickets = response.data.filter(t => t.status === 'sharing' || t.status === 'shared');
+            setTicketsState({ data: giveTickets, loading: false, error: '' });
+        } catch (err) {
+            console.error(err);
+            setTicketsState({ data: [], loading: false, error: '나눔 티켓을 불러오는 데 실패했습니다.' });
+        }
+    }, [apiClient]);
 
-    useEffect(() => { fetchTickets(); }, [apiClient]);
+    useEffect(() => {
+        fetchTickets();
+    }, [fetchTickets]);
 
     const handleApplyClick = (ticket) => {
         setCurrentTicket(ticket);
@@ -43,11 +48,11 @@ export default function GiveView() {
     const handleApplicationSaved = () => { fetchTickets(); };
 
     const renderListContent = () => {
-        if (loading) return <div className="empty"><div>Loading...</div></div>;
-        if (error) return <div className="empty"><div className="text-red-500">{error}</div></div>;
-        if (tickets.length === 0) return <div className="empty"><div className="empty-icon">🎁</div><div className="empty-text">나눔중인 티켓이 없습니다</div></div>;
+        if (ticketsState.loading) return <div className="empty"><div>Loading...</div></div>;
+        if (ticketsState.error) return <div className="empty"><div className="text-red-500">{ticketsState.error}</div></div>;
+        if (ticketsState.data.length === 0) return <div className="empty"><div className="empty-icon">🎁</div><div className="empty-text">나눔중인 티켓이 없습니다</div></div>;
         
-        return tickets.map(ticket => (
+        return ticketsState.data.map(ticket => (
             <TicketCard 
                 key={ticket.id} 
                 ticket={ticket} 
@@ -82,4 +87,3 @@ export default function GiveView() {
         </>
     );
 }
-

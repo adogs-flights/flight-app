@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import CalendarView from '../components/CalendarView';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { getCountryByAirport } from '../utils/airportUtils';
 import TicketCard from '../components/TicketCard';
 import TicketFormModal from '../components/modals/TicketFormModal';
@@ -12,9 +12,14 @@ import { useModal } from '../hooks/useModal';
 
 export default function ScheduleView() {
     const { apiClient } = useAuth();
-    const [tickets, setTickets] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
+    
+    // 상태 통합 관리
+    const [ticketsState, setTicketsState] = useState({
+        data: [],
+        loading: true,
+        error: ''
+    });
+    
     const [view, setView] = useState('cal');
     const [currentTicket, setCurrentTicket] = useState(null);
     const [selectedCountry, setSelectedCountry] = useState('전체');
@@ -27,20 +32,20 @@ export default function ScheduleView() {
     const { isOpen: isDetailOpen, openModal: openDetailModal, closeModal: closeDetailModal } = useModal();
     const { isOpen: isDayMoreOpen, openModal: openDayMoreModal, closeModal: closeDayMoreModal } = useModal();
 
-    const fetchTickets = () => {
-        setLoading(true);
-        apiClient.get('/tickets')
-            .then(response => {
-                setTickets(response.data);
-            })
-            .catch(err => {
-                console.error(err);
-                setError('티켓을 불러오는 데 실패했습니다.');
-            })
-            .finally(() => setLoading(false));
-    };
+    const fetchTickets = useCallback(async () => {
+        setTicketsState(prev => ({ ...prev, loading: true }));
+        try {
+            const response = await apiClient.get('/tickets');
+            setTicketsState({ data: response.data, loading: false, error: '' });
+        } catch (err) {
+            console.error(err);
+            setTicketsState({ data: [], loading: false, error: '티켓을 불러오는 데 실패했습니다.' });
+        }
+    }, [apiClient]);
 
-    useEffect(() => { fetchTickets(); }, [apiClient]);
+    useEffect(() => {
+        fetchTickets();
+    }, [fetchTickets]);
 
     const handleCreateClick = () => {
         setCurrentTicket(null);
@@ -84,8 +89,7 @@ export default function ScheduleView() {
             try {
                 await apiClient.delete(`/tickets/${ticketId}`);
                 fetchTickets();
-            } catch (err) {
-                console.error(err);
+            } catch {
                 alert('삭제에 실패했습니다.');
             }
         }
@@ -95,15 +99,16 @@ export default function ScheduleView() {
     const handleApplicationSaved = () => { fetchTickets(); };
     const handleStatusChanged = () => { fetchTickets(); };
 
-    const filteredTickets = tickets.filter(t => {
+    // ticketsState.data를 기반으로 필터링
+    const filteredTickets = ticketsState.data.filter(t => {
         if (selectedCountry === '전체') return true;
         const country = getCountryByAirport(t.arrival_airport);
         return country === selectedCountry;
     });
 
     const renderListContent = () => {
-        if (loading) return <div className="empty"><div>Loading...</div></div>;
-        if (error) return <div className="empty"><div className="text-red-500">{error}</div></div>;
+        if (ticketsState.loading) return <div className="empty"><div>Loading...</div></div>;
+        if (ticketsState.error) return <div className="empty"><div className="text-red-500">{ticketsState.error}</div></div>;
         if (filteredTickets.length === 0) return <div className="empty"><div className="empty-icon">📭</div><div className="empty-text">표시할 일정이 없습니다</div></div>;
         
         return filteredTickets.map(ticket => (
@@ -172,7 +177,6 @@ export default function ScheduleView() {
                 onClose={closeDetailModal}
                 ticket={currentTicket}
                 onEditClick={handleEditClick}
-                onApplyClick={handleApplyClick}
                 onViewApplicantsClick={handleViewApplicantsClick}
                 onDeleteClick={handleDeleteClick}
             />            <DayTicketsModal 
@@ -185,4 +189,3 @@ export default function ScheduleView() {
         </>
     );
 }
-

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '../hooks/useAuth';
 import TicketCard from '../components/TicketCard';
 // We'll reuse all the modals from ScheduleView
 import TicketFormModal from '../components/modals/TicketFormModal';
@@ -9,30 +9,35 @@ import { useModal } from '../hooks/useModal';
 
 export default function MyTicketsView() {
     const { apiClient, user } = useAuth();
-    const [tickets, setTickets] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
+    
+    // 상태 통합 관리
+    const [ticketsState, setTicketsState] = useState({
+        data: [],
+        loading: true,
+        error: ''
+    });
+    
     const [currentTicket, setCurrentTicket] = useState(null);
 
     const { isOpen: isFormOpen, openModal: openFormModal, closeModal: closeFormModal } = useModal();
     const { isOpen: isApplicantsOpen, openModal: openApplicantsModal, closeModal: closeApplicantsModal } = useModal();
     const { isOpen: isDetailOpen, openModal: openDetailModal, closeModal: closeDetailModal } = useModal();
 
-    const fetchMyTickets = () => {
-        setLoading(true);
-        apiClient.get('/tickets') // We fetch all and filter client-side for simplicity
-            .then(response => {
-                const myTickets = response.data.filter(t => t.owner_id === user.id);
-                setTickets(myTickets);
-            })
-            .catch(err => {
-                console.error(err);
-                setError('내 티켓을 불러오는 데 실패했습니다.');
-            })
-            .finally(() => setLoading(false));
-    };
+    const fetchMyTickets = useCallback(async () => {
+        setTicketsState(prev => ({ ...prev, loading: true }));
+        try {
+            const response = await apiClient.get('/tickets');
+            const myTickets = response.data.filter(t => t.owner_id === user.id);
+            setTicketsState({ data: myTickets, loading: false, error: '' });
+        } catch (err) {
+            console.error(err);
+            setTicketsState({ data: [], loading: false, error: '내 티켓을 불러오는 데 실패했습니다.' });
+        }
+    }, [apiClient, user.id]);
 
-    useEffect(() => { fetchMyTickets(); }, [apiClient, user.id]);
+    useEffect(() => {
+        fetchMyTickets();
+    }, [fetchMyTickets]);
 
     const handleEditClick = (ticket) => {
         setCurrentTicket(ticket);
@@ -54,8 +59,7 @@ export default function MyTicketsView() {
             try {
                 await apiClient.delete(`/tickets/${ticketId}`);
                 fetchMyTickets();
-            } catch (err) {
-                console.error(err);
+            } catch {
                 alert('삭제에 실패했습니다.');
             }
         }
@@ -66,11 +70,11 @@ export default function MyTicketsView() {
 
 
     const renderListContent = () => {
-        if (loading) return <div className="empty"><div>Loading...</div></div>;
-        if (error) return <div className="empty"><div className="text-red-500">{error}</div></div>;
-        if (tickets.length === 0) return <div className="empty"><div className="empty-icon">🎫</div><div className="empty-text">보유한 티켓이 없습니다</div></div>;
+        if (ticketsState.loading) return <div className="empty"><div>Loading...</div></div>;
+        if (ticketsState.error) return <div className="empty"><div className="text-red-500">{ticketsState.error}</div></div>;
+        if (ticketsState.data.length === 0) return <div className="empty"><div className="empty-icon">🎫</div><div className="empty-text">보유한 티켓이 없습니다</div></div>;
         
-        return tickets.map(ticket => (
+        return ticketsState.data.map(ticket => (
             <TicketCard 
                 key={ticket.id} 
                 ticket={ticket} 
@@ -117,4 +121,3 @@ export default function MyTicketsView() {
         </>
     );
 }
-

@@ -1,9 +1,9 @@
-from pydantic import BaseModel, EmailStr, field_validator
 import re
 from datetime import date, datetime
-from typing import Optional, List
 from enum import Enum
-import uuid
+
+from pydantic import BaseModel, EmailStr, field_validator
+
 
 # ======================================================================================
 # Enums for status fields
@@ -27,7 +27,7 @@ class AdminUserBase(BaseModel):
 
 class AdminUser(AdminUserBase):
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 
@@ -57,7 +57,7 @@ class UserCreate(UserBase):
 class User(UserBase):
     id: str
     created_at: datetime
-    admin_info: Optional[AdminUser] = None
+    admin_info: AdminUser | None = None
 
     class Config:
         from_attributes = True
@@ -67,48 +67,48 @@ class User(UserBase):
 # ======================================================================================
 class TicketBase(BaseModel):
     title: str
-    arrival_airport: str 
+    arrival_airport: str
     departure_date: date
     return_date: date
-    departure_time: Optional[str] = ""
-    arrival_time: Optional[str] = ""
-    flight_info: Optional[str] = ""
-    airline: Optional[str] = ""
-    capacity: Optional[int] = 1
-    cabin_capacity: Optional[int] = 0
-    cargo_capacity: Optional[int] = 0
+    departure_time: str | None = ""
+    arrival_time: str | None = ""
+    flight_info: str | None = ""
+    airline: str | None = ""
+    capacity: int | None = 1
+    cabin_capacity: int | None = 0
+    cargo_capacity: int | None = 0
     manager_name: str
     contact: str
-    memo: Optional[str] = None
+    memo: str | None = None
 
 class TicketCreate(TicketBase):
     pass
 
 class TicketUpdate(BaseModel):
-    title: Optional[str] = None
-    arrival_airport: Optional[str] = None
-    departure_date: Optional[date] = None
-    return_date: Optional[date] = None
-    departure_time: Optional[str] = None
-    arrival_time: Optional[str] = None
-    flight_info: Optional[str] = None
-    airline: Optional[str] = None
-    capacity: Optional[int] = None
-    cabin_capacity: Optional[int] = None
-    cargo_capacity: Optional[int] = None
-    status: Optional[TicketStatus] = None
-    manager_name: Optional[str] = None
-    contact: Optional[str] = None
-    memo: Optional[str] = None
+    title: str | None = None
+    arrival_airport: str | None = None
+    departure_date: date | None = None
+    return_date: date | None = None
+    departure_time: str | None = None
+    arrival_time: str | None = None
+    flight_info: str | None = None
+    airline: str | None = None
+    capacity: int | None = None
+    cabin_capacity: int | None = None
+    cargo_capacity: int | None = None
+    status: TicketStatus | None = None
+    manager_name: str | None = None
+    contact: str | None = None
+    memo: str | None = None
 
 class Ticket(TicketBase):
     id: str
     status: TicketStatus
-    created_by_id: Optional[str]
-    owner_id: Optional[str]
+    created_by_id: str | None
+    owner_id: str | None
     created_at: datetime
     updated_at: datetime
-    owner: Optional[User] = None
+    owner: User | None = None
 
     class Config:
         from_attributes = True
@@ -133,8 +133,8 @@ class TicketApplication(TicketApplicationBase):
     status: TicketApplicationStatus
     applied_at: datetime
     updated_at: datetime
-    applicant: Optional[User] = None
-    ticket: Optional[Ticket] = None
+    applicant: User | None = None
+    ticket: Ticket | None = None
 
     class Config:
         from_attributes = True
@@ -145,38 +145,38 @@ class TicketApplication(TicketApplicationBase):
 class NeedPostBase(BaseModel):
     title: str
     airport_code: str
-    desired_date: Optional[date] = None
-    flight_route: Optional[str] = ""
-    seats_needed: Optional[int] = 1
+    desired_date: date | None = None
+    flight_route: str | None = ""
+    seats_needed: int | None = 1
     contact: str
-    detail: Optional[str] = None
-    is_urgent: Optional[bool] = False
+    detail: str | None = None
+    is_urgent: bool | None = False
 
 class NeedPostCreate(NeedPostBase):
     pass
 
 class NeedPostUpdate(BaseModel):
-    title: Optional[str] = None
-    airport_code: Optional[str] = None
-    desired_date: Optional[date] = None
-    flight_route: Optional[str] = None
-    seats_needed: Optional[int] = None
-    contact: Optional[str] = None
-    detail: Optional[str] = None
-    is_urgent: Optional[bool] = None
-    is_resolved: Optional[bool] = None
+    title: str | None = None
+    airport_code: str | None = None
+    desired_date: date | None = None
+    flight_route: str | None = None
+    seats_needed: int | None = None
+    contact: str | None = None
+    detail: str | None = None
+    is_urgent: bool | None = None
+    is_resolved: bool | None = None
 
 class NeedPost(NeedPostBase):
     id: str
     is_resolved: bool
-    author_id: Optional[str]
+    author_id: str | None
     created_at: datetime
     updated_at: datetime
-    author: Optional[User] = None
+    author: User | None = None
 
     class Config:
         from_attributes = True
-        
+
 # ======================================================================================
 # Token Schemas
 # ======================================================================================
@@ -189,7 +189,7 @@ class TokenRefresh(BaseModel):
     refresh_token: str
 
 class TokenData(BaseModel):
-    email: Optional[EmailStr] = None
+    email: EmailStr | None = None
 
 class UserLogin(BaseModel):
     email: EmailStr

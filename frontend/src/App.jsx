@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthProvider } from './contexts/AuthContext';
+import { useAuth } from './hooks/useAuth';
 import LoginScreen from './pages/LoginScreen';
 import MainLayout from './components/layout/MainLayout';
 import ScheduleView from './pages/ScheduleView';

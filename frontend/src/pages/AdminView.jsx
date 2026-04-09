@@ -1,34 +1,41 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '../hooks/useAuth';
 import { useModal } from '../hooks/useModal';
 import RegisterUserModal from '../components/modals/RegisterUserModal';
 
 export default function AdminView() {
     const { apiClient } = useAuth();
-    const [users, setUsers] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
+    
+    // 상태 통합 관리
+    const [usersState, setUsersState] = useState({
+        data: [],
+        loading: true,
+        error: ''
+    });
+    
     const { isOpen, openModal, closeModal } = useModal();
 
-    const fetchUsers = () => {
-        setLoading(true);
-        apiClient.get('/users')
-            .then(res => setUsers(res.data))
-            .catch(err => setError('사용자 목록을 불러오는데 실패했습니다.'))
-            .finally(() => setLoading(false));
-    };
+    const fetchUsers = useCallback(async () => {
+        setUsersState(prev => ({ ...prev, loading: true }));
+        try {
+            const res = await apiClient.get('/users');
+            setUsersState({ data: res.data, loading: false, error: '' });
+        } catch {
+            setUsersState({ data: [], loading: false, error: '사용자 목록을 불러오는데 실패했습니다.' });
+        }
+    }, [apiClient]);
 
     useEffect(() => {
         fetchUsers();
-    }, [apiClient]);
+    }, [fetchUsers]);
 
     const handleUserRegistered = () => {
         fetchUsers();
     };
 
     const renderContent = () => {
-        if (loading) return <p>Loading...</p>;
-        if (error) return <p className="text-red-500">{error}</p>;
+        if (usersState.loading) return <p>Loading...</p>;
+        if (usersState.error) return <p className="text-red-500">{usersState.error}</p>;
 
         return (
             <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 'var(--radius)', overflow: 'hidden' }}>
@@ -42,7 +49,7 @@ export default function AdminView() {
                         </tr>
                     </thead>
                     <tbody>
-                        {users.map(user => (
+                        {usersState.data.map(user => (
                             <tr key={user.id}>
                                 <td style={{ fontWeight: 600 }}>{user.name}</td>
                                 <td style={{ color: 'var(--ink-soft)' }}>{user.email}</td>

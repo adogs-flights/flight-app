@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 
 export default function LoginScreen() {
     const [email, setEmail] = useState('');
@@ -12,8 +12,8 @@ export default function LoginScreen() {
         setError('');
         try {
             await login(email, password);
-        } catch (err) {
-            setError('아이디 또는 비밀번호가 올바르지 않습니다.');
+        } catch {
+            setError('이메일 또는 비밀번호가 올바르지 않습니다.');
         }
     };
 

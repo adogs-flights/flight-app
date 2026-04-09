@@ -1,8 +1,8 @@
 import React from 'react';
 import Modal from '../ui/Modal';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 
-export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick, onApplyClick, onViewApplicantsClick, onDeleteClick }) {
+export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick, onViewApplicantsClick, onDeleteClick }) {
     const { user } = useAuth();
     if (!ticket) return null;
 

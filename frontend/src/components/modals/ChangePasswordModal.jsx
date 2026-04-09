@@ -1,6 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Modal from '../ui/Modal';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
+
+const CheckItem = ({ label, passed }) => (
+    <div style={{ fontSize: '12px', color: passed ? 'var(--green)' : 'var(--ink-mute)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+        {passed ? '✅' : '○'} {label}
+    </div>
+);
 
 export default function ChangePasswordModal({ isOpen, onClose }) {
     const { apiClient } = useAuth();
@@ -10,21 +16,13 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
-    const [checks, setChecks] = useState({
-        length: false,
-        letter: false,
-        number: false,
-        special: false
-    });
-
-    useEffect(() => {
-        setChecks({
-            length: newPassword.length >= 8,
-            letter: /[A-Za-z]/.test(newPassword),
-            number: /[0-9]/.test(newPassword),
-            special: /[!@#$%^&*(),.?":{}|<>]/.test(newPassword)
-        });
-    }, [newPassword]);
+    // Derived state: 렌더링 시점에 직접 계산 (useEffect 필요 없음)
+    const checks = {
+        length: newPassword.length >= 8,
+        letter: /[A-Za-z]/.test(newPassword),
+        number: /[0-9]/.test(newPassword),
+        special: /[!@#$%^&*(),.?":{}|<>]/.test(newPassword)
+    };
 
     const isAllPassed = Object.values(checks).every(Boolean);
 
@@ -64,12 +62,6 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
             <button className="btn btn-ghost" onClick={onClose}>취소</button>
             <button className="btn btn-primary" onClick={handleSubmit} disabled={!isAllPassed || !oldPassword || !confirmPassword}>변경하기</button>
         </>
-    );
-
-    const CheckItem = ({ label, passed }) => (
-        <div style={{ fontSize: '12px', color: passed ? 'var(--green)' : 'var(--ink-mute)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-            {passed ? '✅' : '○'} {label}
-        </div>
     );
 
     return (

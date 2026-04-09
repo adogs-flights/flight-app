@@ -1,6 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Modal from '../ui/Modal';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
+
+const CheckItem = ({ label, passed }) => (
+    <div style={{ fontSize: '11px', color: passed ? 'var(--green)' : 'var(--ink-mute)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+        {passed ? '✅' : '○'} {label}
+    </div>
+);
 
 export default function RegisterUserModal({ isOpen, onClose, onUserRegistered }) {
     const { apiClient } = useAuth();
@@ -9,21 +15,13 @@ export default function RegisterUserModal({ isOpen, onClose, onUserRegistered })
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
 
-    const [checks, setChecks] = useState({
-        length: false,
-        letter: false,
-        number: false,
-        special: false
-    });
-
-    useEffect(() => {
-        setChecks({
-            length: password.length >= 8,
-            letter: /[A-Za-z]/.test(password),
-            number: /[0-9]/.test(password),
-            special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
-        });
-    }, [password]);
+    // Derived state: 렌더링 시점에 직접 계산
+    const checks = {
+        length: password.length >= 8,
+        letter: /[A-Za-z]/.test(password),
+        number: /[0-9]/.test(password),
+        special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+    };
 
     const isAllPassed = Object.values(checks).every(Boolean);
 
@@ -49,12 +47,6 @@ export default function RegisterUserModal({ isOpen, onClose, onUserRegistered })
             setError(err.response?.data?.detail || '등록에 실패했습니다.');
         }
     };
-
-    const CheckItem = ({ label, passed }) => (
-        <div style={{ fontSize: '11px', color: passed ? 'var(--green)' : 'var(--ink-mute)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-            {passed ? '✅' : '○'} {label}
-        </div>
-    );
     
     const footer = (
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
