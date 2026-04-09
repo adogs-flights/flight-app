@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 
 const statusBadge = (s) => {
@@ -17,20 +17,20 @@ export default function MyApplicationsView() {
         error: ''
     });
 
-    const fetchApplications = useCallback(async () => {
-        setAppsState(prev => ({ ...prev, loading: true }));
-        try {
-            const response = await apiClient.get('/me/applications');
-            setAppsState({ data: response.data, loading: false, error: '' });
-        } catch (err) {
-            console.error(err);
-            setAppsState({ data: [], loading: false, error: '내 신청 현황을 불러오는 데 실패했습니다.' });
-        }
-    }, [apiClient]);
-
     useEffect(() => {
+        const fetchApplications = async () => {
+            setAppsState(prev => ({ ...prev, loading: true }));
+            try {
+                const response = await apiClient.get('/me/applications');
+                setAppsState({ data: response.data, loading: false, error: '' });
+            } catch (err) {
+                console.error(err);
+                setAppsState({ data: [], loading: false, error: '내 신청 현황을 불러오는 데 실패했습니다.' });
+            }
+        };
+
         fetchApplications();
-    }, [fetchApplications]);
+    }, [apiClient]);
 
     const renderContent = () => {
         if (appsState.loading) return <div className="empty"><div>Loading...</div></div>;
