@@ -10,3 +10,4 @@ pyjwt
 email-validator
 python-multipart
 aiofiles
+psycopg2-binary

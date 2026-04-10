@@ -1,13 +1,17 @@
 services:
-  flight-frontend:
-    image: ${IMAGE_NAME_FRONTEND:-flight-frontend}:latest
-    container_name: flight-frontend
+  flight-db:
+    image: postgres:16-alpine
+    container_name: postgresql
     ports:
-      - "127.0.0.1:3010:3010"
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     networks:
       - flight-app
-    depends_on:
-      - flight-backend
     restart: unless-stopped
 
   flight-backend:
@@ -21,9 +25,25 @@ services:
       - .env
     networks:
       - flight-app
+    depends_on:
+      - flight-db
+    restart: unless-stopped
+
+  flight-frontend:
+    image: ${IMAGE_NAME_FRONTEND:-flight-frontend}:latest
+    container_name: flight-frontend
+    ports:
+      - "127.0.0.1:3010:3010"
+    networks:
+      - flight-app
+    depends_on:
+      - flight-backend
     restart: unless-stopped
 
 networks:
   flight-app:
     name: flight-app
-    external: true
+    external: false
+
+volumes:
+  postgres_data:
