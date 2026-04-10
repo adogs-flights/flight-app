@@ -14,7 +14,12 @@ export default function DayTicketsModal({ isOpen, onClose, tickets, onTicketClic
     };
 
     const footer = (
-        <button className="btn btn-ghost" onClick={onClose}>닫기</button>
+        <button 
+            className="px-4 py-2 text-sm font-bold rounded-md bg-secondary text-secondary-foreground border border-border hover:bg-muted transition-colors" 
+            onClick={onClose}
+        >
+            닫기
+        </button>
     );
 
     return (
@@ -24,40 +29,26 @@ export default function DayTicketsModal({ isOpen, onClose, tickets, onTicketClic
             title={`${formatDate(date)} 일정`} 
             footer={footer}
         >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div className="flex flex-col gap-3 animate-in fade-in duration-300">
                 {tickets.map(t => {
                     const colors = getAirportColor(t.arrival_airport, rawAirports);
                     return (
                         <div 
                             key={t.id} 
-                            className="day-ticket-item"
+                            className="group flex items-center justify-between p-4 bg-background rounded-xl border-2 border-border transition-all cursor-pointer hover:border-primary/30 hover:shadow-sm"
                             onClick={() => onTicketClick(t)}
-                            style={{ 
-                                padding: '12px', 
-                                border: '1px solid var(--border)', 
-                                borderRadius: 'var(--radius-sm)',
-                                cursor: 'pointer',
-                                background: 'white',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between'
-                            }}
                         >
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--ink)' }}>{t.title}</div>
-                                <div style={{ fontSize: '12px', color: 'var(--ink-mute)' }}>
-                                    {t.flight_info} · {t.airline}
+                            <div className="flex flex-col gap-1">
+                                <div className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">{t.title}</div>
+                                <div className="text-[11px] font-medium text-muted-foreground flex items-center gap-2">
+                                    <span>✈️ {t.flight_info}</span>
+                                    <span className="w-1 h-1 rounded-full bg-border"></span>
+                                    <span>{t.airline}</span>
                                 </div>
                             </div>
                             <span 
-                                className="badge" 
-                                style={{ 
-                                    backgroundColor: colors.bg, 
-                                    color: colors.text, 
-                                    borderColor: colors.bg,
-                                    fontSize: '11px',
-                                    padding: '2px 8px'
-                                }}
+                                className="px-2 py-0.5 rounded-full text-[10px] font-bold border shadow-sm" 
+                                style={{ backgroundColor: colors.bg, color: colors.text, borderColor: colors.bg }}
                             >
                                 {t.arrival_airport}
                             </span>

@@ -80,42 +80,67 @@ export default function NeedPostView() {
     };
 
     return (
-        <>
-            <div id="sectionNeed">
-                <div className="toolbar" style={{ marginBottom: '16px' }}>
-                    <div className="toolbar-left"><span className="page-title">🙏 구해요 게시판</span></div>
-                    <div className="toolbar-right">
-                        <div className="search-box">🔍<input placeholder="공항 코드 또는 제목 검색..." value={searchText} onChange={e => setSearchText(e.target.value)} /></div>
-                        <button className="btn btn-primary" onClick={handleCreateClick}>+ 구해요 등록</button>
-                    </div>
+        <div className="space-y-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-1">
+                    <h1 className="text-2xl font-bold tracking-tight text-foreground">🙏 구해요 게시판</h1>
+                    <p className="text-sm text-muted-foreground">도움이 필요한 일정을 확인하고 제안하세요.</p>
                 </div>
-                <div style={{ display: 'flex', gap: 0, borderBottom: '2px solid var(--border)', overflowX: 'auto', paddingBottom: '2px' }}>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs opacity-50">🔍</span>
+                        <input 
+                            placeholder="공항 코드 또는 제목 검색..." 
+                            className="flex h-10 w-full rounded-md border-2 border-border bg-background pl-9 pr-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all focus:border-primary/50 sm:w-[240px]"
+                            value={searchText} 
+                            onChange={e => setSearchText(e.target.value)} 
+                        />
+                    </div>
                     <button 
-                        className={`need-tab ${activeFilter === 'ALL' ? 'active' : ''}`}
+                        className="inline-flex items-center justify-center px-4 py-2 text-sm font-bold transition-colors rounded-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm" 
+                        onClick={handleCreateClick}
+                    >
+                        + 구해요 등록
+                    </button>
+                </div>
+            </div>
+
+            <div className="flex flex-col bg-card rounded-xl border-2 border-border shadow-sm overflow-hidden min-h-[400px]">
+                <div className="flex items-center gap-1 border-b px-2 bg-muted/30 overflow-x-auto scrollbar-hide">
+                    <button 
+                        className={`shrink-0 px-4 py-3 text-xs font-bold transition-all border-b-2 -mb-[2px] ${activeFilter === 'ALL' ? 'text-primary border-primary' : 'text-muted-foreground border-transparent hover:text-foreground'}`}
                         onClick={() => setActiveFilter('ALL')}
-                    >전체</button>
+                    >
+                        전체
+                    </button>
                     {airports.map(airport => (
                         <button 
                             key={airport.value}
-                            className={`need-tab ${activeFilter === airport.value ? 'active' : ''}`}
+                            className={`shrink-0 px-4 py-3 text-xs font-bold transition-all border-b-2 -mb-[2px] ${activeFilter === airport.value ? 'text-primary border-primary' : 'text-muted-foreground border-transparent hover:text-foreground'}`}
                             onClick={() => setActiveFilter(airport.value)}
-                        >✈️ {airport.value}</button>
+                        >
+                            ✈️ {airport.value}
+                        </button>
                     ))}
                     <button 
-                        className={`need-tab ${activeFilter === 'OTHERS' ? 'active' : ''}`}
+                        className={`shrink-0 px-4 py-3 text-xs font-bold transition-all border-b-2 -mb-[2px] ${activeFilter === 'OTHERS' ? 'text-primary border-primary' : 'text-muted-foreground border-transparent hover:text-foreground'}`}
                         onClick={() => setActiveFilter('OTHERS')}
-                    >🌐 기타</button>
+                    >
+                        🌐 기타
+                    </button>
                 </div>
-                <div id="needBoardList" style={{ background: 'white', border: '1px solid var(--border)', borderTop: 'none', borderRadius: '0 0 var(--radius) var(--radius)', minHeight: '160px' }}>
+                
+                <div className="flex-1 divide-y divide-border/50 animate-in fade-in duration-300">
                     {renderContent()}
                 </div>
             </div>
+
             <NeedPostFormModal 
                 isOpen={isOpen} 
                 onClose={closeModal} 
                 post={currentPost}
                 onPostSaved={handlePostSaved}
             />
-        </>
+        </div>
     );
 }

@@ -58,42 +58,80 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
     };
 
     const footer = (
-        <>
-            <button className="btn btn-ghost" onClick={onClose}>취소</button>
-            <button className="btn btn-primary" onClick={handleSubmit} disabled={!isAllPassed || !oldPassword || !confirmPassword}>변경하기</button>
-        </>
+        <div className="flex items-center justify-end w-full gap-2">
+            <button 
+                className="px-4 py-2 text-sm font-bold rounded-md bg-secondary text-secondary-foreground border border-border hover:bg-muted transition-colors" 
+                onClick={onClose}
+            >
+                취소
+            </button>
+            <button 
+                className="px-6 py-2 text-sm font-bold transition-all rounded-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm disabled:opacity-50 disabled:grayscale" 
+                onClick={handleSubmit} 
+                disabled={!isAllPassed || !oldPassword || !confirmPassword}
+            >
+                변경하기
+            </button>
+        </div>
     );
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="🔑 비밀번호 변경" footer={footer}>
-            <div className="form-grid">
-                <div className="form-group full">
-                    <label className="form-label">현재 비밀번호</label>
-                    <input className="form-input" type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} placeholder="현재 비밀번호를 입력하세요" />
-                </div>
-                <div className="form-group full" style={{ marginBottom: '4px' }}>
-                    <label className="form-label">새 비밀번호</label>
-                    <input className="form-input" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="새 비밀번호를 입력하세요" />
-                </div>
-                
-                {/* 비밀번호 정책 안내 가이드 */}
-                <div className="form-group full" style={{ padding: '10px', background: 'var(--paper-warm)', borderRadius: '8px', marginBottom: '12px' }}>
-                    <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink-soft)', marginBottom: '6px' }}>보안 정책 (필수 요구사항)</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
-                        <CheckItem label="8자 이상" passed={checks.length} />
-                        <CheckItem label="영문 포함" passed={checks.letter} />
-                        <CheckItem label="숫자 포함" passed={checks.number} />
-                        <CheckItem label="특수문자 포함" passed={checks.special} />
+            <div className="space-y-6">
+                <div className="space-y-4">
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">현재 비밀번호</label>
+                        <input 
+                            className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
+                            type="password" 
+                            value={oldPassword} 
+                            onChange={(e) => setOldPassword(e.target.value)} 
+                            placeholder="현재 비밀번호를 입력하세요" 
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">새 비밀번호</label>
+                        <input 
+                            className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
+                            type="password" 
+                            value={newPassword} 
+                            onChange={(e) => setNewPassword(e.target.value)} 
+                            placeholder="새 비밀번호를 입력하세요" 
+                        />
+                    </div>
+                    
+                    <div className="p-4 rounded-xl border-2 border-border bg-muted/30 space-y-3">
+                        <h5 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">보안 정책 (필수 요구사항)</h5>
+                        <div className="grid grid-cols-2 gap-2">
+                            <CheckItem label="8자 이상" passed={checks.length} />
+                            <CheckItem label="영문 포함" passed={checks.letter} />
+                            <CheckItem label="숫자 포함" passed={checks.number} />
+                            <CheckItem label="특수문자 포함" passed={checks.special} />
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">새 비밀번호 확인</label>
+                        <input 
+                            className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
+                            type="password" 
+                            value={confirmPassword} 
+                            onChange={(e) => setConfirmPassword(e.target.value)} 
+                            placeholder="새 비밀번호를 한 번 더 입력하세요" 
+                        />
                     </div>
                 </div>
-
-                <div className="form-group full">
-                    <label className="form-label">새 비밀번호 확인</label>
-                    <input className="form-input" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="새 비밀번호를 한 번 더 입력하세요" />
-                </div>
                 
-                {error && <div className="form-group full"><div className="login-error" style={{display: 'block'}}>{error}</div></div>}
-                {success && <div className="form-group full"><div className="info-box green" style={{display: 'block'}}>{success}</div></div>}
+                {error && (
+                    <div className="px-3 py-2 text-xs font-medium text-destructive bg-destructive/10 border border-destructive/20 rounded-lg animate-in shake duration-300">
+                        {error}
+                    </div>
+                )}
+                {success && (
+                    <div className="px-3 py-2 text-xs font-bold text-green bg-green-foreground border border-green/20 rounded-lg animate-in fade-in duration-500">
+                        {success}
+                    </div>
+                )}
             </div>
         </Modal>
     );

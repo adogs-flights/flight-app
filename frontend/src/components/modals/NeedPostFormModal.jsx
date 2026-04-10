@@ -4,7 +4,7 @@ import { useAuth } from '../../hooks/useAuth';
 import SelectField from '../ui/SelectField';
 
 export default function NeedPostFormModal({ isOpen, onClose, post, onPostSaved }) {
-    const { apiClient, airports, fetchStaticData } = useAuth();
+    const { apiClient, airports } = useAuth();
     const [form, setForm] = useState({
         title: '',
         airportCode: 'JFK',
@@ -77,50 +77,105 @@ export default function NeedPostFormModal({ isOpen, onClose, post, onPostSaved }
     };
     
     const footer = (
-        <>
-            <button className="btn btn-ghost" onClick={onClose}>취소</button>
-            <button className="btn btn-primary" onClick={handleSubmit}>{isEditing ? '수정하기' : '등록하기'}</button>
-        </>
+        <div className="flex items-center justify-end w-full gap-2">
+            <button 
+                className="px-4 py-2 text-sm font-bold rounded-md bg-secondary text-secondary-foreground border border-border hover:bg-muted transition-colors" 
+                onClick={onClose}
+            >
+                취소
+            </button>
+            <button 
+                className="px-6 py-2 text-sm font-bold transition-all rounded-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm" 
+                onClick={handleSubmit}
+            >
+                {isEditing ? '수정하기' : '등록하기'}
+            </button>
+        </div>
     );
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={isEditing ? '🙏 구해요 수정' : '🙏 구해요 등록'} footer={footer}>
-            <div className="form-grid">
-                <div className="form-group full">
-                    <label className="form-label">제목</label>
-                    <input className="form-input" value={form.title} onChange={e => handleChange('title', e.target.value)} placeholder="예: JFK 4월 출발편 1매 구합니다" />
+            <div className="space-y-6">
+                <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">제목</label>
+                    <input 
+                        className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
+                        value={form.title} 
+                        onChange={e => handleChange('title', e.target.value)} 
+                        placeholder="예: JFK 4월 출발편 1매 구합니다" 
+                    />
                 </div>
                 
-                <SelectField 
-                    label="도착 공항"
-                    options={airports}
-                    value={form.airportCode}
-                    onChange={val => handleChange('airportCode', val)}
-                    placeholder="공항 선택 또는 직접 입력"
-                />
+                <div className="grid grid-cols-2 gap-4">
+                    <SelectField 
+                        label="도착 공항"
+                        options={airports}
+                        value={form.airportCode}
+                        onChange={val => handleChange('airportCode', val)}
+                        placeholder="공항 선택 또는 직접 입력"
+                    />
 
-                <div className="form-group">
-                    <label className="form-label">필요 매수</label>
-                    <input className="form-input" type="number" min="1" value={form.seatsNeeded} onChange={e => handleChange('seatsNeeded', parseInt(e.target.value) || 1)} />
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">필요 매수</label>
+                        <input 
+                            className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
+                            type="number" 
+                            min="1" 
+                            value={form.seatsNeeded} 
+                            onChange={e => handleChange('seatsNeeded', parseInt(e.target.value) || 1)} 
+                        />
+                    </div>
                 </div>
-                <div className="form-group">
-                    <label className="form-label">희망 출발일</label>
-                    <input className="form-input" type="date" value={form.desiredDate} onChange={e => handleChange('desiredDate', e.target.value)} />
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">희망 출발일</label>
+                        <input 
+                            className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
+                            type="date" 
+                            value={form.desiredDate} 
+                            onChange={e => handleChange('desiredDate', e.target.value)} 
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">연락처</label>
+                        <input 
+                            className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
+                            value={form.contact} 
+                            onChange={e => handleChange('contact', e.target.value)} 
+                            placeholder="010-xxxx-xxxx 또는 이메일" 
+                        />
+                    </div>
                 </div>
-                <div className="form-group full">
-                    <label className="form-label">연락처</label>
-                    <input className="form-input" value={form.contact} onChange={e => handleChange('contact', e.target.value)} placeholder="010-xxxx-xxxx 또는 이메일" />
+
+                <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">상세 내용</label>
+                    <textarea 
+                        className="flex min-h-[100px] w-full rounded-lg border-2 border-border bg-background px-4 py-3 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
+                        value={form.detail} 
+                        onChange={e => handleChange('detail', e.target.value)} 
+                        placeholder="비용 부담 여부, 단체 정보 등..."
+                    />
                 </div>
-                <div className="form-group full">
-                    <label className="form-label">상세 내용</label>
-                    <textarea className="form-input" value={form.detail} onChange={e => handleChange('detail', e.target.value)} placeholder="비용 부담 여부, 단체 정보 등..."></textarea>
-                </div>
-                <div className="form-group full">
-                    <label style={{display:'flex',alignItems:'center',gap:'7px',fontSize:'13px',cursor:'pointer'}}>
-                        <input type="checkbox" checked={form.isUrgent} onChange={e => handleChange('isUrgent', e.target.checked)} style={{width:'15px',height:'15px'}} /> 급구 표시
+
+                <div className="flex items-center gap-3 p-4 rounded-xl border-2 border-border bg-muted/30">
+                    <label className="relative inline-flex items-center cursor-pointer">
+                        <input 
+                            type="checkbox" 
+                            className="sr-only peer" 
+                            checked={form.isUrgent} 
+                            onChange={e => handleChange('isUrgent', e.target.checked)} 
+                        />
+                        <div className="w-11 h-6 bg-border rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-destructive"></div>
+                        <span className="ml-3 text-sm font-bold text-foreground">🚨 급구 표시</span>
                     </label>
                 </div>
-                {error && <div className="form-group full"><div className="login-error" style={{display: 'block'}}>{error}</div></div>}
+
+                {error && (
+                    <div className="px-3 py-2 text-xs font-medium text-destructive bg-destructive/10 border border-destructive/20 rounded-lg">
+                        {error}
+                    </div>
+                )}
             </div>
         </Modal>
     );

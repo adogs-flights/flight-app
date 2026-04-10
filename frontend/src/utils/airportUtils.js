@@ -1,7 +1,8 @@
 /**
  * Default fallback colors if not specified in DB
+ * Updated to match the new neutral/soft theme
  */
-export const DEFAULT_AIRPORT_COLOR = { bg: '#f1f5f9', text: '#475569' };
+export const DEFAULT_AIRPORT_COLOR = { bg: '#f4f4f5', text: '#71717a' };
 
 /**
  * Returns country category by airport code from rawAirports data
