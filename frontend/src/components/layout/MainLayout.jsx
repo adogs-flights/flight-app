@@ -13,7 +13,7 @@ export default function MainLayout() {
     // 페이지 이동 시 사이드바 닫기 (모바일 대응)
     useEffect(() => {
         setIsSidebarOpen(false);
-    }, [location]);
+    }, [location.pathname]); // 경로가 바뀔 때만 실행
 
     const toggleSidebar = () => {
         setIsSidebarOpen(!isSidebarOpen);
@@ -24,21 +24,21 @@ export default function MainLayout() {
     };
 
     return (
-        <div className="layout-root">
+        <div className="flex flex-col min-h-screen bg-background">
             <Header onMenuClick={toggleSidebar} onPwChangeClick={openPwModal} />
             
-            {/* 모바일용 사이드바 배경 (Backdrop) */}
+            {/* Mobile Sidebar Backdrop */}
             {isSidebarOpen && (
-                <div className="sidebar-backdrop" onClick={closeSidebar}></div>
+                <div className="fixed inset-0 z-40 bg-black/40 animate-in fade-in duration-200" onClick={closeSidebar}></div>
             )}
 
-            <div className="layout">
+            <div className="flex flex-1 w-full max-w-7xl px-4 py-6 mx-auto gap-6 sm:px-6 lg:px-8">
                 <Sidebar 
                     isOpen={isSidebarOpen} 
                     onClose={closeSidebar} 
                     onPwChangeClick={openPwModal} 
                 />
-                <main className="main">
+                <main className="flex-1 min-w-0">
                     <Outlet />
                 </main>
             </div>

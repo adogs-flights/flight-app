@@ -63,15 +63,16 @@ export default function GiveView() {
     };
 
     return (
-        <>
-            <div id="sectionGive">
-                <div className="toolbar" style={{ marginBottom: '16px' }}>
-                    <div className="toolbar-left"><span className="page-title">🎁 나눔해요</span></div>
-                </div>
-                <div className="list-view" style={{ display: 'flex', flexDirection: 'column' }}>
-                    {renderListContent()}
-                </div>
+        <div className="space-y-6">
+            <div className="flex flex-col gap-2">
+                <h1 className="text-2xl font-bold tracking-tight text-foreground">🎁 나눔해요</h1>
+                <p className="text-sm text-muted-foreground">따뜻한 마음으로 나눔 중인 티켓들을 확인하세요.</p>
             </div>
+
+            <div className="robust-grid animate-in fade-in slide-in-from-bottom-2 duration-300">
+                {renderListContent()}
+            </div>
+
             <ApplyModal 
                 isOpen={isApplyOpen}
                 onClose={closeApplyModal}
@@ -84,6 +85,6 @@ export default function GiveView() {
                 ticket={currentTicket}
                 onApplyClick={handleApplyClick}
             />
-        </>
+        </div>
     );
 }

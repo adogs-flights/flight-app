@@ -17,6 +17,7 @@ const TicketStatusBadge = ({ status }) => {
 const TicketCard = ({ ticket, onEditClick, onDeleteClick, onApplyClick, onViewApplicantsClick, onClick }) => {
     const { user, rawAirports } = useAuth();
     const isOwner = ticket.owner_id === user.id;
+    const colors = getAirportColor(ticket.arrival_airport, rawAirports);
 
     // A simple date formatter
     const formatDate = (dateString) => {
@@ -25,51 +26,92 @@ const TicketCard = ({ ticket, onEditClick, onDeleteClick, onApplyClick, onViewAp
         return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     };
 
-    const cardCls = (ticket.status === 'sharing' || ticket.status === 'shared' || ticket.status === 'owned') ? 'give' : 'regular';
-
     const handleEdit = (e) => { e.stopPropagation(); onEditClick(ticket); };
     const handleDelete = (e) => { e.stopPropagation(); onDeleteClick(ticket.id); };
     const handleApply = (e) => { e.stopPropagation(); onApplyClick(ticket); };
     const handleViewApplicants = (e) => { e.stopPropagation(); onViewApplicantsClick(ticket); };
 
     return (
-        <div className={`ticket-card ${cardCls}`} onClick={onClick}>
-            <div className="ticket-top">
-                <div className="ticket-title">{ticket.title}</div>
-                <div className="ticket-badges">
-                    {(() => {
-                        const colors = getAirportColor(ticket.arrival_airport, rawAirports);
-                        return (
-                            <span 
-                                className="badge badge-airport" 
-                                style={{ backgroundColor: colors.bg, color: colors.text, borderColor: colors.bg }}
-                            >
-                                {ticket.arrival_airport}
-                            </span>
-                        );
-                    })()}
-                    <TicketStatusBadge status={ticket.status} />
-                    {isOwner && ticket.status !== 'regular' && <span className="badge badge-mine">👤 내 등록</span>}
+        <div 
+            className="group relative flex flex-col justify-between p-5 border-2 rounded-xl transition-all cursor-pointer hover:shadow-md overflow-hidden bg-card" 
+            style={{ borderColor: colors.bg }}
+            onClick={onClick}
+        >
+            {/* Left accent bar matching airport color */}
+            <div 
+                className="absolute left-0 top-0 bottom-0 w-1.5" 
+                style={{ backgroundColor: colors.text + '77' }}
+            />
+
+            <div className="space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                    <h3 className="text-base font-bold leading-snug text-foreground line-clamp-2">
+                        {ticket.title}
+                    </h3>
+                    <div className="flex flex-wrap items-center justify-end flex-shrink-0 gap-1.5">
+                        <span 
+                            className="px-2 py-0.5 rounded-full text-[10px] font-bold border" 
+                            style={{ backgroundColor: colors.bg, color: colors.text, borderColor: colors.bg }}
+                        >
+                            {ticket.arrival_airport}
+                        </span>
+                        <TicketStatusBadge status={ticket.status} />
+                        {isOwner && ticket.status !== 'regular' && (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-secondary text-secondary-foreground border border-border">👤 내 등록</span>
+                        )}
+                    </div>
+                </div>
+                
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[12.5px] text-muted-foreground">
+                    <div className="flex items-center gap-1.5">
+                        <span className="text-sm">📅</span>
+                        <span>{formatDate(ticket.departure_date)} ~ {formatDate(ticket.return_date)}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                        <span className="text-sm">✈️</span>
+                        <span>{ticket.flight_info}</span>
+                    </div>
                 </div>
             </div>
-            <div className="ticket-meta">
-                <span>📅 {formatDate(ticket.departure_date)} ~ {formatDate(ticket.return_date)}</span>
-                <span>✈️ {ticket.flight_info}</span>
-            </div>
-            <div className="ticket-footer">
-                <span className="ticket-contact">👤 소유자: {ticket.owner?.name || ticket.manager_name || '알 수 없음'}</span>
-                <div className="ticket-actions">
+
+            <div className="flex items-center justify-between pt-4 mt-4 border-t border-border">
+                <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="text-[12px] text-muted-foreground truncate">
+                        👤 소유자: <span className="font-medium text-foreground">{ticket.owner?.name || ticket.manager_name || '알 수 없음'}</span>
+                    </span>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
                     {isOwner && (
                         <>
-                            <button className="btn-xs btn-edit" onClick={handleEdit}>수정</button>
-                            <button className="btn-xs btn-del" onClick={handleDelete}>삭제</button>
+                            <button 
+                                className="px-3 py-1 text-[11px] font-semibold rounded-md bg-secondary text-secondary-foreground border border-border hover:bg-muted transition-colors" 
+                                onClick={handleEdit}
+                            >
+                                수정
+                            </button>
+                            <button 
+                                className="px-3 py-1 text-[11px] font-semibold rounded-md bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20 transition-colors" 
+                                onClick={handleDelete}
+                            >
+                                삭제
+                            </button>
                         </>
                     )}
                     {isOwner && ticket.status === 'sharing' && (
-                        <button className="btn-xs btn-applicants" onClick={handleViewApplicants}>📋 신청자</button>
+                        <button 
+                            className="px-3 py-1 text-[11px] font-semibold rounded-md bg-sky text-sky-foreground hover:bg-sky/90 transition-colors" 
+                            onClick={handleViewApplicants}
+                        >
+                            📋 신청자
+                        </button>
                     )}
                     {!isOwner && ticket.status === 'sharing' && (
-                        <button className="btn-xs btn-share" onClick={handleApply}>🎁 신청</button>
+                        <button 
+                            className="px-3 py-1 text-[11px] font-semibold rounded-md bg-green text-green-foreground hover:bg-green/90 transition-colors" 
+                            onClick={handleApply}
+                        >
+                            🎁 신청
+                        </button>
                     )}
                 </div>
             </div>

@@ -78,98 +78,226 @@ export default function AdminView() {
     };
 
     const renderUsers = () => (
-        <table className="member-table">
-            <thead>
-                <tr><th>이름</th><th>이메일</th><th>관리자</th><th>가입일</th></tr>
-            </thead>
-            <tbody>
+        <>
+            {/* Desktop Table */}
+            <div className="hidden sm:block overflow-x-auto">
+                <table className="w-full text-sm text-left border-collapse">
+                    <thead>
+                        <tr className="bg-muted/50 border-b text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                            <th className="px-6 py-4">이름</th>
+                            <th className="px-6 py-4">이메일</th>
+                            <th className="px-6 py-4">권한</th>
+                            <th className="px-6 py-4 text-right">가입일</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/50">
+                        {users.map(u => (
+                            <tr key={u.id} className="hover:bg-muted/30 transition-colors">
+                                <td className="px-6 py-4 font-semibold text-foreground">{u.name}</td>
+                                <td className="px-6 py-4 text-muted-foreground">{u.email}</td>
+                                <td className="px-6 py-4">
+                                    {u.admin_info?.approved && (
+                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky/10 text-sky border border-sky/20 whitespace-nowrap">관리자</span>
+                                    )}
+                                </td>
+                                <td className="px-6 py-4 text-muted-foreground text-xs text-right">{new Date(u.created_at).toLocaleDateString()}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+            {/* Mobile Cards */}
+            <div className="sm:hidden divide-y divide-border">
                 {users.map(u => (
-                    <tr key={u.id}>
-                        <td>{u.name}</td>
-                        <td style={{color:'var(--ink-soft)'}}>{u.email}</td>
-                        <td>{u.admin_info?.approved && <span className="badge badge-mine">관리자</span>}</td>
-                        <td>{new Date(u.created_at).toLocaleDateString()}</td>
-                    </tr>
+                    <div key={u.id} className="p-4 space-y-2">
+                        <div className="flex items-center justify-between">
+                            <span className="font-bold text-foreground">{u.name}</span>
+                            {u.admin_info?.approved && (
+                                <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-sky/10 text-sky border border-sky/20">관리자</span>
+                            )}
+                        </div>
+                        <div className="text-xs text-muted-foreground">{u.email}</div>
+                        <div className="text-[10px] text-muted-foreground/60 italic">{new Date(u.created_at).toLocaleDateString()} 가입</div>
+                    </div>
                 ))}
-            </tbody>
-        </table>
+            </div>
+        </>
     );
 
     const renderAirports = () => (
-        <table className="member-table">
-            <thead>
-                <tr><th>코드</th><th>공항명</th><th>국가</th><th>색상</th><th>상태</th><th>관리</th></tr>
-            </thead>
-            <tbody>
+        <>
+            {/* Desktop Table */}
+            <div className="hidden sm:block overflow-x-auto">
+                <table className="w-full text-sm text-left border-collapse">
+                    <thead>
+                        <tr className="bg-muted/50 border-b text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                            <th className="px-6 py-4">코드</th>
+                            <th className="px-6 py-4">공항명</th>
+                            <th className="px-6 py-4">국가</th>
+                            <th className="px-6 py-4">색상</th>
+                            <th className="px-6 py-4">상태</th>
+                            <th className="px-6 py-4 text-right">관리</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/50">
+                        {airports.map(a => (
+                            <tr key={a.id} className="hover:bg-muted/30 transition-colors">
+                                <td className="px-6 py-4 font-black text-foreground">{a.code}</td>
+                                <td className="px-6 py-4 font-bold">{a.name}</td>
+                                <td className="px-6 py-4 text-muted-foreground">{a.country}</td>
+                                <td className="px-6 py-4">
+                                    <span 
+                                        className="px-2 py-0.5 rounded-md text-[10px] font-black border shadow-sm" 
+                                        style={{ backgroundColor: a.bg_color, color: a.text_color, borderColor: a.bg_color }}
+                                    >
+                                        Chip
+                                    </span>
+                                </td>
+                                <td className="px-6 py-4 text-xs">{a.is_active ? '✅ 활성' : '❌ 중지'}</td>
+                                <td className="px-6 py-4 text-right">
+                                    <div className="flex items-center justify-end gap-2">
+                                        <button className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-secondary text-secondary-foreground border border-border hover:bg-muted transition-all active:scale-95" onClick={() => handleEdit(a)}>수정</button>
+                                        <button className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20 transition-all active:scale-95" onClick={() => handleDelete(a.id)}>삭제</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+            {/* Mobile Cards */}
+            <div className="sm:hidden divide-y divide-border">
                 {airports.map(a => (
-                    <tr key={a.id}>
-                        <td style={{fontWeight:600}}>{a.code}</td>
-                        <td>{a.name}</td>
-                        <td>{a.country}</td>
-                        <td>
-                            <span style={{ 
-                                padding: '2px 8px', 
-                                borderRadius: '10px', 
-                                backgroundColor: a.bg_color, 
-                                color: a.text_color,
-                                fontSize: '11px',
-                                border: `1px solid ${a.bg_color}`
-                            }}>Chip</span>
-                        </td>
-                        <td>{a.is_active ? '✅' : '❌'}</td>
-                        <td>
-                            <button className="btn-xs btn-edit" onClick={() => handleEdit(a)}>수정</button>
-                            <button className="btn-xs btn-del" onClick={() => handleDelete(a.id)}>삭제</button>
-                        </td>
-                    </tr>
+                    <div key={a.id} className="p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <span className="font-black text-foreground">{a.code}</span>
+                                <span className="text-xs font-bold text-muted-foreground">{a.name}</span>
+                            </div>
+                            <span 
+                                className="px-2 py-0.5 rounded-md text-[10px] font-black border" 
+                                style={{ backgroundColor: a.bg_color, color: a.text_color, borderColor: a.bg_color }}
+                            >
+                                {a.country}
+                            </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold">{a.is_active ? '✅ 활성 상태' : '❌ 사용 중지'}</span>
+                            <div className="flex items-center gap-2">
+                                <button className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-secondary border border-border" onClick={() => handleEdit(a)}>수정</button>
+                                <button className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-destructive/10 text-destructive border border-destructive/20" onClick={() => handleDelete(a.id)}>삭제</button>
+                            </div>
+                        </div>
+                    </div>
                 ))}
-            </tbody>
-        </table>
+            </div>
+        </>
     );
 
     const renderAirlines = () => (
-        <table className="member-table">
-            <thead>
-                <tr><th>코드</th><th>항공사명</th><th>상태</th><th>관리</th></tr>
-            </thead>
-            <tbody>
+        <>
+            {/* Desktop Table */}
+            <div className="hidden sm:block overflow-x-auto">
+                <table className="w-full text-sm text-left border-collapse">
+                    <thead>
+                        <tr className="bg-muted/50 border-b text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                            <th className="px-6 py-4">코드</th>
+                            <th className="px-6 py-4">항공사명</th>
+                            <th className="px-6 py-4">상태</th>
+                            <th className="px-6 py-4 text-right">관리</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/50">
+                        {airlines.map(a => (
+                            <tr key={a.id} className="hover:bg-muted/30 transition-colors">
+                                <td className="px-6 py-4 font-black text-foreground">{a.code}</td>
+                                <td className="px-6 py-4 font-bold">{a.name}</td>
+                                <td className="px-6 py-4 text-xs">{a.is_active ? '✅ 활성' : '❌ 중지'}</td>
+                                <td className="px-6 py-4 text-right">
+                                    <div className="flex items-center justify-end gap-2">
+                                        <button className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-secondary text-secondary-foreground border border-border hover:bg-muted transition-all active:scale-95" onClick={() => handleEdit(a)}>수정</button>
+                                        <button className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20 transition-all active:scale-95" onClick={() => handleDelete(a.id)}>삭제</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+            {/* Mobile Cards */}
+            <div className="sm:hidden divide-y divide-border">
                 {airlines.map(a => (
-                    <tr key={a.id}>
-                        <td style={{fontWeight:600}}>{a.code}</td>
-                        <td>{a.name}</td>
-                        <td>{a.is_active ? '✅' : '❌'}</td>
-                        <td>
-                            <button className="btn-xs btn-edit" onClick={() => handleEdit(a)}>수정</button>
-                            <button className="btn-xs btn-del" onClick={() => handleDelete(a.id)}>삭제</button>
-                        </td>
-                    </tr>
+                    <div key={a.id} className="p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <span className="font-black text-foreground">{a.code}</span>
+                                <span className="text-xs font-bold text-muted-foreground">{a.name}</span>
+                            </div>
+                            <span className="text-[10px] font-bold">{a.is_active ? '✅ 사용 중' : '❌ 중지됨'}</span>
+                        </div>
+                        <div className="flex items-center justify-end gap-2">
+                            <button className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-secondary border border-border" onClick={() => handleEdit(a)}>수정</button>
+                            <button className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-destructive/10 text-destructive border border-destructive/20" onClick={() => handleDelete(a.id)}>삭제</button>
+                        </div>
+                    </div>
                 ))}
-            </tbody>
-        </table>
+            </div>
+        </>
     );
 
     return (
-        <div id="sectionAdmin">
-            <div className="toolbar" style={{ marginBottom: '16px' }}>
-                <div className="toolbar-left"><span className="page-title">⚙️ 시스템 관리</span></div>
-                <div className="toolbar-right">
-                    <button className="btn btn-primary" onClick={handleCreate}>+ {activeTab === 'users' ? '회원 등록' : activeTab === 'airports' ? '공항 등록' : '항공사 등록'}</button>
+        <div className="space-y-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-1">
+                    <h1 className="text-2xl font-bold tracking-tight text-foreground">⚙️ 시스템 관리</h1>
+                    <p className="text-sm text-muted-foreground">회원 및 마스터 데이터를 관리합니다.</p>
                 </div>
+                <button 
+                    className="inline-flex items-center justify-center px-4 py-2 text-sm font-bold transition-colors rounded-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm" 
+                    onClick={handleCreate}
+                >
+                    + {activeTab === 'users' ? '회원 등록' : activeTab === 'airports' ? '공항 등록' : '항공사 등록'}
+                </button>
             </div>
 
-            <div className="view-tabs" style={{ marginBottom: '16px' }}>
-                <button className={`view-tab ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>👥 회원</button>
-                <button className={`view-tab ${activeTab === 'airports' ? 'active' : ''}`} onClick={() => setActiveTab('airports')}>🏢 공항</button>
-                <button className={`view-tab ${activeTab === 'airlines' ? 'active' : ''}`} onClick={() => setActiveTab('airlines')}>✈️ 항공사</button>
-            </div>
+            <div className="flex flex-col bg-card rounded-xl border-2 border-border shadow-sm overflow-hidden min-h-[400px]">
+                <div className="flex items-center gap-1 border-b px-2 bg-muted/30 overflow-x-auto scrollbar-hide">
+                    <button 
+                        className={`shrink-0 px-4 py-3 text-xs font-bold transition-all border-b-2 -mb-[2px] ${activeTab === 'users' ? 'text-primary border-primary' : 'text-muted-foreground border-transparent hover:text-foreground'}`}
+                        onClick={() => setActiveTab('users')}
+                    >
+                        👥 회원
+                    </button>
+                    <button 
+                        className={`shrink-0 px-4 py-3 text-xs font-bold transition-all border-b-2 -mb-[2px] ${activeTab === 'airports' ? 'text-primary border-primary' : 'text-muted-foreground border-transparent hover:text-foreground'}`}
+                        onClick={() => setActiveTab('airports')}
+                    >
+                        🏢 공항
+                    </button>
+                    <button 
+                        className={`shrink-0 px-4 py-3 text-xs font-bold transition-all border-b-2 -mb-[2px] ${activeTab === 'airlines' ? 'text-primary border-primary' : 'text-muted-foreground border-transparent hover:text-foreground'}`}
+                        onClick={() => setActiveTab('airlines')}
+                    >
+                        ✈️ 항공사
+                    </button>
+                </div>
 
-            {error && <div className="info-box red">{error}</div>}
-            
-            <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 'var(--radius)', overflow: 'hidden' }}>
-                {loading ? <p style={{padding:'20px'}}>Loading...</p> : (
-                    activeTab === 'users' ? renderUsers() :
-                    activeTab === 'airports' ? renderAirports() : renderAirlines()
-                )}
+                <div className="flex-1 animate-in fade-in duration-300">
+                    {error && (
+                        <div className="m-4 px-4 py-3 text-xs font-medium text-destructive bg-destructive/10 border border-destructive/20 rounded-lg">
+                            {error}
+                        </div>
+                    )}
+                    
+                    {loading ? (
+                        <div className="flex items-center justify-center h-[200px] text-sm text-muted-foreground">
+                            데이터를 불러오는 중...
+                        </div>
+                    ) : (
+                        activeTab === 'users' ? renderUsers() :
+                        activeTab === 'airports' ? renderAirports() : renderAirlines()
+                    )}
+                </div>
             </div>
 
             <RegisterUserModal isOpen={userModal.isOpen} onClose={userModal.closeModal} onUserRegistered={handleSaved} />

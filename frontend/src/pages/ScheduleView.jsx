@@ -8,6 +8,7 @@ import ApplicantListModal from '../components/modals/ApplicantListModal';
 import TicketDetailModal from '../components/modals/TicketDetailModal';
 import DayTicketsModal from '../components/modals/DayTicketsModal';
 import { useModal } from '../hooks/useModal';
+import { getAirportColor } from '../utils/airportUtils';
 
 export default function ScheduleView() {
     const { apiClient, airports, rawAirports } = useAuth();
@@ -127,61 +128,83 @@ export default function ScheduleView() {
     };
 
     return (
-        <>
-            <div id="sectionSchedule">
-                <div className="toolbar">
-                    <div className="toolbar-left">
-                        <div className="title-row">
-                            <span className="page-title">일정 관리</span>
-                            <button className="btn btn-primary mobile-only" onClick={handleCreateClick}>+ 티켓 등록</button>
-                        </div>
-                        <div className="view-tabs">
-                            <button className={`view-tab ${view === 'cal' ? 'active' : ''}`} onClick={() => setView('cal')}>📅 달력</button>
-                            <button className={`view-tab ${view === 'list' ? 'active' : ''}`} onClick={() => setView('list')}>📋 리스트</button>
-                        </div>
-                    </div>
-                    <div className="toolbar-right">
-                        <button className="btn btn-primary desktop-only" onClick={handleCreateClick}>+ 티켓 등록</button>
-                    </div>
+        <div className="space-y-4">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-1">
+                    <h1 className="text-2xl font-bold tracking-tight text-foreground">일정 관리</h1>
+                    <p className="text-sm text-muted-foreground">봉사 일정 확인 및 새로운 티켓을 등록하세요.</p>
                 </div>
-
-                <div className="filter-bar" style={{ marginBottom: '16px', overflowX: 'auto', whiteSpace: 'nowrap', paddingBottom: '4px', display: 'flex', gap: '8px' }}>
-                    <button
-                        className={`chip ${selectedAirport === '전체' ? 'active' : ''}`}
-                        onClick={() => setSelectedAirport('전체')}
-                        style={{ flexShrink: 0 }}
+                <div className="flex items-center gap-2">
+                    <div className="inline-flex items-center p-1 rounded-lg bg-secondary/50 border border-border">
+                        <button 
+                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${view === 'cal' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                            onClick={() => setView('cal')}
+                        >
+                            📅 달력
+                        </button>
+                        <button 
+                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${view === 'list' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                            onClick={() => setView('list')}
+                        >
+                            📋 리스트
+                        </button>
+                    </div>
+                    <button 
+                        className="inline-flex items-center justify-center px-4 py-2 text-sm font-bold transition-colors rounded-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+                        onClick={handleCreateClick}
                     >
-                        전체
+                        + 티켓 등록
                     </button>
-                    {airports.map(airport => (
+                </div>
+            </div>
+
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                <button
+                    className={`shrink-0 px-4 py-1.5 text-xs font-black rounded-full border-2 transition-all ${selectedAirport === '전체' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-muted-foreground border-border hover:border-primary/30'}`}
+                    onClick={() => setSelectedAirport('전체')}
+                >
+                    전체
+                </button>
+                {airports.map(airport => {
+                    const colors = getAirportColor(airport.value, rawAirports);
+                    const isActive = selectedAirport === airport.value;
+                    return (
                         <button
                             key={airport.value}
-                            className={`chip ${selectedAirport === airport.value ? 'active' : ''}`}
+                            className="shrink-0 px-4 py-1.5 text-xs font-black rounded-full border-2 transition-all"
+                            style={{ 
+                                backgroundColor: colors.bg, 
+                                color: colors.text, 
+                                borderColor: isActive ? colors.text + '55' : colors.bg,
+                                opacity: isActive ? 1 : 0.7
+                            }}
                             onClick={() => setSelectedAirport(airport.value)}
-                            style={{ flexShrink: 0 }}
                         >
                             {airport.value}
                         </button>
-                    ))}
-                    <button
-                        className={`chip ${selectedAirport === '기타' ? 'active' : ''}`}
-                        onClick={() => setSelectedAirport('기타')}
-                        style={{ flexShrink: 0 }}
-                    >
-                        기타
-                    </button>
-                </div>
-                
-                {view === 'cal' && (
-                    <CalendarView 
-                        tickets={filteredTickets} 
-                        onTicketClick={handleTicketClick} 
-                        onMoreClick={handleDayMoreClick}
-                    />
-                )}
-
-                {view === 'list' && (
-                    <div className="list-view" style={{ display: 'flex', flexDirection: 'column' }}>{renderListContent()}</div>
+                    );
+                })}
+                <button
+                    className={`shrink-0 px-4 py-1.5 text-xs font-black rounded-full border-2 transition-all ${selectedAirport === '기타' ? 'bg-secondary text-secondary-foreground border-secondary' : 'bg-background text-muted-foreground border-border hover:border-primary/30'}`}
+                    onClick={() => setSelectedAirport('기타')}
+                >
+                    기타
+                </button>
+            </div>
+            
+            <div className="min-h-[400px]">
+                {view === 'cal' ? (
+                    <div className="bg-card rounded-xl border-2 border-border shadow-sm overflow-hidden">
+                        <CalendarView 
+                            tickets={filteredTickets} 
+                            onTicketClick={handleTicketClick} 
+                            onMoreClick={handleDayMoreClick}
+                        />
+                    </div>
+                ) : (
+                    <div className="robust-grid animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        {renderListContent()}
+                    </div>
                 )}
             </div>
             
@@ -203,6 +226,6 @@ export default function ScheduleView() {
                 onTicketClick={handleTicketSelectFromList}
                 date={selectedDate}
             />
-        </>
+        </div>
     );
 }

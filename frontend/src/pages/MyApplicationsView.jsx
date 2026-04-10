@@ -1,10 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 
-const statusBadge = (s) => {
-    if (s === 'confirmed') return <span className="a-status a-confirmed">✅ 확정</span>;
-    if (s === 'rejected') return <span className="a-status a-rejected">❌ 미선정</span>;
-    return <span className="a-status a-pending">⏳ 대기중</span>;
+const StatusBadge = ({ status }) => {
+    switch (status) {
+        case 'confirmed':
+            return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green text-green-foreground border border-green/20">✅ 확정</span>;
+        case 'rejected':
+            return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-muted text-muted-foreground border border-border">❌ 미선정</span>;
+        default:
+            return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-earth-foreground text-earth border border-earth/20">⏳ 대기중</span>;
+    }
 };
 
 export default function MyApplicationsView() {
@@ -38,29 +43,34 @@ export default function MyApplicationsView() {
         if (appsState.data.length === 0) return <div className="empty"><div className="empty-icon">📬</div><div className="empty-text">신청 내역이 없습니다</div></div>;
 
         return appsState.data.map(app => (
-            <div key={app.id} className="applicant-item" style={{ marginBottom: '12px', background: 'white', padding: '16px', borderRadius: '12px', border: '1px solid var(--border)' }}>
-                <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '14px', fontWeight: 700, marginBottom: '4px' }}>{app.ticket?.title}</div>
-                    <div style={{ fontSize: '12px', color: 'var(--ink-soft)', marginBottom: '8px' }}>
-                        📍 {app.ticket?.arrival_airport} · 🗓️ {app.ticket?.departure_date?.split('T')[0]}
+            <div key={app.id} className="group flex items-center justify-between p-5 bg-card rounded-xl border-2 border-border shadow-sm transition-all hover:border-primary/30 hover:shadow-md animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="flex-1 min-w-0 space-y-3">
+                    <div className="space-y-1">
+                        <h4 className="text-sm font-bold text-foreground truncate">{app.ticket?.title}</h4>
+                        <div className="flex items-center gap-3 text-[11px] text-muted-foreground font-medium">
+                            <span className="flex items-center gap-1">📍 {app.ticket?.arrival_airport}</span>
+                            <span className="flex items-center gap-1">🗓️ {app.ticket?.departure_date?.split('T')[0]}</span>
+                        </div>
                     </div>
-                    <div style={{ fontSize: '13px', color: 'var(--ink-mute)', background: 'var(--paper-warm)', padding: '8px', borderRadius: '6px' }}>
-                        💬 {app.message}
+                    <div className="p-3 text-[12.5px] leading-relaxed text-muted-foreground bg-muted/30 rounded-lg border border-border/50">
+                        <span className="font-bold text-foreground mr-1">💬</span> {app.message}
                     </div>
                 </div>
-                <div style={{ marginLeft: '16px' }}>
-                    {statusBadge(app.status)}
+                <div className="ml-6 shrink-0">
+                    <StatusBadge status={app.status} />
                 </div>
             </div>
         ));
     };
 
     return (
-        <div id="sectionMyapps">
-            <div className="toolbar" style={{ marginBottom: '16px' }}>
-                <div className="toolbar-left"><span className="page-title">📬 내 신청 현황</span></div>
+        <div className="space-y-6">
+            <div className="flex flex-col gap-2">
+                <h1 className="text-2xl font-bold tracking-tight text-foreground">📬 내 신청 현황</h1>
+                <p className="text-sm text-muted-foreground">내가 신청한 이동봉사 티켓들의 처리 상태를 확인하세요.</p>
             </div>
-            <div className="list-view" style={{ display: 'flex', flexDirection: 'column' }}>
+            
+            <div className="grid gap-4">
                 {renderContent()}
             </div>
         </div>

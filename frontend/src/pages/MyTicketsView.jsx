@@ -87,15 +87,19 @@ export default function MyTicketsView() {
     };
 
     return (
-        <>
-            <div id="sectionMytickets">
-                <div className="toolbar" style={{ marginBottom: '16px' }}>
-                    <div className="toolbar-left"><span className="page-title">🎫 내 티켓</span></div>
-                </div>
-                <div className="info-box purple" style={{ marginBottom: '16px' }}>🔒 <strong>소유중</strong> 상태의 티켓은 본인만 볼 수 있습니다.</div>
-                <div className="list-view" style={{ display: 'flex', flexDirection: 'column' }}>
-                    {renderListContent()}
-                </div>
+        <div className="space-y-6">
+            <div className="flex flex-col gap-2">
+                <h1 className="text-2xl font-bold tracking-tight text-foreground">🎫 내 티켓</h1>
+                <p className="text-sm text-muted-foreground">내가 등록하고 관리하는 티켓 목록입니다.</p>
+            </div>
+
+            <div className="flex items-center gap-2 px-4 py-3 text-xs font-bold text-earth bg-earth-foreground border border-earth/20 rounded-xl animate-in fade-in duration-500">
+                <span className="text-lg">🔒</span>
+                <strong>소유중</strong> 상태의 티켓은 본인만 볼 수 있습니다.
+            </div>
+
+            <div className="robust-grid animate-in fade-in slide-in-from-bottom-2 duration-300">
+                {renderListContent()}
             </div>
 
             <TicketFormModal 
@@ -118,6 +122,6 @@ export default function MyTicketsView() {
                 onViewApplicantsClick={handleViewApplicantsClick}
                 onDeleteClick={handleDeleteClick}
             />
-        </>
+        </div>
     );
 }

@@ -115,7 +115,7 @@ export default function CalendarView({ tickets, onTicketClick, onMoreClick }) {
     };
 
     return (
-        <div className="calendar-container">
+        <div className="flex flex-col">
             {isSaving && (
                 <div className="loading-overlay">
                     <div className="spinner"></div>
@@ -123,62 +123,72 @@ export default function CalendarView({ tickets, onTicketClick, onMoreClick }) {
                 </div>
             )}
             <div className="calendar-view" ref={calendarRef}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px 16px', borderBottom: '1px solid var(--border)', gap: '20px' }}>
-                    <button className="btn btn-ghost" style={{ padding: '4px', background: 'white', display: 'flex', alignItems: 'center' }} onClick={prevMonth}>
-                        <img src="/icon/back.png" alt="이전 달" style={{ width: '20px', height: '20px' }} />
-                    </button>
-                    <span style={{ fontSize: '18px', fontWeight: 700, fontFamily: "'Gowun Batang', serif"}}>{year}년 {month + 1}월</span>
-                    <button className="btn btn-ghost" style={{ padding: '4px', background: 'white', display: 'flex', alignItems: 'center' }} onClick={nextMonth}>
-                        <img src="/icon/next.png" alt="다음 달" style={{ width: '20px', height: '20px' }} />
-                    </button>
+                <div className="flex items-center justify-between px-6 py-4 border-b bg-background/50">
+                    <h3 className="text-xl font-bold text-foreground">{year}년 {month + 1}월</h3>
+                    <div className="flex items-center gap-1">
+                        <button 
+                            className="p-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors" 
+                            onClick={prevMonth}
+                        >
+                            <img src="/icon/back.png" alt="이전 달" className="w-4 h-4 opacity-70" />
+                        </button>
+                        <button 
+                            className="p-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors" 
+                            onClick={nextMonth}
+                        >
+                            <img src="/icon/next.png" alt="다음 달" className="w-4 h-4 opacity-70" />
+                        </button>
+                    </div>
                 </div>
-                <div className="cal-header">
-                    <div className="cal-day-name">일</div>
-                    <div className="cal-day-name">월</div>
-                    <div className="cal-day-name">화</div>
-                    <div className="cal-day-name">수</div>
-                    <div className="cal-day-name">목</div>
-                    <div className="cal-day-name">금</div>
-                    <div className="cal-day-name">토</div>
+                <div className="grid grid-cols-7 border-b bg-muted/30">
+                    {['일', '월', '화', '수', '목', '금', '토'].map((day, i) => (
+                        <div key={i} className={`py-2.5 text-center text-[11px] font-bold uppercase tracking-wider ${i === 0 ? 'text-destructive' : i === 6 ? 'text-sky' : 'text-muted-foreground'}`}>
+                            {day}
+                        </div>
+                    ))}
                 </div>
-                <div className="cal-grid">
+                <div className="grid grid-cols-7 divide-x divide-y border-l">
                     {days.map((d, idx) => (
-                        <div key={idx} className={`cal-cell ${d.otherMonth ? 'other-month' : ''}`}>
-                            <div className={`cal-date ${d.isSunday ? 'sunday' : ''} ${d.isSaturday ? 'saturday' : ''}`}>
+                        <div key={idx} className={`min-h-[85px] p-0.5 space-y-1 transition-colors ${d.otherMonth ? 'bg-muted/10' : 'bg-background hover:bg-accent/5'}`}>
+                            <div className={`text-xs font-bold ${d.otherMonth ? 'text-muted-foreground/30' : d.isSunday ? 'text-destructive' : d.isSaturday ? 'text-sky' : 'text-muted-foreground'}`}>
                                 {d.day}
                             </div>
-                            {d.tickets && (
-                                <>
-                                    {d.tickets.slice(0, d.tickets.length > 3 ? 2 : 3).map(t => {
-                                        const colors = getAirportColor(t.arrival_airport, rawAirports);
-                                        return (
-                                            <div
-                                                key={t.id}
-                                                className={`cal-event ${t.status === 'sharing' ? 'type-share-give' : 'type-regular'}`}
-                                                onClick={() => onTicketClick(t)}
-                                                style={{ backgroundColor: colors.bg, color: colors.text, border: 'none' }}
-                                                title={t.title}
+                            <div className="space-y-1">
+                                {d.tickets && (
+                                    <>
+                                        {d.tickets.slice(0, d.tickets.length > 2 ? 2 : 2).map(t => {
+                                            const colors = getAirportColor(t.arrival_airport, rawAirports);
+                                            return (
+                                                <div
+                                                    key={t.id}
+                                                    className="px-1 py-0.5 rounded text-[10px] font-semibold truncate cursor-pointer transition-opacity hover:opacity-80 shadow-[0_1px_2px_rgba(0,0,0,0.05)]"
+                                                    onClick={() => onTicketClick(t)}
+                                                    style={{ backgroundColor: colors.bg, color: colors.text }}
+                                                    title={t.title}
+                                                >
+                                                    {t.title}
+                                                </div>
+                                            );
+                                        })}
+                                        {d.tickets.length > 2 && (
+                                            <div 
+                                                className="text-[10px] font-bold text-muted-foreground px-1.5 py-0.5 rounded-md hover:bg-accent transition-colors cursor-pointer w-fit" 
+                                                onClick={() => onMoreClick(d.tickets, d.dateStr)}
                                             >
-                                                <span className="cal-event-name">{t.title}</span>
+                                                + {d.tickets.length - 2}
                                             </div>
-                                        );
-                                    })}
-                                    {d.tickets.length > 3 && (
-                                        <div className="cal-more" onClick={() => onMoreClick(d.tickets, d.dateStr)}>
-                                            + {d.tickets.length - 2}
-                                        </div>
-                                    )}
-                                </>
-                            )}
+                                        )}
+                                    </>
+                                )}
+                            </div>
                         </div>
                     ))}
                 </div>
             </div>
 
-            <div className="mobile-only" style={{ display: 'flex', marginTop: '12px' }}>
+            <div className="p-4 sm:hidden">
                 <button 
-                    className="btn btn-primary" 
-                    style={{ width: '100%', height: '44px', fontWeight: 600 }} 
+                    className="w-full flex items-center justify-center gap-2 h-11 px-4 text-sm font-bold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm" 
                     onClick={handleShare}
                 >
                     📲 일정 공유하기

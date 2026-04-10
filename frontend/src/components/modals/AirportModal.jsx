@@ -66,90 +66,125 @@ export default function AirportModal({ isOpen, onClose, airport, onSaved, apiCli
     };
 
     const footer = (
-        <>
-            <button className="btn btn-primary" onClick={handleSubmit}>저장</button>
-            <button className="btn btn-ghost" onClick={onClose}>취소</button>
-        </>
+        <div className="flex items-center justify-end w-full gap-2">
+            <button 
+                className="px-4 py-2 text-sm font-bold rounded-md bg-secondary text-secondary-foreground border border-border hover:bg-muted transition-colors" 
+                onClick={onClose}
+            >
+                취소
+            </button>
+            <button 
+                className="px-6 py-2 text-sm font-bold transition-all rounded-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm" 
+                onClick={handleSubmit}
+            >
+                저장하기
+            </button>
+        </div>
     );
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={isEditing ? '🏢 공항 수정' : '🏢 공항 등록'} footer={footer}>
-            <div className="form-grid">
-                <div className="form-group">
-                    <label className="form-label">공항 코드 (IATA)</label>
-                    <input className="form-input" value={form.code} onChange={e => setForm({...form, code: e.target.value.toUpperCase()})} placeholder="JFK" disabled={isEditing} />
-                </div>
-                <div className="form-group">
-                    <label className="form-label">국가/지역</label>
-                    <select className="form-input" value={form.country} onChange={e => setForm({...form, country: e.target.value})}>
-                        <option value="미국">미국</option>
-                        <option value="캐나다">캐나다</option>
-                        <option value="기타">기타</option>
-                    </select>
-                </div>
-                <div className="form-group full">
-                    <label className="form-label">공항명</label>
-                    <input className="form-input" value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="뉴욕 존 F. 케네디 국제공항" />
-                </div>
-                <div className="form-group">
-                    <label className="form-label">배경색</label>
-                    <input type="color" className="form-input" style={{height:'40px', padding:'2px'}} value={form.bg_color} onChange={e => setForm({...form, bg_color: e.target.value})} />
-                </div>
-                <div className="form-group">
-                    <label className="form-label">글자색</label>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                        <input type="color" className="form-input" style={{height:'40px', padding:'2px', flex: 1}} value={form.text_color} onChange={e => setForm({...form, text_color: e.target.value})} />
-                        <button 
-                            type="button" 
-                            onClick={applyRecommendedColor}
-                            style={{ 
-                                padding: '0 10px', 
-                                fontSize: '11px', 
-                                border: '1px solid #cbd5e1', 
-                                borderRadius: '4px',
-                                backgroundColor: '#f8fafc',
-                                whiteSpace: 'nowrap'
-                            }}
+            <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">공항 코드 (IATA)</label>
+                        <input 
+                            className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none disabled:bg-muted disabled:text-muted-foreground" 
+                            value={form.code} 
+                            onChange={e => setForm({...form, code: e.target.value.toUpperCase()})} 
+                            placeholder="JFK" 
+                            disabled={isEditing} 
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">국가/지역</label>
+                        <select 
+                            className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none appearance-none" 
+                            value={form.country} 
+                            onChange={e => setForm({...form, country: e.target.value})}
                         >
-                            대비 최적화
-                        </button>
+                            <option value="미국">미국</option>
+                            <option value="캐나다">캐나다</option>
+                            <option value="기타">기타</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">공항명</label>
+                    <input 
+                        className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
+                        value={form.name} 
+                        onChange={e => setForm({...form, name: e.target.value})} 
+                        placeholder="뉴욕 존 F. 케네디 국제공항" 
+                    />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">배경색</label>
+                        <div className="flex items-center gap-3 h-11 px-3 border-2 border-border rounded-lg bg-background">
+                            <input 
+                                type="color" 
+                                className="w-8 h-8 rounded border-none cursor-pointer overflow-hidden bg-transparent p-0" 
+                                value={form.bg_color} 
+                                onChange={e => setForm({...form, bg_color: e.target.value})} 
+                            />
+                            <span className="text-xs font-mono text-muted-foreground uppercase">{form.bg_color}</span>
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">글자색</label>
+                        <div className="flex items-center gap-2 h-11 p-1 border-2 border-border rounded-lg bg-background">
+                            <input 
+                                type="color" 
+                                className="w-8 h-8 rounded border-none cursor-pointer overflow-hidden bg-transparent p-0 ml-2" 
+                                value={form.text_color} 
+                                onChange={e => setForm({...form, text_color: e.target.value})} 
+                            />
+                            <button 
+                                type="button" 
+                                onClick={applyRecommendedColor}
+                                className="ml-auto px-3 py-1 text-[10px] font-bold rounded-md bg-secondary text-secondary-foreground hover:bg-muted transition-colors border"
+                            >
+                                대비 최적화
+                            </button>
+                        </div>
                     </div>
                 </div>
                 
-                <div className="form-group full">
-                    <label className="form-label">✨ 미리보기 가이드</label>
-                    <div style={{ 
-                        padding: '20px', 
-                        background: '#f8fafc', 
-                        borderRadius: '8px', 
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        alignItems: 'center', 
-                        gap: '12px',
-                        border: '1px dashed #cbd5e1'
-                    }}>
-                        <div style={{ fontSize: '12px', color: '#64748b' }}>앱 내 실제 노출 모습 (가독성을 확인하세요)</div>
-                        <span style={{ 
-                            padding: '4px 12px', 
-                            borderRadius: '20px', 
-                            fontSize: '12px', 
-                            fontWeight: 600,
-                            backgroundColor: form.bg_color,
-                            color: form.text_color,
-                            border: `1px solid ${form.bg_color}`
-                        }}>
+                <div className="p-6 rounded-xl border-2 border-border bg-muted/30 space-y-4">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70 block text-center">✨ 미리보기 가이드</label>
+                    <div className="flex flex-col items-center gap-3">
+                        <div className="text-[11px] text-muted-foreground">앱 내 실제 노출 모습 (가독성을 확인하세요)</div>
+                        <span 
+                            className="px-4 py-1.5 rounded-full text-xs font-bold border shadow-sm transition-all" 
+                            style={{ backgroundColor: form.bg_color, color: form.text_color, borderColor: form.bg_color }}
+                        >
                             {form.code || 'CODE'}
                         </span>
                     </div>
                 </div>
 
-                <div className="form-group full">
-                    <label style={{display:'flex', alignItems:'center', gap:'8px', cursor:'pointer'}}>
-                        <input type="checkbox" checked={form.is_active} onChange={e => setForm({...form, is_active: e.target.checked})} /> 공항 활성화 (체크 해제 시 목록에서 숨김)
+                <div className="flex items-center gap-3 p-4 rounded-xl border-2 border-border bg-muted/30">
+                    <label className="relative inline-flex items-center cursor-pointer">
+                        <input 
+                            type="checkbox" 
+                            className="sr-only peer" 
+                            checked={form.is_active} 
+                            onChange={e => setForm({...form, is_active: e.target.checked})} 
+                        />
+                        <div className="w-11 h-6 bg-border rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                        <span className="ml-3 text-sm font-bold text-foreground">공항 활성화</span>
                     </label>
+                    <span className="text-[11px] text-muted-foreground ml-auto">(해제 시 목록에서 숨김)</span>
                 </div>
 
-                {error && <div className="form-group full"><div className="login-error" style={{display:'block'}}>{error}</div></div>}
+                {error && (
+                    <div className="px-3 py-2 text-xs font-medium text-destructive bg-destructive/10 border border-destructive/20 rounded-lg">
+                        {error}
+                    </div>
+                )}
             </div>
         </Modal>
     );
