@@ -2,88 +2,179 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useModal } from '../hooks/useModal';
 import RegisterUserModal from '../components/modals/RegisterUserModal';
+import AirportModal from '../components/modals/AirportModal';
+import AirlineModal from '../components/modals/AirlineModal';
 
 export default function AdminView() {
-    const { apiClient } = useAuth();
+    const { apiClient, fetchStaticData } = useAuth();
+    const [activeTab, setActiveTab] = useState('users');
     
-    // 상태 통합 관리
-    const [usersState, setUsersState] = useState({
-        data: [],
-        loading: true,
-        error: ''
-    });
-    
-    const { isOpen, openModal, closeModal } = useModal();
+    // 데이터 상태
+    const [users, setUsers] = useState([]);
+    const [airports, setAirports] = useState([]);
+    const [airlines, setAirlines] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
 
-    const fetchUsers = useCallback(async () => {
-        setUsersState(prev => ({ ...prev, loading: true }));
+    const [selectedItem, setSelectedItem] = useState(null);
+
+    // 모달 관리
+    const userModal = useModal();
+    const airportModal = useModal();
+    const airlineModal = useModal();
+
+    const fetchData = useCallback(async () => {
+        setLoading(true);
+        setError('');
         try {
-            const res = await apiClient.get('/users');
-            setUsersState({ data: res.data, loading: false, error: '' });
+            if (activeTab === 'users') {
+                const res = await apiClient.get('/users');
+                setUsers(res.data);
+            } else if (activeTab === 'airports') {
+                const res = await apiClient.get('/master/airports');
+                setAirports(res.data);
+            } else if (activeTab === 'airlines') {
+                const res = await apiClient.get('/master/airlines');
+                setAirlines(res.data);
+            }
         } catch {
-            setUsersState({ data: [], loading: false, error: '사용자 목록을 불러오는데 실패했습니다.' });
+            setError('데이터를 불러오는데 실패했습니다.');
+        } finally {
+            setLoading(false);
         }
-    }, [apiClient]);
+    }, [apiClient, activeTab]);
 
     useEffect(() => {
-        fetchUsers();
-    }, [fetchUsers]);
+        fetchData();
+    }, [fetchData]);
 
-    const handleUserRegistered = () => {
-        fetchUsers();
+    const handleSaved = () => {
+        fetchData();
+        fetchStaticData(); // 전역 정적 데이터 갱신
     };
 
-    const renderContent = () => {
-        if (usersState.loading) return <p>Loading...</p>;
-        if (usersState.error) return <p className="text-red-500">{usersState.error}</p>;
-
-        return (
-            <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 'var(--radius)', overflow: 'hidden' }}>
-                <table className="member-table">
-                    <thead>
-                        <tr>
-                            <th>이름</th>
-                            <th>이메일 (아이디)</th>
-                            <th>관리자 여부</th>
-                            <th>가입일</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {usersState.data.map(user => (
-                            <tr key={user.id}>
-                                <td style={{ fontWeight: 600 }}>{user.name}</td>
-                                <td style={{ color: 'var(--ink-soft)' }}>{user.email}</td>
-                                <td>
-                                    {user.admin_info?.approved && (
-                                        <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '20px', fontWeight: 600, background: 'var(--earth-light)', color: 'var(--earth)', border: '1px solid #fde68a' }}>
-                                            관리자
-                                        </span>
-                                    )}
-                                </td>
-                                <td style={{ color: 'var(--ink-soft)' }}>{new Date(user.created_at).toLocaleDateString()}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        );
+    const handleEdit = (item) => {
+        setSelectedItem(item);
+        if (activeTab === 'airports') airportModal.openModal();
+        else if (activeTab === 'airlines') airlineModal.openModal();
     };
+
+    const handleCreate = () => {
+        setSelectedItem(null);
+        if (activeTab === 'users') userModal.openModal();
+        else if (activeTab === 'airports') airportModal.openModal();
+        else if (activeTab === 'airlines') airlineModal.openModal();
+    };
+
+    const handleDelete = async (id) => {
+        if (!window.confirm('정말로 삭제하시겠습니까?')) return;
+        try {
+            if (activeTab === 'airports') await apiClient.delete(`/master/airports/${id}`);
+            else if (activeTab === 'airlines') await apiClient.delete(`/master/airlines/${id}`);
+            handleSaved();
+        } catch {
+            alert('삭제에 실패했습니다.');
+        }
+    };
+
+    const renderUsers = () => (
+        <table className="member-table">
+            <thead>
+                <tr><th>이름</th><th>이메일</th><th>관리자</th><th>가입일</th></tr>
+            </thead>
+            <tbody>
+                {users.map(u => (
+                    <tr key={u.id}>
+                        <td>{u.name}</td>
+                        <td style={{color:'var(--ink-soft)'}}>{u.email}</td>
+                        <td>{u.admin_info?.approved && <span className="badge badge-mine">관리자</span>}</td>
+                        <td>{new Date(u.created_at).toLocaleDateString()}</td>
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+    );
+
+    const renderAirports = () => (
+        <table className="member-table">
+            <thead>
+                <tr><th>코드</th><th>공항명</th><th>국가</th><th>색상</th><th>상태</th><th>관리</th></tr>
+            </thead>
+            <tbody>
+                {airports.map(a => (
+                    <tr key={a.id}>
+                        <td style={{fontWeight:600}}>{a.code}</td>
+                        <td>{a.name}</td>
+                        <td>{a.country}</td>
+                        <td>
+                            <span style={{ 
+                                padding: '2px 8px', 
+                                borderRadius: '10px', 
+                                backgroundColor: a.bg_color, 
+                                color: a.text_color,
+                                fontSize: '11px',
+                                border: `1px solid ${a.bg_color}`
+                            }}>Chip</span>
+                        </td>
+                        <td>{a.is_active ? '✅' : '❌'}</td>
+                        <td>
+                            <button className="btn-xs btn-edit" onClick={() => handleEdit(a)}>수정</button>
+                            <button className="btn-xs btn-del" onClick={() => handleDelete(a.id)}>삭제</button>
+                        </td>
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+    );
+
+    const renderAirlines = () => (
+        <table className="member-table">
+            <thead>
+                <tr><th>코드</th><th>항공사명</th><th>상태</th><th>관리</th></tr>
+            </thead>
+            <tbody>
+                {airlines.map(a => (
+                    <tr key={a.id}>
+                        <td style={{fontWeight:600}}>{a.code}</td>
+                        <td>{a.name}</td>
+                        <td>{a.is_active ? '✅' : '❌'}</td>
+                        <td>
+                            <button className="btn-xs btn-edit" onClick={() => handleEdit(a)}>수정</button>
+                            <button className="btn-xs btn-del" onClick={() => handleDelete(a.id)}>삭제</button>
+                        </td>
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+    );
 
     return (
-        <>
-            <div id="sectionAdmin">
-                <div className="toolbar" style={{ marginBottom: '16px' }}>
-                    <div className="toolbar-left"><span className="page-title">⚙️ 회원 관리</span></div>
-                    <div className="toolbar-right"><button className="btn btn-primary" onClick={openModal}>+ 회원 등록</button></div>
+        <div id="sectionAdmin">
+            <div className="toolbar" style={{ marginBottom: '16px' }}>
+                <div className="toolbar-left"><span className="page-title">⚙️ 시스템 관리</span></div>
+                <div className="toolbar-right">
+                    <button className="btn btn-primary" onClick={handleCreate}>+ {activeTab === 'users' ? '회원 등록' : activeTab === 'airports' ? '공항 등록' : '항공사 등록'}</button>
                 </div>
-                <div className="info-box blue">🔒 계정은 관리자만 발급할 수 있습니다. 등록 후 해당 이메일로 <strong>아이디와 임시 비밀번호</strong>가 발송됩니다.</div>
-                {renderContent()}
             </div>
-            <RegisterUserModal 
-                isOpen={isOpen}
-                onClose={closeModal}
-                onUserRegistered={handleUserRegistered}
-            />
-        </>
+
+            <div className="view-tabs" style={{ marginBottom: '16px' }}>
+                <button className={`view-tab ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>👥 회원</button>
+                <button className={`view-tab ${activeTab === 'airports' ? 'active' : ''}`} onClick={() => setActiveTab('airports')}>🏢 공항</button>
+                <button className={`view-tab ${activeTab === 'airlines' ? 'active' : ''}`} onClick={() => setActiveTab('airlines')}>✈️ 항공사</button>
+            </div>
+
+            {error && <div className="info-box red">{error}</div>}
+            
+            <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 'var(--radius)', overflow: 'hidden' }}>
+                {loading ? <p style={{padding:'20px'}}>Loading...</p> : (
+                    activeTab === 'users' ? renderUsers() :
+                    activeTab === 'airports' ? renderAirports() : renderAirlines()
+                )}
+            </div>
+
+            <RegisterUserModal isOpen={userModal.isOpen} onClose={userModal.closeModal} onUserRegistered={handleSaved} />
+            <AirportModal isOpen={airportModal.isOpen} onClose={airportModal.closeModal} airport={selectedItem} onSaved={handleSaved} apiClient={apiClient} />
+            <AirlineModal isOpen={airlineModal.isOpen} onClose={airlineModal.closeModal} airline={selectedItem} onSaved={handleSaved} apiClient={apiClient} />
+        </div>
     );
 }

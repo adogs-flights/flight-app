@@ -2,14 +2,16 @@ import os
 import sys
 
 from alembic.config import Config
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from alembic import command
-from database import Base, engine
-from routers import auth, need_posts, ticket_applications, tickets
+from database import Base, engine, get_db
+from routers import auth, need_posts, ticket_applications, tickets, master
+import models
+from sqlalchemy.orm import Session
 
 # --- 🔒 필수 환경변수 검증 ---
 SECRET_KEY = os.environ.get("SECRET_KEY")
@@ -24,6 +26,61 @@ if not SECRET_KEY:
 # CORS 허용 도메인 설정
 ALLOWED_ORIGINS = os.environ.get("ALLOWED_ORIGINS", "*").split(",")
 
+# --- ✨ 초기 데이터 시딩 (Initial Seeding) ---
+def seed_data(db: Session):
+    # 기본 관리자 시딩
+    from routers.auth import get_password_hash
+    admin_email = "admin@example.com"
+    exists = db.query(models.User).filter(models.User.email == admin_email).first()
+    if not exists:
+        admin_user = models.User(
+            email=admin_email,
+            name="시스템 관리자",
+            hashed_password=get_password_hash("admin123!") # 기본 비밀번호
+        )
+        db.add(admin_user)
+        db.commit()
+        db.refresh(admin_user)
+        
+        # 관리자 권한 부여
+        admin_info = models.AdminUser(user_id=admin_user.id, approved=True)
+        db.add(admin_info)
+        db.commit()
+
+    # 항공사 시딩
+    from static_data import AIRLINES
+    for air in AIRLINES:
+        exists = db.query(models.Airline).filter(models.Airline.code == air["value"]).first()
+        if not exists:
+            # "대한항공 (Korean Air)" -> "대한항공"
+            name = air["label"].split(" (")[0]
+            db.add(models.Airline(code=air["value"], name=name))
+    
+    # 공항 시딩
+    from static_data import AIRPORTS
+    # airportUtils.js의 색상 및 국가 정보 반영
+    AIRPORT_EXTRA = {
+        'JFK': {'country': '미국', 'bg': '#e0f2fe', 'text': '#0369a1'},
+        'LAX': {'country': '미국', 'bg': '#fef3c7', 'text': '#92400e'},
+        'ORD': {'country': '미국', 'bg': '#ede9fe', 'text': '#7c3aed'},
+        'YVR': {'country': '캐나다', 'bg': '#fee2e2', 'text': '#dc2626'},
+        'YYZ': {'country': '캐나다', 'bg': '#dcfce7', 'text': '#16a34a'}
+    }
+    
+    for port in AIRPORTS:
+        code = port["value"]
+        exists = db.query(models.Airport).filter(models.Airport.code == code).first()
+        if not exists:
+            extra = AIRPORT_EXTRA.get(code, {'country': '기타', 'bg': '#f1f5f9', 'text': '#475569'})
+            db.add(models.Airport(
+                code=code,
+                name=port["label"],
+                country=extra['country'],
+                bg_color=extra['bg'],
+                text_color=extra['text']
+            ))
+    db.commit()
+
 # --- ✨ Alembic 마이그레이션 자동 실행 ---
 def run_migrations() -> None:
     try:
@@ -33,14 +90,17 @@ def run_migrations() -> None:
     except Exception as e:
         print(f"Error applying migrations via Alembic: {e}")
 
-# 기존 테이블 생성 (Alembic이 관리하지 않는 초기 생성용)
-Base.metadata.create_all(bind=engine)
+# 마이그레이션 실행
 run_migrations()
+
+# 초기 데이터 시딩 실행
+with Session(engine) as db:
+    seed_data(db)
 
 app = FastAPI(
     title="해봉티켓 API",
     description="보안이 강화된 이동봉사 일정 관리 API",
-    version="1.3.0"
+    version="1.4.0"
 )
 
 # --- 🔒 전역 에러 핸들러 (보안 강화) ---
@@ -66,16 +126,17 @@ app.include_router(auth.router)
 app.include_router(tickets.router)
 app.include_router(ticket_applications.router)
 app.include_router(need_posts.router)
+app.include_router(master.router)
 
 @app.get("/api/static/airlines")
-async def get_airlines() -> list[str]:
-    from static_data import AIRLINES
-    return AIRLINES
+async def get_airlines(db: Session = Depends(get_db)):
+    airlines = db.query(models.Airline).filter(models.Airline.is_active == True).all()
+    return [{"value": a.code, "label": a.name} for a in airlines]
 
 @app.get("/api/static/airports")
-async def get_airports() -> list[dict[str, str]]:
-    from static_data import AIRPORTS
-    return AIRPORTS
+async def get_airports(db: Session = Depends(get_db)):
+    airports = db.query(models.Airport).filter(models.Airport.is_active == True).all()
+    return [{"value": a.code, "label": a.name} for a in airports]
 
 # --- ✨ 배포용 프론트엔드 정적 파일 서빙 ---
 if os.path.exists("static/assets"):

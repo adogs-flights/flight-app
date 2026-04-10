@@ -26,12 +26,6 @@ export default function TicketFormModal({ isOpen, onClose, ticket, onTicketSaved
     const isEditing = ticket != null;
 
     useEffect(() => {
-        if (isOpen) {
-            fetchStaticData();
-        }
-    }, [isOpen, fetchStaticData]);
-
-    useEffect(() => {
         if (isEditing) {
             setForm({
                 title: ticket.title || '',

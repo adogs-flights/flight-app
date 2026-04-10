@@ -1,47 +1,39 @@
 /**
- * Major Airports and their assigned colors
+ * Default fallback colors if not specified in DB
  */
-export const MAJOR_AIRPORTS = ['JFK', 'LAX', 'YVR', 'YYZ', 'ORD'];
+export const DEFAULT_AIRPORT_COLOR = { bg: '#f1f5f9', text: '#475569' };
 
 /**
- * Mapping airport codes to country categories
- */
-export const AIRPORT_TO_COUNTRY = {
-  'JFK': '미국',
-  'LAX': '미국',
-  'ORD': '미국',
-  'YVR': '캐나다',
-  'YYZ': '캐나다'
-};
-
-/**
- * Returns country category by airport code
+ * Returns country category by airport code from rawAirports data
  * @param {string} code - Airport code
+ * @param {Array} rawAirports - Raw airport data from DB
  * @returns {string} - '미국' | '캐나다' | '기타'
  */
-export const getCountryByAirport = (code) => {
+export const getCountryByAirport = (code, rawAirports = []) => {
   if (!code) return '기타';
   const upperCode = code.toUpperCase();
-  return AIRPORT_TO_COUNTRY[upperCode] || '기타';
-};
-
-export const AIRPORT_COLORS = {
-  'JFK': { bg: '#e0f2fe', text: '#0369a1' }, // Sky Light / Sky Dark
-  'LAX': { bg: '#fef3c7', text: '#92400e' }, // Earth Light / Earth
-  'YVR': { bg: '#fee2e2', text: '#dc2626' }, // Red Light / Red
-  'YYZ': { bg: '#dcfce7', text: '#16a34a' }, // Green Light / Green
-  'ORD': { bg: '#ede9fe', text: '#7c3aed' }, // Purple Light / Purple
-  'OTHER': { bg: '#f1f5f9', text: '#475569' } // Slate Light / Slate Dark
+  const airport = rawAirports.find(a => a.code.toUpperCase() === upperCode);
+  return airport ? airport.country : '기타';
 };
 
 /**
- * Returns background and text color based on airport code
+ * Returns background and text color based on airport code from rawAirports data
  * @param {string} code - Airport code (e.g., 'JFK')
+ * @param {Array} rawAirports - Raw airport data from DB
  * @returns {object} - { bg, text }
  */
-export const getAirportColor = (code) => {
-  if (!code) return AIRPORT_COLORS.OTHER;
+export const getAirportColor = (code, rawAirports = []) => {
+  if (!code) return DEFAULT_AIRPORT_COLOR;
   
   const upperCode = code.toUpperCase();
-  return AIRPORT_COLORS[upperCode] || AIRPORT_COLORS.OTHER;
+  const airport = rawAirports.find(a => a.code.toUpperCase() === upperCode);
+  
+  if (airport && airport.bg_color && airport.text_color) {
+    return { bg: airport.bg_color, text: airport.text_color };
+  }
+  
+  return DEFAULT_AIRPORT_COLOR;
 };
+
+// MAJOR_AIRPORTS는 정렬용으로 유지 (필요시 DB의 sort_order 등으로 대체 가능)
+export const MAJOR_AIRPORTS = ['JFK', 'LAX', 'YVR', 'YYZ', 'ORD'];

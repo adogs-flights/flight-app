@@ -19,12 +19,6 @@ export default function NeedPostFormModal({ isOpen, onClose, post, onPostSaved }
     const isEditing = post != null;
 
     useEffect(() => {
-        if (isOpen) {
-            fetchStaticData();
-        }
-    }, [isOpen, fetchStaticData]);
-
-    useEffect(() => {
         if (isEditing) {
             setForm({
                 title: post.title || '',

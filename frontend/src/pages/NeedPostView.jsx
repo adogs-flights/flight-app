@@ -3,10 +3,9 @@ import { useAuth } from '../hooks/useAuth';
 import NeedPostItem from '../components/NeedPostItem';
 import NeedPostFormModal from '../components/modals/NeedPostFormModal';
 import { useModal } from '../hooks/useModal';
-import { MAJOR_AIRPORTS } from '../utils/airportUtils';
 
 export default function NeedPostView() {
-    const { apiClient, user } = useAuth();
+    const { apiClient, user, airports } = useAuth();
     
     // 상태 통합 관리
     const [postsState, setPostsState] = useState({
@@ -57,7 +56,8 @@ export default function NeedPostView() {
         
         if (activeFilter === 'ALL') return true;
         if (activeFilter === 'OTHERS') {
-            return !MAJOR_AIRPORTS.includes(post.airport_code.toUpperCase());
+            const masterCodes = airports.map(a => a.value);
+            return !masterCodes.includes(post.airport_code.toUpperCase());
         }
         return post.airport_code.toUpperCase() === activeFilter;
     });
@@ -94,12 +94,12 @@ export default function NeedPostView() {
                         className={`need-tab ${activeFilter === 'ALL' ? 'active' : ''}`}
                         onClick={() => setActiveFilter('ALL')}
                     >전체</button>
-                    {MAJOR_AIRPORTS.map(code => (
+                    {airports.map(airport => (
                         <button 
-                            key={code}
-                            className={`need-tab ${activeFilter === code ? 'active' : ''}`}
-                            onClick={() => setActiveFilter(code)}
-                        >✈️ {code}</button>
+                            key={airport.value}
+                            className={`need-tab ${activeFilter === airport.value ? 'active' : ''}`}
+                            onClick={() => setActiveFilter(airport.value)}
+                        >✈️ {airport.value}</button>
                     ))}
                     <button 
                         className={`need-tab ${activeFilter === 'OTHERS' ? 'active' : ''}`}

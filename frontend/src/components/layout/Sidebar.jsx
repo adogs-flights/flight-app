@@ -44,7 +44,7 @@ export default function Sidebar({ isOpen, onClose, onPwChangeClick }) {
                     <NavItem to="/give" icon="🎁" count={giveCount}>나눔해요</NavItem>
                     <NavItem to="/mytickets" icon="🎫">내 티켓</NavItem>
                     <NavItem to="/myapplications" icon="📬">내 신청 현황</NavItem>
-                    {isAdmin && <NavItem to="/admin" icon="⚙️">회원 관리</NavItem>}
+                    {isAdmin && <NavItem to="/admin" icon="⚙️">관리자 페이지</NavItem>}
                     
                     {/* 모바일에서만 보이는 비밀번호 변경 (메뉴 하단에 자연스럽게 배치) */}
                     <button className="nav-item mobile-only" onClick={onPwChangeClick}>

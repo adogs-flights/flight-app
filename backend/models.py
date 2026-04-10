@@ -187,3 +187,24 @@ class NeedPost(Base):
     )
 
     author = relationship("User", back_populates="need_posts")
+
+
+class Airport(Base):
+    __tablename__ = "airports"
+
+    id = Column(Integer, primary_key=True, index=True)
+    code = Column(String, unique=True, index=True, nullable=False)  # JFK, LAX
+    name = Column(String, nullable=False)  # 뉴욕 존 F. 케네디 국제공항
+    country = Column(String, nullable=False)  # 미국, 캐나다, 기타
+    bg_color = Column(String, default="#f1f5f9")  # 배경색 (HEX)
+    text_color = Column(String, default="#475569")  # 글자색 (HEX)
+    is_active = Column(Boolean, default=True)
+
+
+class Airline(Base):
+    __tablename__ = "airlines"
+
+    id = Column(Integer, primary_key=True, index=True)
+    code = Column(String, unique=True, index=True, nullable=False)  # KE, OZ
+    name = Column(String, nullable=False)  # 대한항공
+    is_active = Column(Boolean, default=True)
