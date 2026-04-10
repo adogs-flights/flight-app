@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import logo from '../assets/flight-app.PNG';
 
 export default function LoginScreen() {
     const [email, setEmail] = useState('');
@@ -21,8 +22,8 @@ export default function LoginScreen() {
         <div className="fixed inset-0 flex items-center justify-center p-4 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-sky/10 via-background to-earth/5">
             <div className="w-full max-w-[400px] p-8 space-y-8 bg-card rounded-2xl border-2 border-border shadow-xl animate-in fade-in zoom-in-95 duration-500">
                 <div className="flex flex-col items-center text-center space-y-2">
-                    <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-primary text-primary-foreground text-2xl font-bold shadow-lg shadow-primary/20 mb-2">
-                        ✈️
+                    <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-background text-primary-foreground text-2xl font-bold mb-2">
+                        <img src={logo} alt="" />
                     </div>
                     <h1 className="text-2xl font-bold tracking-tight text-foreground">해봉티켓</h1>
                     <p className="text-sm text-muted-foreground">해외이동봉사 일정 관리 플랫폼</p>

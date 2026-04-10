@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import logo from '../../assets/flight-app.PNG';
 
 function NavItem({ to, icon, children, count }) {
     return (
@@ -47,8 +48,8 @@ export default function Sidebar({ isOpen, onClose, onPwChangeClick }) {
                 <div className="flex flex-col h-full sm:h-auto gap-8 sm:gap-6 p-6 sm:p-0">
                     <div className="flex items-center justify-between sm:hidden pb-4 border-b">
                         <div className="flex items-center gap-3">
-                            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary text-primary-foreground font-black shadow-lg shadow-primary/20">
-                                ✈️
+                            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary text-primary-foreground font-black">
+                                <img src={logo} alt="" />
                             </div>
                             <span className="text-xl font-black tracking-tighter text-foreground">해봉티켓</span>
                         </div>
@@ -83,7 +84,7 @@ export default function Sidebar({ isOpen, onClose, onPwChangeClick }) {
                             </nav>
                         </div>
 
-                        <div className="p-5 rounded-2xl border-2 border-border bg-card shadow-sm space-y-5 sm:space-y-4 transition-all hover:border-primary/10 hover:shadow-md">
+                        {/* <div className="p-5 rounded-2xl border-2 border-border bg-card shadow-sm space-y-5 sm:space-y-4 transition-all hover:border-primary/10 hover:shadow-md">
                             <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/50 ml-1">Statistics</h4>
                             <div className="grid gap-3.5">
                                 <div className="flex items-center justify-between text-xs font-bold px-1">
@@ -111,7 +112,7 @@ export default function Sidebar({ isOpen, onClose, onPwChangeClick }) {
                                     <span className="text-foreground">{stats.owned}</span>
                                 </div>
                             </div>
-                        </div>
+                        </div> */}
                     </div>
                 </div>
             </aside>
