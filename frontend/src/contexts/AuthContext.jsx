@@ -1,5 +1,4 @@
-import { createContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import { createContext, useState, useEffect, useCallback } from 'react';
 import apiClient from '../utils/api';
 import { MAJOR_AIRPORTS } from '../utils/airportUtils';
 
@@ -15,68 +14,38 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(import.meta.env.DEV ? false : true);
     const [airlines, setAirlines] = useState([]);
     const [airports, setAirports] = useState([]);
+    const [rawAirports, setRawAirports] = useState([]); // DB 원본 데이터 (색상 등 포함)
 
-    // --- 🔒 토큰 갱신 로직 ---
-    let isRefreshing = false;
-    let failedQueue = [];
+    const fetchStaticData = useCallback(async () => {
+        try {
+            const [airRes, portRes, masterRes] = await Promise.all([
+                apiClient.get('/static/airlines'),
+                apiClient.get('/static/airports'),
+                apiClient.get('/master/airports')
+            ]);
 
-    const processQueue = (error, token = null) => {
-        failedQueue.forEach(prom => {
-            if (error) { prom.reject(error); }
-            else { prom.resolve(token); }
-        });
-        failedQueue = [];
-    };
-
-    apiClient.interceptors.response.use(
-        (response) => response,
-        async (error) => {
-            const originalRequest = error.config;
-
-            if (error.response?.status === 401 && !originalRequest._retry) {
-                if (isRefreshing) {
-                    return new Promise((resolve, reject) => {
-                        failedQueue.push({ resolve, reject });
-                    })
-                    .then(token => {
-                        originalRequest.headers['Authorization'] = 'Bearer ' + token;
-                        return apiClient(originalRequest);
-                    })
-                    .catch(err => Promise.reject(err));
-                }
-
-                originalRequest._retry = true;
-                isRefreshing = true;
-
-                const refreshToken = localStorage.getItem('refresh_token');
-                if (!refreshToken) {
-                    logout();
-                    return Promise.reject(error);
-                }
-
-                try {
-                    const response = await axios.post('/api/refresh', { refresh_token: refreshToken });
-                    const { access_token, refresh_token: newRefreshToken } = response.data;
-
-                    localStorage.setItem('token', access_token);
-                    localStorage.setItem('refresh_token', newRefreshToken);
-                    apiClient.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
-                    
-                    processQueue(null, access_token);
-                    return apiClient(originalRequest);
-                } catch (refreshError) {
-                    processQueue(refreshError, null);
-                    logout();
-                    return Promise.reject(refreshError);
-                } finally {
-                    isRefreshing = false;
-                }
-            }
-            return Promise.reject(error);
+            setAirlines(airRes.data);
+            
+            // MAJOR_AIRPORTS를 상단으로 정렬
+            const sortedAirports = [...portRes.data].sort((a, b) => {
+                const aIdx = MAJOR_AIRPORTS.indexOf(a.value);
+                const bIdx = MAJOR_AIRPORTS.indexOf(b.value);
+                if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+                if (aIdx !== -1) return -1;
+                if (bIdx !== -1) return 1;
+                return a.label.localeCompare(b.label);
+            });
+            setAirports(sortedAirports);
+            setRawAirports(masterRes.data);
+        } catch (error) {
+            console.error("Failed to fetch static data", error);
         }
-    );
+    }, []);
 
     useEffect(() => {
+        // 앱 초기 로드 시 정적 데이터 가져오기
+        fetchStaticData();
+
         if (import.meta.env.DEV) return; // 개발 모드 패스
 
         const token = localStorage.getItem('token');
@@ -87,8 +56,6 @@ export const AuthProvider = ({ children }) => {
                     setUser(response.data);
                 })
                 .catch(() => {
-                    // 엑세스 토큰 실패 시 인터셉터가 갱신을 시도하겠지만, 
-                    // 초기 로드 실패는 리프레시 토큰이 없을 확률이 큼
                     localStorage.removeItem('token');
                     delete apiClient.defaults.headers.common['Authorization'];
                 })
@@ -96,32 +63,7 @@ export const AuthProvider = ({ children }) => {
         } else {
             setLoading(false);
         }
-    }, []);
-
-    const fetchStaticData = async () => {
-        try {
-            if (airlines.length === 0) {
-                const airRes = await apiClient.get('/static/airlines');
-                setAirlines(airRes.data);
-            }
-            if (airports.length === 0) {
-                const portRes = await apiClient.get('/static/airports');
-                // MAJOR_AIRPORTS를 상단으로 정렬
-                const sortedAirports = [...portRes.data].sort((a, b) => {
-                    const aIdx = MAJOR_AIRPORTS.indexOf(a.value);
-                    const bIdx = MAJOR_AIRPORTS.indexOf(b.value);
-                    
-                    if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
-                    if (aIdx !== -1) return -1;
-                    if (bIdx !== -1) return 1;
-                    return a.label.localeCompare(b.label);
-                });
-                setAirports(sortedAirports);
-            }
-        } catch (error) {
-            console.error("Failed to fetch static data", error);
-        }
-    };
+    }, [fetchStaticData]);
 
     const login = async (email, password) => {
         const response = await apiClient.post('/token', new URLSearchParams({
@@ -153,7 +95,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, loading, apiClient, airlines, airports, fetchStaticData }}>
+        <AuthContext.Provider value={{ user, login, logout, loading, apiClient, airlines, airports, rawAirports, fetchStaticData }}>
             {children}
         </AuthContext.Provider>
     );

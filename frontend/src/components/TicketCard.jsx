@@ -15,7 +15,7 @@ const TicketStatusBadge = ({ status }) => {
 };
 
 const TicketCard = ({ ticket, onEditClick, onDeleteClick, onApplyClick, onViewApplicantsClick, onClick }) => {
-    const { user } = useAuth();
+    const { user, rawAirports } = useAuth();
     const isOwner = ticket.owner_id === user.id;
 
     // A simple date formatter
@@ -38,7 +38,7 @@ const TicketCard = ({ ticket, onEditClick, onDeleteClick, onApplyClick, onViewAp
                 <div className="ticket-title">{ticket.title}</div>
                 <div className="ticket-badges">
                     {(() => {
-                        const colors = getAirportColor(ticket.arrival_airport);
+                        const colors = getAirportColor(ticket.arrival_airport, rawAirports);
                         return (
                             <span 
                                 className="badge badge-airport" 

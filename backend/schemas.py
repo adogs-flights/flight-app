@@ -211,3 +211,52 @@ class PasswordUpdate(BaseModel):
         if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", v):
             raise ValueError("Password must contain at least one special character")
         return v
+
+
+# ======================================================================================
+# Master Data Schemas (Airport, Airline)
+# ======================================================================================
+class AirportBase(BaseModel):
+    code: str
+    name: str
+    country: str
+    bg_color: str | None = "#f1f5f9"
+    text_color: str | None = "#475569"
+    is_active: bool | None = True
+
+class AirportCreate(AirportBase):
+    pass
+
+class AirportUpdate(BaseModel):
+    code: str | None = None
+    name: str | None = None
+    country: str | None = None
+    bg_color: str | None = None
+    text_color: str | None = None
+    is_active: bool | None = None
+
+class Airport(AirportBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+
+class AirlineBase(BaseModel):
+    code: str
+    name: str
+    is_active: bool | None = True
+
+class AirlineCreate(AirlineBase):
+    pass
+
+class AirlineUpdate(BaseModel):
+    code: str | None = None
+    name: str | None = None
+    is_active: bool | None = None
+
+class Airline(AirlineBase):
+    id: int
+
+    class Config:
+        from_attributes = True

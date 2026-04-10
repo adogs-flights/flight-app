@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import CalendarView from '../components/CalendarView';
 import { useAuth } from '../hooks/useAuth';
-import { getCountryByAirport } from '../utils/airportUtils';
 import TicketCard from '../components/TicketCard';
 import TicketFormModal from '../components/modals/TicketFormModal';
 import ApplyModal from '../components/modals/ApplyModal';
@@ -11,7 +10,7 @@ import DayTicketsModal from '../components/modals/DayTicketsModal';
 import { useModal } from '../hooks/useModal';
 
 export default function ScheduleView() {
-    const { apiClient } = useAuth();
+    const { apiClient, airports, rawAirports } = useAuth();
     
     // 상태 통합 관리
     const [ticketsState, setTicketsState] = useState({
@@ -22,7 +21,7 @@ export default function ScheduleView() {
     
     const [view, setView] = useState('cal');
     const [currentTicket, setCurrentTicket] = useState(null);
-    const [selectedCountry, setSelectedCountry] = useState('전체');
+    const [selectedAirport, setSelectedAirport] = useState('전체');
     const [selectedDateTickets, setSelectedDateTickets] = useState([]);
     const [selectedDate, setSelectedDate] = useState(null);
     
@@ -101,9 +100,12 @@ export default function ScheduleView() {
 
     // ticketsState.data를 기반으로 필터링
     const filteredTickets = ticketsState.data.filter(t => {
-        if (selectedCountry === '전체') return true;
-        const country = getCountryByAirport(t.arrival_airport);
-        return country === selectedCountry;
+        if (selectedAirport === '전체') return true;
+        if (selectedAirport === '기타') {
+            const masterCodes = airports.map(a => a.value);
+            return !masterCodes.includes(t.arrival_airport);
+        }
+        return t.arrival_airport === selectedAirport;
     });
 
     const renderListContent = () => {
@@ -143,17 +145,31 @@ export default function ScheduleView() {
                     </div>
                 </div>
 
-                <div className="filter-bar" style={{ marginBottom: '16px', overflowX: 'auto', whiteSpace: 'nowrap', paddingBottom: '4px' }}>
-                    {['전체', '미국', '캐나다', '기타'].map(country => (
+                <div className="filter-bar" style={{ marginBottom: '16px', overflowX: 'auto', whiteSpace: 'nowrap', paddingBottom: '4px', display: 'flex', gap: '8px' }}>
+                    <button
+                        className={`chip ${selectedAirport === '전체' ? 'active' : ''}`}
+                        onClick={() => setSelectedAirport('전체')}
+                        style={{ flexShrink: 0 }}
+                    >
+                        전체
+                    </button>
+                    {airports.map(airport => (
                         <button
-                            key={country}
-                            className={`chip ${selectedCountry === country ? 'active' : ''}`}
-                            onClick={() => setSelectedCountry(country)}
+                            key={airport.value}
+                            className={`chip ${selectedAirport === airport.value ? 'active' : ''}`}
+                            onClick={() => setSelectedAirport(airport.value)}
                             style={{ flexShrink: 0 }}
                         >
-                            {country}
+                            {airport.value}
                         </button>
                     ))}
+                    <button
+                        className={`chip ${selectedAirport === '기타' ? 'active' : ''}`}
+                        onClick={() => setSelectedAirport('기타')}
+                        style={{ flexShrink: 0 }}
+                    >
+                        기타
+                    </button>
                 </div>
                 
                 {view === 'cal' && (
@@ -179,7 +195,8 @@ export default function ScheduleView() {
                 onEditClick={handleEditClick}
                 onViewApplicantsClick={handleViewApplicantsClick}
                 onDeleteClick={handleDeleteClick}
-            />            <DayTicketsModal 
+            />
+            <DayTicketsModal 
                 isOpen={isDayMoreOpen} 
                 onClose={closeDayMoreModal} 
                 tickets={selectedDateTickets} 

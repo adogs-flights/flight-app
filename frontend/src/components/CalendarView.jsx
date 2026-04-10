@@ -1,8 +1,10 @@
 import React, { useState, useRef } from 'react';
 import { toBlob } from 'html-to-image';
+import { useAuth } from '../hooks/useAuth';
 import { getAirportColor } from '../utils/airportUtils';
 
 export default function CalendarView({ tickets, onTicketClick, onMoreClick }) {
+    const { rawAirports } = useAuth();
     const [currentDate, setCurrentDate] = useState(new Date());
     const [isSaving, setIsSaving] = useState(false);
     const calendarRef = useRef(null);
@@ -46,53 +48,6 @@ export default function CalendarView({ tickets, onTicketClick, onMoreClick }) {
 
     const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
     const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
-
-    /* 
-    const handleSaveImage = async () => {
-        if (!calendarRef.current || isSaving) return;
-        setIsSaving(true);
-        try {
-            const dataUrl = await toPng(calendarRef.current, {
-                pixelRatio: 2,
-                backgroundColor: '#ffffff',
-                cacheBust: false,
-                // 이미지 렌더링에 필요한 최소한의 폰트 설정만 수동으로 삽입
-                fontEmbedCSS: `
-                    @font-face {
-                        font-family: 'Gowun Batang';
-                        src: url('/fonts/GowunBatang-Regular.woff2') format('woff2');
-                        font-weight: 400;
-                    }
-                    @font-face {
-                        font-family: 'Gowun Batang';
-                        src: url('/fonts/GowunBatang-Bold.woff2') format('woff2');
-                        font-weight: 700;
-                    }
-                    @font-face {
-                        font-family: 'Noto Sans KR';
-                        src: url('/fonts/NotoSansKR-Regular.woff2') format('woff2');
-                        font-weight: 400;
-                    }
-                    @font-face {
-                        font-family: 'Noto Sans KR';
-                        src: url('/fonts/NotoSansKR-Bold.woff2') format('woff2');
-                        font-weight: 700;
-                    }
-                `,
-                style: { transform: 'scale(1)' }
-            });
-            const link = document.createElement('a');
-            link.download = `calendar-${year}-${month + 1}.png`;
-            link.href = dataUrl;
-            link.click();
-        } catch (err) {
-            console.error('Image capture failed:', err);
-            alert('이미지 저장에 실패했습니다.');
-        } finally {
-            setIsSaving(false);
-        }
-    };
-    */
 
     const handleShare = async () => {
         if (!calendarRef.current || isSaving) return;
@@ -195,7 +150,7 @@ export default function CalendarView({ tickets, onTicketClick, onMoreClick }) {
                             {d.tickets && (
                                 <>
                                     {d.tickets.slice(0, d.tickets.length > 3 ? 2 : 3).map(t => {
-                                        const colors = getAirportColor(t.arrival_airport);
+                                        const colors = getAirportColor(t.arrival_airport, rawAirports);
                                         return (
                                             <div
                                                 key={t.id}
@@ -220,7 +175,6 @@ export default function CalendarView({ tickets, onTicketClick, onMoreClick }) {
                 </div>
             </div>
 
-            {/* Mobile-only Action Buttons Below Calendar */}
             <div className="mobile-only" style={{ display: 'flex', marginTop: '12px' }}>
                 <button 
                     className="btn btn-primary" 

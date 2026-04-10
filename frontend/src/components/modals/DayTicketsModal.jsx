@@ -1,8 +1,10 @@
 import React from 'react';
 import Modal from '../ui/Modal';
+import { useAuth } from '../../hooks/useAuth';
 import { getAirportColor } from '../../utils/airportUtils';
 
 export default function DayTicketsModal({ isOpen, onClose, tickets, onTicketClick, date }) {
+    const { rawAirports } = useAuth();
     if (!tickets || tickets.length === 0) return null;
 
     const formatDate = (dateString) => {
@@ -24,7 +26,7 @@ export default function DayTicketsModal({ isOpen, onClose, tickets, onTicketClic
         >
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {tickets.map(t => {
-                    const colors = getAirportColor(t.arrival_airport);
+                    const colors = getAirportColor(t.arrival_airport, rawAirports);
                     return (
                         <div 
                             key={t.id} 

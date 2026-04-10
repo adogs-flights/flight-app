@@ -1,9 +1,10 @@
 import React from 'react';
 import Modal from '../ui/Modal';
 import { useAuth } from '../../hooks/useAuth';
+import { getAirportColor } from '../../utils/airportUtils';
 
 export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick, onViewApplicantsClick, onDeleteClick }) {
-    const { user } = useAuth();
+    const { user, rawAirports } = useAuth();
     if (!ticket) return null;
 
     const isAdmin = user.admin_info && user.admin_info.approved;
@@ -55,7 +56,19 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick
                 </div>
                 <div>
                     <div className="detail-label">도착 공항</div>
-                    <div className="detail-value">{ticket.arrival_airport}</div>
+                    <div className="detail-value" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {(() => {
+                            const colors = getAirportColor(ticket.arrival_airport, rawAirports);
+                            return (
+                                <span 
+                                    className="badge badge-airport" 
+                                    style={{ backgroundColor: colors.bg, color: colors.text, borderColor: colors.bg, padding: '2px 8px', fontSize: '11px' }}
+                                >
+                                    {ticket.arrival_airport}
+                                </span>
+                            );
+                        })()}
+                    </div>
                 </div>
                 <div>
                     <div className="detail-label">출발일</div>

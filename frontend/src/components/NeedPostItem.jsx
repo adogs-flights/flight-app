@@ -1,6 +1,9 @@
+import { useAuth } from '../hooks/useAuth';
 import { getAirportColor } from '../utils/airportUtils';
 
 const NeedPostItem = ({ post }) => {
+    const { rawAirports } = useAuth();
+    
     // A simple date formatter
     const formatDate = (dateString) => {
         if (!dateString) return '미정';
@@ -17,7 +20,7 @@ const NeedPostItem = ({ post }) => {
                 <div className={`board-post-title ${post.is_resolved ? 'line-through text-stone-500' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {post.title}
                     {(() => {
-                        const colors = getAirportColor(post.airport_code);
+                        const colors = getAirportColor(post.airport_code, rawAirports);
                         return (
                             <span 
                                 className="badge badge-airport" 
