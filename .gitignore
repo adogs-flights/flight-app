@@ -21,3 +21,7 @@ venv/
 .env.*
 
 .idea/
+
+client_secret.json
+
+.agents/

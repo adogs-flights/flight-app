@@ -65,8 +65,14 @@ export default function MyTicketsView() {
         }
     };
 
-    const handleTicketSaved = () => { fetchMyTickets(); };
-    const handleStatusChanged = () => { fetchMyTickets(); };
+    const handleTicketSaved = (updatedTicket) => { 
+        if (updatedTicket && updatedTicket.id) setCurrentTicket(updatedTicket);
+        fetchMyTickets(); 
+    };
+    const handleStatusChanged = (updatedTicket) => { 
+        if (updatedTicket && updatedTicket.id) setCurrentTicket(updatedTicket);
+        fetchMyTickets(); 
+    };
 
 
     const renderListContent = () => {
@@ -121,6 +127,7 @@ export default function MyTicketsView() {
                 onEditClick={handleEditClick}
                 onViewApplicantsClick={handleViewApplicantsClick}
                 onDeleteClick={handleDeleteClick}
+                onUpdate={handleTicketSaved}
             />
         </div>
     );

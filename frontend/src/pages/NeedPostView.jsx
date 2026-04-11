@@ -70,7 +70,7 @@ export default function NeedPostView() {
             return <div className="empty"><div className="text-red-500">{postsState.error}</div></div>;
         }
         if (filteredPosts.length === 0) {
-            return <div className="empty"><div className="empty-icon">🔍</div><div className="empty-text">조건에 맞는 게시글이 없습니다</div></div>;
+            return <div className="empty flex space-x-1"><div className="empty-icon">🔍</div><div className="empty-text">조건에 맞는 게시글이 없습니다</div></div>;
         }
         return filteredPosts.map(post => (
             <div key={post.id} onClick={() => (post.author_id === user.id) && handleEditClick(post)} style={{ cursor: (post.author_id === user.id) ? 'pointer' : 'default' }}>
@@ -130,7 +130,7 @@ export default function NeedPostView() {
                     </button>
                 </div>
                 
-                <div className="flex-1 divide-y divide-border/50 animate-in fade-in duration-300">
+                <div className="flex-1 divide-y divide-border/50 animate-in fade-in duration-300 p-5">
                     {renderContent()}
                 </div>
             </div>
