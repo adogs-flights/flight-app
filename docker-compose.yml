@@ -43,7 +43,7 @@ services:
 networks:
   flight-app:
     name: flight-app
-    external: false
+    external: true
 
 volumes:
   postgres_data:
