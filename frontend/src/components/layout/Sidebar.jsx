@@ -37,7 +37,6 @@ export default function Sidebar({ isOpen, onClose, onPwChangeClick }) {
     const scheduleCount = 0;
     const needCount = 0;
     const giveCount = 0;
-    const stats = { regular: 0, sharing: 0, shared: 0, owned: 0 };
 
     return (
         <>
@@ -48,7 +47,7 @@ export default function Sidebar({ isOpen, onClose, onPwChangeClick }) {
                 <div className="flex flex-col h-full sm:h-auto gap-8 sm:gap-6 p-6 sm:p-0">
                     <div className="flex items-center justify-between sm:hidden pb-4 border-b">
                         <div className="flex items-center gap-3">
-                            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary text-primary-foreground font-black">
+                            <div className="flex items-center justify-center w-10 h-10 rounded-xl text-primary-foreground font-black">
                                 <img src={logo} alt="" />
                             </div>
                             <span className="text-xl font-black tracking-tighter text-foreground">해봉티켓</span>

@@ -49,7 +49,8 @@ export default function CalendarView({ tickets, onTicketClick, onMoreClick }) {
     const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
     const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
 
-    const handleShare = async () => {
+    const handleShare = async (e) => {
+        if (e) e.stopPropagation();
         if (!calendarRef.current || isSaving) return;
         
         if (!navigator.share) {
@@ -58,12 +59,46 @@ export default function CalendarView({ tickets, onTicketClick, onMoreClick }) {
         }
 
         setIsSaving(true);
+        const el = calendarRef.current;
+        
+        // 캡처를 위한 임시 스타일 저장
+        const originalStyle = {
+            border: el.style.border,
+            borderRadius: el.style.borderRadius,
+            boxShadow: el.style.boxShadow,
+            backgroundColor: el.style.backgroundColor,
+            overflow: el.style.overflow
+        };
+
         try {
-            const blob = await toBlob(calendarRef.current, {
+            // 공유 이미지에만 나타날 테두리 및 카드 스타일 적용
+            el.style.border = '2px solid #e4e4e7'; // border-border (Zinc-200)
+            el.style.borderRadius = '16px';
+            el.style.boxShadow = '0 4px 6px -1px rgb(0 0 0 / 0.1)';
+            el.style.backgroundColor = '#ffffff';
+            el.style.overflow = 'hidden';
+
+            const blob = await toBlob(el, {
                 pixelRatio: 2,
                 backgroundColor: '#ffffff',
                 cacheBust: false,
+                // 상단/좌측 패딩 버그 방지를 위한 옵션
+                style: {
+                    margin: '0',
+                    padding: '0',
+                    transform: 'none'
+                },
                 fontEmbedCSS: `
+                    @font-face {
+                        font-family: 'Pretendard';
+                        src: url('/fonts/Pretendard-Regular.woff2') format('woff2');
+                        font-weight: 400;
+                    }
+                    @font-face {
+                        font-family: 'Pretendard';
+                        src: url('/fonts/Pretendard-Bold.woff2') format('woff2');
+                        font-weight: 700;
+                    }
                     @font-face {
                         font-family: 'Gowun Batang';
                         src: url('/fonts/GowunBatang-Regular.woff2') format('woff2');
@@ -74,18 +109,11 @@ export default function CalendarView({ tickets, onTicketClick, onMoreClick }) {
                         src: url('/fonts/GowunBatang-Bold.woff2') format('woff2');
                         font-weight: 700;
                     }
-                    @font-face {
-                        font-family: 'Noto Sans KR';
-                        src: url('/fonts/NotoSansKR-Regular.woff2') format('woff2');
-                        font-weight: 400;
-                    }
-                    @font-face {
-                        font-family: 'Noto Sans KR';
-                        src: url('/fonts/NotoSansKR-Bold.woff2') format('woff2');
-                        font-weight: 700;
-                    }
                 `,
             });
+
+            // 스타일 즉시 원복
+            Object.assign(el.style, originalStyle);
 
             if (!blob) throw new Error('이미지 생성 실패');
 
@@ -94,20 +122,20 @@ export default function CalendarView({ tickets, onTicketClick, onMoreClick }) {
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
                 await navigator.share({
                     files: [file],
-                    title: '달력 공유',
-                    text: `${year}년 ${month + 1}월 일정표입니다.`
+                    title: '달력 공유'
                 });
             } else {
                 await navigator.share({
                     title: '달력 공유',
-                    text: `${year}년 ${month + 1}월 일정표입니다.`,
                     url: window.location.href
                 });
             }
         } catch (err) {
             console.error('Share failed:', err);
+            // 에러 시에도 스타일 원복 보장
+            Object.assign(el.style, originalStyle);
             if (err.name !== 'AbortError') {
-                alert('공유에 실패했습니다. 이미지가 너무 크거나 생성 시간이 초과되었습니다.');
+                alert('공유에 실패했습니다.');
             }
         } finally {
             setIsSaving(false);
@@ -115,13 +143,15 @@ export default function CalendarView({ tickets, onTicketClick, onMoreClick }) {
     };
 
     return (
-        <div className="flex flex-col">
+        <div className="flex flex-col relative">
             {isSaving && (
                 <div className="loading-overlay">
                     <div className="spinner"></div>
-                    <div className="loading-text">이미지 저장 중</div>
+                    <div className="loading-text">이미지 생성 중</div>
                 </div>
             )}
+            
+            {/* 평소에는 테두리 없는 일반 div, 공유 시에만 테두리 주입됨 */}
             <div className="calendar-view" ref={calendarRef}>
                 <div className="flex items-center justify-between px-6 py-4 border-b bg-background/50">
                     <h3 className="text-xl font-bold text-foreground">{year}년 {month + 1}월</h3>
@@ -140,6 +170,7 @@ export default function CalendarView({ tickets, onTicketClick, onMoreClick }) {
                         </button>
                     </div>
                 </div>
+                    
                 <div className="grid grid-cols-7 border-b bg-muted/30">
                     {['일', '월', '화', '수', '목', '금', '토'].map((day, i) => (
                         <div key={i} className={`py-2.5 text-center text-[11px] font-bold uppercase tracking-wider ${i === 0 ? 'text-destructive' : i === 6 ? 'text-sky' : 'text-muted-foreground'}`}>
@@ -147,7 +178,8 @@ export default function CalendarView({ tickets, onTicketClick, onMoreClick }) {
                         </div>
                     ))}
                 </div>
-                <div className="grid grid-cols-7 divide-x divide-y border-l">
+                
+                <div className="grid grid-cols-7 divide-x divide-y border">
                     {days.map((d, idx) => (
                         <div key={idx} className={`min-h-[85px] p-0.5 space-y-1 transition-colors ${d.otherMonth ? 'bg-muted/10' : 'bg-background hover:bg-accent/5'}`}>
                             <div className={`text-xs font-bold ${d.otherMonth ? 'text-muted-foreground/30' : d.isSunday ? 'text-destructive' : d.isSaturday ? 'text-sky' : 'text-muted-foreground'}`}>
@@ -156,7 +188,7 @@ export default function CalendarView({ tickets, onTicketClick, onMoreClick }) {
                             <div className="space-y-1">
                                 {d.tickets && (
                                     <>
-                                        {d.tickets.slice(0, d.tickets.length > 2 ? 2 : 2).map(t => {
+                                        {d.tickets.slice(0, 2).map(t => {
                                             const colors = getAirportColor(t.arrival_airport, rawAirports);
                                             return (
                                                 <div
@@ -191,7 +223,7 @@ export default function CalendarView({ tickets, onTicketClick, onMoreClick }) {
                     className="w-full flex items-center justify-center gap-2 h-11 px-4 text-sm font-bold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm" 
                     onClick={handleShare}
                 >
-                    📲 일정 공유하기
+                    일정 공유하기
                 </button>
             </div>
         </div>

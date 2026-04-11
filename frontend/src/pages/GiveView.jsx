@@ -47,6 +47,11 @@ export default function GiveView() {
 
     const handleApplicationSaved = () => { fetchTickets(); };
 
+    const handleTicketUpdated = (updatedTicket) => {
+        if (updatedTicket && updatedTicket.id) setCurrentTicket(updatedTicket);
+        fetchTickets();
+    };
+
     const renderListContent = () => {
         if (ticketsState.loading) return <div className="empty"><div>Loading...</div></div>;
         if (ticketsState.error) return <div className="empty"><div className="text-red-500">{ticketsState.error}</div></div>;
@@ -83,7 +88,7 @@ export default function GiveView() {
                 isOpen={isDetailOpen}
                 onClose={closeDetailModal}
                 ticket={currentTicket}
-                onApplyClick={handleApplyClick}
+                onUpdate={handleTicketUpdated}
             />
         </div>
     );

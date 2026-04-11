@@ -95,9 +95,15 @@ export default function ScheduleView() {
         }
     };
 
-    const handleTicketSaved = () => { fetchTickets(); };
+    const handleTicketSaved = (updatedTicket) => { 
+        if (updatedTicket && updatedTicket.id) setCurrentTicket(updatedTicket);
+        fetchTickets(); 
+    };
     const handleApplicationSaved = () => { fetchTickets(); };
-    const handleStatusChanged = () => { fetchTickets(); };
+    const handleStatusChanged = (updatedTicket) => { 
+        if (updatedTicket && updatedTicket.id) setCurrentTicket(updatedTicket);
+        fetchTickets(); 
+    };
 
     // ticketsState.data를 기반으로 필터링
     const filteredTickets = ticketsState.data.filter(t => {
@@ -140,13 +146,13 @@ export default function ScheduleView() {
                             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${view === 'cal' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
                             onClick={() => setView('cal')}
                         >
-                            📅 달력
+                            달력
                         </button>
                         <button 
                             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${view === 'list' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
                             onClick={() => setView('list')}
                         >
-                            📋 리스트
+                            리스트
                         </button>
                     </div>
                     <button 
@@ -218,6 +224,7 @@ export default function ScheduleView() {
                 onEditClick={handleEditClick}
                 onViewApplicantsClick={handleViewApplicantsClick}
                 onDeleteClick={handleDeleteClick}
+                onUpdate={handleTicketSaved}
             />
             <DayTicketsModal 
                 isOpen={isDayMoreOpen} 

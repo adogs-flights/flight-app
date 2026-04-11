@@ -8,7 +8,7 @@ export default function Header({ onMenuClick, onPwChangeClick }) {
     return (
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="container flex items-center justify-between h-16 max-w-7xl px-4 mx-auto sm:px-6 lg:px-8">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center">
                     <button 
                         className="inline-flex items-center justify-center p-2 rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground sm:hidden transition-colors" 
                         onClick={onMenuClick}
