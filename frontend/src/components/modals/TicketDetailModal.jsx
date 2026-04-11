@@ -151,7 +151,7 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick
     };
 
     const footer = (
-        <div className="flex flex-col w-full gap-5 pt-4 border-t border-slate-100">
+        <div className="flex flex-col w-full gap-5 border-t border-slate-100">
             <div className="flex items-center justify-between w-full gap-2">
                 <div className="flex items-center gap-2">
                     <button 
