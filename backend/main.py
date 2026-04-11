@@ -28,25 +28,6 @@ ALLOWED_ORIGINS = os.environ.get("ALLOWED_ORIGINS", "*").split(",")
 
 # --- ✨ 초기 데이터 시딩 (Initial Seeding) ---
 def seed_data(db: Session):
-    # 기본 관리자 시딩
-    from routers.auth import get_password_hash
-    admin_email = "admin@example.com"
-    exists = db.query(models.User).filter(models.User.email == admin_email).first()
-    if not exists:
-        admin_user = models.User(
-            email=admin_email,
-            name="시스템 관리자",
-            hashed_password=get_password_hash("admin123!") # 기본 비밀번호
-        )
-        db.add(admin_user)
-        db.commit()
-        db.refresh(admin_user)
-        
-        # 관리자 권한 부여
-        admin_info = models.AdminUser(user_id=admin_user.id, approved=True)
-        db.add(admin_info)
-        db.commit()
-
     # 항공사 시딩
     from static_data import AIRLINES
     for air in AIRLINES:
@@ -86,9 +67,10 @@ def run_migrations() -> None:
     try:
         alembic_cfg = Config("alembic.ini")
         command.upgrade(alembic_cfg, "head")
-        print("Database migrations applied successfully via Alembic.")
+            
+        print("Database schema verified and migrations synced successfully.")
     except Exception as e:
-        print(f"Error applying migrations via Alembic: {e}")
+        print(f"Error during database initialization: {e}")
 
 # 마이그레이션 실행
 run_migrations()
