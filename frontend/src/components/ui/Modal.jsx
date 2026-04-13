@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-export default function Modal({ isOpen, onClose, title, children, footer }) {
+export default function Modal({ isOpen, onClose, title, children, footer, error }) {
     useEffect(() => {
         const handleEsc = (event) => {
             if (event.keyCode === 27) {
@@ -31,9 +31,18 @@ export default function Modal({ isOpen, onClose, title, children, footer }) {
             onClick={onClose}
         >
             <div 
-                className="w-full max-w-[520px] max-h-[90vh] flex flex-col bg-card rounded-2xl border-2 border-border shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 overflow-hidden" 
+                className="w-full max-w-[520px] max-h-[90vh] flex flex-col relative bg-card rounded-2xl border-2 border-border shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 overflow-hidden" 
                 onClick={(e) => e.stopPropagation()}
             >
+                {/* Toast Error Message */}
+                {error && (
+                    <div className="absolute top-[68px] left-1/2 -translate-x-1/2 z-[1010] w-[90%] animate-in slide-in-from-top-4 duration-300 pointer-events-none">
+                        <div className="px-4 py-3 text-sm font-bold text-white bg-destructive/80 backdrop-blur-md rounded-xl shadow-xl flex items-center justify-center gap-2 border border-white/20">
+                            {error}
+                        </div>
+                    </div>
+                )}
+
                 <div className="flex items-center justify-between px-6 py-4 border-b bg-background/50">
                     <h3 className="text-lg font-bold text-foreground">{title}</h3>
                     <button 

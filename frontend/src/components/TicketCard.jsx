@@ -65,7 +65,7 @@ const TicketCard = ({ ticket, onEditClick, onDeleteClick, onApplyClick, onViewAp
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[12.5px] text-muted-foreground">
                     <div className="flex items-center gap-1.5">
                         <span className="text-sm">📅</span>
-                        <span>{formatDate(ticket.departure_date)} ~ {formatDate(ticket.return_date)}</span>
+                        <span>{formatDate(ticket.departure_date)}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                         <span className="text-sm">✈️</span>

@@ -31,20 +31,21 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick
     }[ticket.status] || ticket.status;
 
     const handleDelete = () => {
-        if (window.confirm('정말로 이 티켓을 삭제하시겠습니까?')) {
-            onClose();
-            onDeleteClick(ticket.id);
-        }
+        onClose();
+        onDeleteClick(ticket.id);
     };
 
     const handleToggleStatus = async () => {
         const isCurrentlySharing = ticket.status === 'sharing';
         const newStatus = isCurrentlySharing ? 'owned' : 'sharing';
-        const message = isCurrentlySharing ? '나눔을 취소하시겠습니까?' : '나눔하시겠습니까?';
+        const confirmMessage = isCurrentlySharing ? '나눔을 취소하시겠습니까?' : '나눔하시겠습니까?';
+        const successMessage = isCurrentlySharing ? '나눔이 취소되었습니다.' : '나눔이 완료되었습니다.';
 
-        if (window.confirm(message)) {
+        if (window.confirm(confirmMessage)) {
             try {
                 const response = await apiClient.put(`/tickets/${ticket.id}`, { status: newStatus });
+                alert(successMessage);
+                onClose(); // 모달 즉시 닫기
                 if (onUpdate) {
                     onUpdate(response.data);
                 }
@@ -124,19 +125,12 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick
             const fileName = `ticket-${ticket.arrival_airport || 'info'}.png`.replace(/\s+/g, '-');
             const file = new File([blob], fileName, { type: 'image/png' });
 
-            const shareData = {
-                title: '티켓 정보 공유',
-                text: `${ticket.title} - ${ticket.arrival_airport} 일정입니다.`,
-            };
-
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
                 await navigator.share({
-                    ...shareData,
                     files: [file],
                 });
             } else {
                 await navigator.share({
-                    ...shareData,
                     url: window.location.href
                 });
             }
@@ -217,7 +211,7 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={ticket.title} footer={footer}>
-            <div className="space-y-6" ref={contentRef}>
+            <div className="space-y-4" ref={contentRef}>
                 {/* 공유 이미지에만 포함될 제목 (평소에는 숨김) */}
                 <div className="share-title-only" style={{ display: 'none' }}>
                     <div className="px-2 pb-4 mb-4 border-b-2 border-slate-900">
@@ -246,26 +240,17 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick
                             })()}
                         </div>
                     </div>
-                    <div className="space-y-1.5">
-                        <label className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground">출발 정보</label>
-                        <div className="flex flex-col gap-1">
-                            <span className="text-3xl font-black text-foreground">
-                                {ticket.departure_time || '-'}
-                            </span>
-                            <span className="text-xs font-medium text-muted-foreground">
-                                {formatDate(ticket.departure_date)}
-                            </span>
-                        </div>
-                    </div>
-                    <div className="space-y-1.5">
-                        <label className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground">귀국 정보</label>
-                        <div className="flex flex-col gap-1">
-                            <span className="text-3xl font-black text-foreground">
-                                {ticket.arrival_time || '-'}
-                            </span>
-                            <span className="text-xs font-medium text-muted-foreground">
-                                {formatDate(ticket.return_date)}
-                            </span>
+                    <div className="col-span-2 pt-2 pb-2 border-y border-slate-100/50">
+                        <div className="flex flex-col items-start justify-center space-y-1.5">
+                            <label className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground">출발 정보</label>
+                            <div className="flex items-end gap-2">
+                                <span className="text-5xl font-black text-foreground tracking-tighter">
+                                    {ticket.departure_time || '-'}
+                                </span>
+                                <span className="text-sm font-bold text-muted-foreground">
+                                    ({formatDate(ticket.departure_date)})
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -289,20 +274,20 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-6 pt-2 px-2">
+                <div className="flex flex-col gap-3 pt-2 px-2">
                     <div className="space-y-1.5">
                         <label className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground">소유자</label>
                         <div className="text-sm font-semibold text-foreground">{ticket.owner?.name || ticket.manager_name || '-'}</div>
                     </div>
-                    <div className="space-y-1.5 text-right">
+                    <div className="space-y-1.5">
                         <label className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground">연락처</label>
                         <div className="text-sm font-semibold text-foreground truncate share-email-target">{ticket.owner?.email || ticket.contact || '-'}</div>
                     </div>
                 </div>
 
                 {ticket.memo && (
-                    <div className="space-y-1.5 pt-2">
-                        <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">메모</label>
+                    <div className="space-y-1.5 pt-2 px-1">
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground pl-1">메모</label>
                         <div className="text-sm leading-relaxed text-muted-foreground bg-accent/30 p-3 rounded-lg border border-border/50 whitespace-pre-wrap">
                             {ticket.memo}
                         </div>

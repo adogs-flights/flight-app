@@ -19,6 +19,13 @@ export default function NeedPostFormModal({ isOpen, onClose, post, onPostSaved }
     const isEditing = post != null;
 
     useEffect(() => {
+        if (error) {
+            const timer = setTimeout(() => setError(''), 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [error]);
+
+    useEffect(() => {
         if (isEditing) {
             setForm({
                 title: post.title || '',
@@ -48,8 +55,20 @@ export default function NeedPostFormModal({ isOpen, onClose, post, onPostSaved }
 
     const handleSubmit = async () => {
         setError('');
-        if (!form.title.trim() || !form.contact.trim() || !form.airportCode) {
-            setError('제목, 도착 공항, 연락처는 필수입니다.');
+        if (!form.title.trim()) {
+            setError('제목을 입력해주세요.');
+            return;
+        }
+        if (!form.airportCode) {
+            setError('도착 공항을 선택하거나 입력해주세요.');
+            return;
+        }
+        if (!form.desiredDate) {
+            setError('희망 출발일을 선택해주세요.');
+            return;
+        }
+        if (!form.contact.trim()) {
+            setError('연락처를 입력해주세요.');
             return;
         }
 
@@ -94,21 +113,23 @@ export default function NeedPostFormModal({ isOpen, onClose, post, onPostSaved }
     );
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={isEditing ? '🙏 구해요 수정' : '🙏 구해요 등록'} footer={footer}>
+        <Modal isOpen={isOpen} onClose={onClose} title={isEditing ? '🙏 구해요 수정' : '🙏 구해요 등록'} footer={footer} error={error}>
             <div className="space-y-6">
                 <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">제목</label>
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">
+                        제목<span className="text-destructive ml-0.5">*</span>
+                    </label>
                     <input 
-                        className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
+                        className="h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
                         value={form.title} 
                         onChange={e => handleChange('title', e.target.value)} 
                         placeholder="예: JFK 4월 출발편 1매 구합니다" 
                     />
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <SelectField 
-                        label="도착 공항"
+                        label={<>도착 공항<span className="text-destructive ml-0.5">*</span></>}
                         options={airports}
                         value={form.airportCode}
                         onChange={val => handleChange('airportCode', val)}
@@ -116,9 +137,9 @@ export default function NeedPostFormModal({ isOpen, onClose, post, onPostSaved }
                     />
 
                     <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">필요 매수</label>
+                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">필요 마리수</label>
                         <input 
-                            className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
+                            className="h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
                             type="number" 
                             min="1" 
                             value={form.seatsNeeded} 
@@ -127,20 +148,24 @@ export default function NeedPostFormModal({ isOpen, onClose, post, onPostSaved }
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">희망 출발일</label>
+                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">
+                            희망 출발일<span className="text-destructive ml-0.5">*</span>
+                        </label>
                         <input 
-                            className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
+                            className="h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
                             type="date" 
                             value={form.desiredDate} 
                             onChange={e => handleChange('desiredDate', e.target.value)} 
                         />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">연락처</label>
+                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">
+                            연락처<span className="text-destructive ml-0.5">*</span>
+                        </label>
                         <input 
-                            className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
+                            className="h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
                             value={form.contact} 
                             onChange={e => handleChange('contact', e.target.value)} 
                             placeholder="010-xxxx-xxxx 또는 이메일" 
@@ -170,12 +195,6 @@ export default function NeedPostFormModal({ isOpen, onClose, post, onPostSaved }
                         <span className="ml-3 text-sm font-bold text-foreground">🚨 급구 표시</span>
                     </label>
                 </div>
-
-                {error && (
-                    <div className="px-3 py-2 text-xs font-medium text-destructive bg-destructive/10 border border-destructive/20 rounded-lg">
-                        {error}
-                    </div>
-                )}
             </div>
         </Modal>
     );

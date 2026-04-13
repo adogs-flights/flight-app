@@ -13,7 +13,7 @@ const NeedPostItem = ({ post }) => {
 
     return (
         <div 
-            className={`group flex items-center gap-5 p-5 border-b border-border transition-all hover:bg-muted/30 cursor-pointer ${post.is_resolved ? 'opacity-50' : ''}`}
+            className={`group flex items-center gap-5 py-5 border-b border-border transition-all hover:bg-muted/30 cursor-pointer ${post.is_resolved ? 'opacity-50' : ''}`}
         >
             <div className={`flex items-center justify-center shrink-0 w-12 h-12 rounded-2xl text-xl shadow-inner border-2 ${post.is_urgent ? 'bg-destructive/10 border-destructive/20 text-destructive animate-pulse' : 'bg-primary/5 border-primary/10 text-primary'}`}>
                 {post.is_urgent ? '🚨' : '🙏'}
@@ -45,7 +45,7 @@ const NeedPostItem = ({ post }) => {
                         <span className="opacity-70">👤</span> {post.author?.name || '익명'}
                     </div>
                     <div className="flex items-center gap-1.5 text-xs font-black text-primary bg-primary/5 px-2 py-1 rounded-lg border border-primary/10">
-                        <span className="opacity-70">🎫</span> {post.seats_needed}매 필요
+                        <span className="opacity-70">🎫</span> {post.seats_needed}마리 필요
                     </div>
                 </div>
             </div>

@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { toBlob } from 'html-to-image';
 import CalendarView from '../components/CalendarView';
 import { useAuth } from '../hooks/useAuth';
 import TicketCard from '../components/TicketCard';
@@ -26,6 +27,14 @@ export default function ScheduleView() {
     const [selectedDateTickets, setSelectedDateTickets] = useState([]);
     const [selectedDate, setSelectedDate] = useState(null);
     
+    // 공유 및 달력 상태 관리
+    const [currentDate, setCurrentDate] = useState(new Date());
+    const [isSaving, setIsSaving] = useState(false);
+    const calendarRef = useRef(null);
+
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+
     const { isOpen: isFormOpen, openModal: openFormModal, closeModal: closeFormModal } = useModal();
     const { isOpen: isApplyOpen, openModal: openApplyModal, closeModal: closeApplyModal } = useModal();
     const { isOpen: isApplicantsOpen, openModal: openApplicantsModal, closeModal: closeApplicantsModal } = useModal();
@@ -35,7 +44,7 @@ export default function ScheduleView() {
     const fetchTickets = useCallback(async () => {
         setTicketsState(prev => ({ ...prev, loading: true }));
         try {
-            const response = await apiClient.get('/tickets');
+            const response = await apiClient.get('/tickets?schedule=true');
             setTicketsState({ data: response.data, loading: false, error: '' });
         } catch (err) {
             console.error(err);
@@ -105,7 +114,6 @@ export default function ScheduleView() {
         fetchTickets(); 
     };
 
-    // ticketsState.data를 기반으로 필터링
     const filteredTickets = ticketsState.data.filter(t => {
         if (selectedAirport === '전체') return true;
         if (selectedAirport === '기타') {
@@ -118,9 +126,23 @@ export default function ScheduleView() {
     const renderListContent = () => {
         if (ticketsState.loading) return <div className="empty"><div>Loading...</div></div>;
         if (ticketsState.error) return <div className="empty"><div className="text-red-500">{ticketsState.error}</div></div>;
-        if (filteredTickets.length === 0) return <div className="empty"><div className="empty-icon">📭</div><div className="empty-text">표시할 일정이 없습니다</div></div>;
         
-        return filteredTickets.map(ticket => (
+        // 오늘 날짜 기준 (시간 정보 제외)
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        // 오늘 이후 일정만 필터링 및 날짜순 정렬
+        const listTickets = filteredTickets
+            .filter(ticket => {
+                const ticketDate = new Date(ticket.departure_date);
+                ticketDate.setHours(0, 0, 0, 0);
+                return ticketDate >= today;
+            })
+            .sort((a, b) => new Date(a.departure_date) - new Date(b.departure_date));
+
+        if (listTickets.length === 0) return <div className="empty"><div className="empty-icon">📭</div><div className="empty-text">표시할 예정된 일정이 없습니다</div></div>;
+        
+        return listTickets.map(ticket => (
             <TicketCard 
                 key={ticket.id} 
                 ticket={ticket} 
@@ -131,6 +153,92 @@ export default function ScheduleView() {
                 onClick={() => handleTicketClick(ticket)}
             />
         ));
+    };
+
+    const handleShare = async (e) => {
+        if (e) e.stopPropagation();
+        if (!calendarRef.current || isSaving) return;
+        
+        if (!navigator.share) {
+            alert('이 브라우저에서는 공유 기능을 지원하지 않습니다.');
+            return;
+        }
+
+        setIsSaving(true);
+        const el = calendarRef.current;
+        
+        const originalStyle = {
+            border: el.style.border,
+            borderRadius: el.style.borderRadius,
+            boxShadow: el.style.boxShadow,
+            backgroundColor: el.style.backgroundColor,
+            overflow: el.style.overflow
+        };
+
+        try {
+            el.style.border = '2px solid #e4e4e7';
+            el.style.borderRadius = '16px';
+            el.style.boxShadow = '0 4px 6px -1px rgb(0 0 0 / 0.1)';
+            el.style.backgroundColor = '#ffffff';
+            el.style.overflow = 'hidden';
+
+            const blob = await toBlob(el, {
+                pixelRatio: 2,
+                backgroundColor: '#ffffff',
+                cacheBust: false,
+                style: {
+                    margin: '0',
+                    padding: '0',
+                    transform: 'none'
+                },
+                fontEmbedCSS: `
+                    @font-face {
+                        font-family: 'Pretendard';
+                        src: url('/fonts/Pretendard-Regular.woff2') format('woff2');
+                        font-weight: 400;
+                    }
+                    @font-face {
+                        font-family: 'Pretendard';
+                        src: url('/fonts/Pretendard-Bold.woff2') format('woff2');
+                        font-weight: 700;
+                    }
+                    @font-face {
+                        font-family: 'Gowun Batang';
+                        src: url('/fonts/GowunBatang-Regular.woff2') format('woff2');
+                        font-weight: 400;
+                    }
+                    @font-face {
+                        font-family: 'Gowun Batang';
+                        src: url('/fonts/GowunBatang-Bold.woff2') format('woff2');
+                        font-weight: 700;
+                    }
+                `,
+            });
+
+            Object.assign(el.style, originalStyle);
+
+            if (!blob) throw new Error('이미지 생성 실패');
+
+            const file = new File([blob], `calendar-${year}-${month + 1}.png`, { type: 'image/png' });
+
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    files: [file],
+                });
+            } else {
+                await navigator.share({
+                    url: window.location.href
+                });
+            }
+        } catch (err) {
+            console.error('Share failed:', err);
+            Object.assign(el.style, originalStyle);
+            if (err.name !== 'AbortError') {
+                alert('공유에 실패했습니다.');
+            }
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     return (
@@ -200,12 +308,26 @@ export default function ScheduleView() {
             
             <div className="min-h-[400px]">
                 {view === 'cal' ? (
-                    <div className="bg-card rounded-xl border-2 border-border shadow-sm overflow-hidden">
-                        <CalendarView 
-                            tickets={filteredTickets} 
-                            onTicketClick={handleTicketClick} 
-                            onMoreClick={handleDayMoreClick}
-                        />
+                    <div className="flex flex-col">
+                        <div className="bg-card rounded-xl border-2 border-border shadow-sm overflow-hidden flex flex-col">
+                            <CalendarView 
+                                tickets={filteredTickets} 
+                                onTicketClick={handleTicketClick} 
+                                onMoreClick={handleDayMoreClick}
+                                currentDate={currentDate}
+                                setCurrentDate={setCurrentDate}
+                                calendarRef={calendarRef}
+                                isSaving={isSaving}
+                            />
+                        </div>
+                        <div className="py-4 px-1 sm:hidden">
+                            <button 
+                                className="w-full flex items-center justify-center gap-2 h-11 px-4 text-sm font-bold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm" 
+                                onClick={handleShare}
+                            >
+                                일정 공유하기
+                            </button>
+                        </div>
                     </div>
                 ) : (
                     <div className="robust-grid animate-in fade-in slide-in-from-bottom-2 duration-300">

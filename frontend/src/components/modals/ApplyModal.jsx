@@ -59,7 +59,7 @@ export default function ApplyModal({ isOpen, onClose, ticket, onApplicationSaved
                     <div className="p-4 rounded-xl border-2 border-green/20 bg-green/5 space-y-1 animate-in fade-in duration-500">
                         <div className="text-sm font-bold text-green">🎁 {ticket.title}</div>
                         <div className="text-[11px] font-medium text-green/70">
-                            {ticket.arrival_airport} · {ticket.departure_date?.split('T')[0]} ~ {ticket.return_date?.split('T')[0]}
+                            {ticket.arrival_airport} · {ticket.departure_date?.split('T')[0]}
                         </div>
                     </div>
                 )}

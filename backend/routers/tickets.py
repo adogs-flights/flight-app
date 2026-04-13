@@ -37,14 +37,35 @@ def create_ticket(
 
 
 @router.get("", response_model=list[schemas.Ticket])
-def list_tickets(db: DBSession, current_user: CurrentUser) -> list[models.Ticket]:
+def list_tickets(
+    db: DBSession, 
+    current_user: CurrentUser,
+    schedule: bool = False
+) -> list[models.Ticket]:
     """
     List tickets.
-    - 'owned' tickets are only visible to the owner or an admin.
-    - 'sharing' and 'shared' tickets are visible to all logged-in users.
+    - If schedule=True: Return only current user's tickets that are NOT in 'sharing' status.
+    - If schedule=False:
+        - 'owned' tickets are only visible to the owner or an admin.
+        - 'sharing' and 'shared' tickets are visible to all logged-in users.
     """
     is_admin = current_user.admin_info and current_user.admin_info.approved
 
+    # 1. Schedule View: Show only my active/owned tickets (not sharing)
+    if schedule:
+        tickets = (
+            db.query(models.Ticket)
+            .options(joinedload(models.Ticket.owner))
+            .filter(
+                models.Ticket.owner_id == current_user.id,
+                models.Ticket.status != "sharing"
+            )
+            .order_by(models.Ticket.departure_date.asc())
+            .all()
+        )
+        return tickets
+
+    # 2. General View (My Tickets or Admin)
     # Non-admin users
     if not is_admin:
         tickets = (
