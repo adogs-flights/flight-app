@@ -1,5 +1,6 @@
 
 
+from datetime import date
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -36,12 +37,14 @@ def create_need_post(
 @router.get("", response_model=list[schemas.NeedPost])
 def list_need_posts(db: DBSession, current_user: CurrentUser) -> list[models.NeedPost]:
     """
-    List all 'need' posts. Any logged-in user can view them.
+    List all 'need' posts that have a desired_date >= today, ordered by desired_date.
     """
+    today = date.today()
     return (
         db.query(models.NeedPost)
         .options(joinedload(models.NeedPost.author))
-        .order_by(models.NeedPost.created_at.desc())
+        .filter(models.NeedPost.desired_date >= today)
+        .order_by(models.NeedPost.desired_date.asc())
         .all()
     )
 

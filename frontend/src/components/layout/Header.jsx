@@ -10,7 +10,7 @@ export default function Header({ onMenuClick, onPwChangeClick }) {
             <div className="container flex items-center justify-between h-16 max-w-7xl px-4 mx-auto sm:px-6 lg:px-8">
                 <div className="flex items-center">
                     <button 
-                        className="inline-flex items-center justify-center p-2 rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground sm:hidden transition-colors" 
+                        className="inline-flex items-center justify-center py-2 pr-2 rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground sm:hidden transition-colors" 
                         onClick={onMenuClick}
                     >
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

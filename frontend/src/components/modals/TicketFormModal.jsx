@@ -10,9 +10,7 @@ export default function TicketFormModal({ isOpen, onClose, ticket, onTicketSaved
         title: '',
         arrivalAirport: '',
         departureDate: '',
-        returnDate: '',
         departureTime: '',
-        arrivalTime: '',
         flightInfo: '',
         airline: '',
         capacity: 1,
@@ -26,14 +24,19 @@ export default function TicketFormModal({ isOpen, onClose, ticket, onTicketSaved
     const isEditing = ticket != null;
 
     useEffect(() => {
+        if (error) {
+            const timer = setTimeout(() => setError(''), 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [error]);
+
+    useEffect(() => {
         if (isEditing) {
             setForm({
                 title: ticket.title || '',
                 arrivalAirport: ticket.arrival_airport || '',
                 departureDate: ticket.departure_date?.split('T')[0] || '',
-                returnDate: ticket.return_date?.split('T')[0] || '',
                 departureTime: ticket.departure_time || '',
-                arrivalTime: ticket.arrival_time || '',
                 flightInfo: ticket.flight_info || '',
                 airline: ticket.airline || '',
                 capacity: ticket.capacity || 1,
@@ -47,9 +50,7 @@ export default function TicketFormModal({ isOpen, onClose, ticket, onTicketSaved
                 title: '',
                 arrivalAirport: '',
                 departureDate: '',
-                returnDate: '',
                 departureTime: '',
-                arrivalTime: '',
                 flightInfo: '',
                 airline: '',
                 capacity: 1,
@@ -67,8 +68,16 @@ export default function TicketFormModal({ isOpen, onClose, ticket, onTicketSaved
 
     const handleSubmit = async () => {
         setError('');
-        if (!form.departureDate || !form.returnDate || !form.arrivalAirport) {
-            setError('도착 공항, 출발일, 귀국일은 필수입니다.');
+        if (!form.departureDate) {
+            setError('출발일을 선택해주세요.');
+            return;
+        }
+        if (!form.arrivalAirport) {
+            setError('도착 공항을 선택하거나 입력해주세요.');
+            return;
+        }
+        if (!form.airline) {
+            setError('항공사를 선택하거나 입력해주세요.');
             return;
         }
 
@@ -89,9 +98,7 @@ export default function TicketFormModal({ isOpen, onClose, ticket, onTicketSaved
             title: finalTitle, 
             arrival_airport: form.arrivalAirport, 
             departure_date: form.departureDate, 
-            return_date: form.returnDate,
             departure_time: form.departureTime,
-            arrival_time: form.arrivalTime,
             flight_info: form.flightInfo, 
             airline: form.airline,
             capacity: form.capacity,
@@ -134,67 +141,44 @@ export default function TicketFormModal({ isOpen, onClose, ticket, onTicketSaved
     );
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={isEditing ? '✈️ 티켓 수정' : '✈️ 티켓 등록'} footer={footer}>
+        <Modal isOpen={isOpen} onClose={onClose} title={isEditing ? '✈️ 티켓 수정' : '✈️ 티켓 등록'} footer={footer} error={error}>
             <div className="space-y-6">
                 <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">티켓 제목 (미입력 시 자동 생성)</label>
                     <input 
-                        className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
+                        className="h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
                         value={form.title} 
                         onChange={e => handleChange('title', e.target.value)} 
                         placeholder="예: 4월 뉴욕행 티켓 나눔합니다" 
                     />
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">출발일</label>
+                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">
+                            출발일<span className="text-destructive ml-0.5">*</span>
+                        </label>
                         <input 
-                            className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
+                            className="h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
                             type="date" 
                             value={form.departureDate} 
-                            onChange={e => {
-                                const newDate = e.target.value;
-                                handleChange('departureDate', newDate);
-                                if (!form.returnDate || form.returnDate < newDate) {
-                                    handleChange('returnDate', newDate);
-                                }
-                            }} 
+                            onChange={e => handleChange('departureDate', e.target.value)} 
                         />
                     </div>
                     <div className="space-y-2">
                         <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">출발 시간</label>
                         <input 
-                            className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
+                            className="h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
                             type="time" 
                             value={form.departureTime} 
                             onChange={e => handleChange('departureTime', e.target.value)} 
                         />
                     </div>
-
-                    <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">귀국일</label>
-                        <input 
-                            className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
-                            type="date" 
-                            value={form.returnDate} 
-                            onChange={e => handleChange('returnDate', e.target.value)} 
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">도착 시간</label>
-                        <input 
-                            className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
-                            type="time" 
-                            value={form.arrivalTime} 
-                            onChange={e => handleChange('arrivalTime', e.target.value)} 
-                        />
-                    </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <SelectField 
-                        label="도착 공항"
+                        label={<>도착 공항<span className="text-destructive ml-0.5">*</span></>}
                         options={airports}
                         value={form.arrivalAirport}
                         onChange={val => handleChange('arrivalAirport', val)}
@@ -202,7 +186,7 @@ export default function TicketFormModal({ isOpen, onClose, ticket, onTicketSaved
                     />
 
                     <SelectField 
-                        label="항공사"
+                        label={<>항공사<span className="text-destructive ml-0.5">*</span></>}
                         options={airlines}
                         value={form.airline}
                         onChange={val => handleChange('airline', val)}
@@ -213,18 +197,18 @@ export default function TicketFormModal({ isOpen, onClose, ticket, onTicketSaved
                 <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">항공편 정보</label>
                     <input 
-                        className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
+                        className="h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
                         value={form.flightInfo} 
                         onChange={e => handleChange('flightInfo', e.target.value)} 
                         placeholder="예: ICN → JFK KE081" 
                     />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">기내 여유 (마리)</label>
                         <input 
-                            className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
+                            className="h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
                             type="number" 
                             min="0" 
                             value={form.cabinCapacity} 
@@ -234,7 +218,7 @@ export default function TicketFormModal({ isOpen, onClose, ticket, onTicketSaved
                     <div className="space-y-2">
                         <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">수하물 여유 (마리)</label>
                         <input 
-                            className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
+                            className="h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
                             type="number" 
                             min="0" 
                             value={form.cargoCapacity} 
@@ -270,12 +254,6 @@ export default function TicketFormModal({ isOpen, onClose, ticket, onTicketSaved
                         placeholder="추가 정보(좌석 등급, 경유 여부 등)..."
                     />
                 </div>
-
-                {error && (
-                    <div className="px-3 py-2 text-xs font-medium text-destructive bg-destructive/10 border border-destructive/20 rounded-lg">
-                        {error}
-                    </div>
-                )}
             </div>
         </Modal>
     );

@@ -53,7 +53,7 @@ export default function Sidebar({ isOpen, onClose, onPwChangeClick }) {
                             <span className="text-xl font-black tracking-tighter text-foreground">해봉티켓</span>
                         </div>
                         <button 
-                            className="p-2 rounded-lg text-muted-foreground hover:bg-muted transition-colors border border-border" 
+                            className="p-2 rounded-lg text-muted-foreground hover:bg-muted transition-colors" 
                             onClick={onClose}
                         >
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -67,18 +67,20 @@ export default function Sidebar({ isOpen, onClose, onPwChangeClick }) {
                         <div className="space-y-2">
                             <h4 className="px-3 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/50 mb-3 ml-1">Main Menu</h4>
                             <nav className="flex flex-col gap-1.5">
-                                <NavItem to="/schedules" icon="📅" count={scheduleCount}>일정 관리</NavItem>
-                                <NavItem to="/needs" icon="🙏" count={needCount}>구해요 게시판</NavItem>
-                                <NavItem to="/give" icon="🎁" count={giveCount}>나눔해요</NavItem>
-                                <NavItem to="/mytickets" icon="🎫">내 티켓</NavItem>
-                                <NavItem to="/myapplications" icon="📬">내 신청 현황</NavItem>
-                                {isAdmin && <NavItem to="/admin" icon="⚙️">관리자 페이지</NavItem>}
+                                <NavItem to="/schedules" icon="" count={scheduleCount}>일정 관리</NavItem>
+                                <NavItem to="/needs" icon="" count={needCount}>구해요 게시판</NavItem>
+                                <NavItem to="/give" icon="" count={giveCount}>나눔해요</NavItem>
+                                <NavItem to="/mytickets" icon="">내 티켓</NavItem>
+                                <NavItem to="/myapplications" icon="">내 신청 현황</NavItem>
+                                {isAdmin && <NavItem to="/admin" icon="">관리자 페이지</NavItem>}
+
+                                <hr></hr>
                                 
                                 <button 
-                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-muted-foreground hover:bg-muted hover:text-foreground sm:hidden transition-all text-left w-full mt-2 border border-dashed border-border" 
+                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-muted-foreground hover:bg-muted hover:text-foreground sm:hidden transition-all text-left w-full mt-2" 
                                     onClick={onPwChangeClick}
                                 >
-                                    <span className="text-base opacity-70">🔑</span> 비밀번호 변경
+                                    <span className="text-base opacity-70"></span> 비밀번호 변경
                                 </button>
                             </nav>
                         </div>
