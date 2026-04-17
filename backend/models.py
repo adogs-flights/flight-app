@@ -1,4 +1,3 @@
-
 import uuid
 
 from sqlalchemy import (
@@ -69,9 +68,7 @@ class RefreshToken(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     token = Column(String, unique=True, index=True, nullable=False)
-    user_id = Column(
-        String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
-    )
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     expires_at = Column(DateTime(timezone=True), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
@@ -99,7 +96,7 @@ class Ticket(Base):
         Text, nullable=False, index=True
     )  # country -> arrival_airport
     departure_date = Column(Date, nullable=False, index=True)
-    return_date = Column(Date, nullable=False)
+    arrival_date = Column(Date, nullable=False)
     departure_time = Column(String, default="")  # 신규
     arrival_time = Column(String, default="")  # 신규
     flight_info = Column(Text, default="")

@@ -20,7 +20,7 @@ from email_utils import send_email
 SECRET_KEY = os.environ.get("SECRET_KEY", "super-secret-key-for-dev")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30  # Short-lived for security
-REFRESH_TOKEN_EXPIRE_DAYS = 14    # Long-lived for convenience
+REFRESH_TOKEN_EXPIRE_DAYS = 14  # Long-lived for convenience
 
 router = APIRouter(prefix="/api", tags=["Authentication"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/token")
@@ -30,18 +30,21 @@ DBSession = Annotated[Session, Depends(get_db)]
 OAuth2Form = Annotated[OAuth2PasswordRequestForm, Depends()]
 TokenDep = Annotated[str, Depends(oauth2_scheme)]
 
+
 # ======================================================================================
 # Password & Token Utilities
 # ======================================================================================
 def get_password_hash(password: str) -> str:
     salt = bcrypt.gensalt()
-    return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
+    return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
+
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return bcrypt.checkpw(
-        plain_password.encode('utf-8'),
-        hashed_password.encode('utf-8'),
+        plain_password.encode("utf-8"),
+        hashed_password.encode("utf-8"),
     )
+
 
 def create_access_token(
     data: dict[str, Any], expires_delta: timedelta | None = None
@@ -198,6 +201,7 @@ def read_users(db: DBSession) -> list[models.User]:
     users = db.query(models.User).all()
     return users
 
+
 @router.post("/users", response_model=schemas.User, status_code=status.HTTP_201_CREATED)
 def create_user_by_admin(
     user_in: schemas.UserCreate,
@@ -227,9 +231,11 @@ def create_user_by_admin(
 
     return db_user
 
+
 @router.get("/users/me", response_model=schemas.User)
 def read_users_me(current_user: CurrentUser) -> models.User:
     return current_user
+
 
 @router.put("/users/me/password", status_code=status.HTTP_204_NO_CONTENT)
 def update_password(

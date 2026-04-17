@@ -72,10 +72,12 @@ export default function NeedPostFormModal({ isOpen, onClose, post, onPostSaved }
             return;
         }
 
+        const seatsNeededNum = form.seatsNeeded === '' ? 1 : parseInt(form.seatsNeeded);
+
         const postData = {
             title: form.title, 
             airport_code: form.airportCode, 
-            seats_needed: form.seatsNeeded,
+            seats_needed: seatsNeededNum,
             desired_date: form.desiredDate || null, 
             contact: form.contact, 
             detail: form.detail, 
@@ -142,8 +144,9 @@ export default function NeedPostFormModal({ isOpen, onClose, post, onPostSaved }
                             className="h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
                             type="number" 
                             min="1" 
-                            value={form.seatsNeeded} 
-                            onChange={e => handleChange('seatsNeeded', parseInt(e.target.value) || 1)} 
+                            value={form.seatsNeeded === 1 && !isEditing ? '' : form.seatsNeeded} 
+                            onChange={e => handleChange('seatsNeeded', e.target.value)} 
+                            placeholder="1"
                         />
                     </div>
                 </div>

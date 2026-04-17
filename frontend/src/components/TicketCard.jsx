@@ -4,11 +4,11 @@ import { getAirportColor } from '../utils/airportUtils';
 const TicketStatusBadge = ({ status }) => {
     switch (status) {
         case 'sharing':
-            return <span className="badge badge-sharing">🟢 나눔중</span>;
+            return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green/10 text-green border border-green/20">🟢 나눔중</span>;
         case 'shared':
-            return <span className="badge badge-shared">✅ 나눔완료</span>;
+            return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-muted text-muted-foreground border border-border">✅ 나눔완료</span>;
         case 'owned':
-            return <span className="badge badge-owned">🔒 소유중</span>;
+            return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary border border-primary/20">🔒 소유중</span>;
         default:
             return null;
     }
@@ -16,20 +16,27 @@ const TicketStatusBadge = ({ status }) => {
 
 const TicketCard = ({ ticket, onEditClick, onDeleteClick, onApplyClick, onViewApplicantsClick, onClick }) => {
     const { user, rawAirports } = useAuth();
-    const isOwner = ticket.owner_id === user.id;
+    
+    if (!ticket) return null;
+    
+    const isOwner = user && ticket.owner_id === user.id;
     const colors = getAirportColor(ticket.arrival_airport, rawAirports);
 
-    // A simple date formatter
     const formatDate = (dateString) => {
         if (!dateString) return '';
-        const date = new Date(dateString);
-        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return '-';
+            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        } catch (e) {
+            return '-';
+        }
     };
 
-    const handleEdit = (e) => { e.stopPropagation(); onEditClick(ticket); };
-    const handleDelete = (e) => { e.stopPropagation(); onDeleteClick(ticket.id); };
-    const handleApply = (e) => { e.stopPropagation(); onApplyClick(ticket); };
-    const handleViewApplicants = (e) => { e.stopPropagation(); onViewApplicantsClick(ticket); };
+    const handleEdit = (e) => { e.stopPropagation(); onEditClick && onEditClick(ticket); };
+    const handleDelete = (e) => { e.stopPropagation(); onDeleteClick && onDeleteClick(ticket.id); };
+    const handleApply = (e) => { e.stopPropagation(); onApplyClick && onApplyClick(ticket); };
+    const handleViewApplicants = (e) => { e.stopPropagation(); onViewApplicantsClick && onViewApplicantsClick(ticket); };
 
     return (
         <div 
@@ -37,7 +44,6 @@ const TicketCard = ({ ticket, onEditClick, onDeleteClick, onApplyClick, onViewAp
             style={{ borderColor: colors.bg }}
             onClick={onClick}
         >
-            {/* Left accent bar matching airport color */}
             <div 
                 className="absolute left-0 top-0 bottom-0 w-1.5" 
                 style={{ backgroundColor: colors.text + '77' }}
@@ -46,17 +52,17 @@ const TicketCard = ({ ticket, onEditClick, onDeleteClick, onApplyClick, onViewAp
             <div className="space-y-3">
                 <div className="flex items-start justify-between gap-3">
                     <h3 className="text-base font-bold leading-snug text-foreground line-clamp-2">
-                        {ticket.title}
+                        {ticket.title || '제목 없음'}
                     </h3>
                     <div className="flex flex-wrap items-center justify-end flex-shrink-0 gap-1.5">
                         <span 
                             className="px-2 py-0.5 rounded-full text-[10px] font-bold border" 
                             style={{ backgroundColor: colors.bg, color: colors.text, borderColor: colors.bg }}
                         >
-                            {ticket.arrival_airport}
+                            {ticket.arrival_airport || '미지정'}
                         </span>
                         <TicketStatusBadge status={ticket.status} />
-                        {isOwner && ticket.status !== 'regular' && (
+                        {isOwner && (
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-secondary text-secondary-foreground border border-border">👤 내 등록</span>
                         )}
                     </div>
@@ -69,7 +75,7 @@ const TicketCard = ({ ticket, onEditClick, onDeleteClick, onApplyClick, onViewAp
                     </div>
                     <div className="flex items-center gap-1.5">
                         <span className="text-sm">✈️</span>
-                        <span>{ticket.flight_info}</span>
+                        <span>{ticket.flight_info || '-'}</span>
                     </div>
                 </div>
             </div>

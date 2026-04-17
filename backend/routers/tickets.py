@@ -1,5 +1,3 @@
-
-
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -38,9 +36,7 @@ def create_ticket(
 
 @router.get("", response_model=list[schemas.Ticket])
 def list_tickets(
-    db: DBSession, 
-    current_user: CurrentUser,
-    schedule: bool = False
+    db: DBSession, current_user: CurrentUser, schedule: bool = False
 ) -> list[models.Ticket]:
     """
     List tickets.
@@ -51,15 +47,16 @@ def list_tickets(
     """
     is_admin = current_user.admin_info and current_user.admin_info.approved
 
-    # 1. Schedule View: Show only my active/owned tickets (not sharing)
+    # 1. Schedule View: Show active/owned tickets (not sharing)
     if schedule:
+        query = db.query(models.Ticket).options(joinedload(models.Ticket.owner))
+
+        # 일반 사용자는 본인 티켓만, 관리자는 전체 티켓 조회
+        if not is_admin:
+            query = query.filter(models.Ticket.owner_id == current_user.id)
+
         tickets = (
-            db.query(models.Ticket)
-            .options(joinedload(models.Ticket.owner))
-            .filter(
-                models.Ticket.owner_id == current_user.id,
-                models.Ticket.status != "sharing"
-            )
+            query.filter(models.Ticket.status != "sharing")
             .order_by(models.Ticket.departure_date.asc())
             .all()
         )

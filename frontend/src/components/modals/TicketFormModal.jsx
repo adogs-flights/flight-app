@@ -11,6 +11,8 @@ export default function TicketFormModal({ isOpen, onClose, ticket, onTicketSaved
         arrivalAirport: '',
         departureDate: '',
         departureTime: '',
+        arrivalDate: '',
+        arrivalTime: '',
         flightInfo: '',
         airline: '',
         capacity: 1,
@@ -37,6 +39,8 @@ export default function TicketFormModal({ isOpen, onClose, ticket, onTicketSaved
                 arrivalAirport: ticket.arrival_airport || '',
                 departureDate: ticket.departure_date?.split('T')[0] || '',
                 departureTime: ticket.departure_time || '',
+                arrivalDate: ticket.arrival_date?.split('T')[0] || '',
+                arrivalTime: ticket.arrival_time || '',
                 flightInfo: ticket.flight_info || '',
                 airline: ticket.airline || '',
                 capacity: ticket.capacity || 1,
@@ -51,6 +55,8 @@ export default function TicketFormModal({ isOpen, onClose, ticket, onTicketSaved
                 arrivalAirport: '',
                 departureDate: '',
                 departureTime: '',
+                arrivalDate: '',
+                arrivalTime: '',
                 flightInfo: '',
                 airline: '',
                 capacity: 1,
@@ -63,7 +69,14 @@ export default function TicketFormModal({ isOpen, onClose, ticket, onTicketSaved
     }, [ticket, isEditing, isOpen]);
 
     const handleChange = (field, value) => {
-        setForm(prev => ({ ...prev, [field]: value }));
+        setForm(prev => {
+            const newForm = { ...prev, [field]: value };
+            // 출발일이 변경될 때 도착일이 비어있거나 출발일보다 이전이면 도착일을 출발일과 동일하게 설정
+            if (field === 'departureDate' && (!prev.arrivalDate || prev.arrivalDate < value)) {
+                newForm.arrivalDate = value;
+            }
+            return newForm;
+        });
     };
 
     const handleSubmit = async () => {
@@ -99,6 +112,8 @@ export default function TicketFormModal({ isOpen, onClose, ticket, onTicketSaved
             arrival_airport: form.arrivalAirport, 
             departure_date: form.departureDate, 
             departure_time: form.departureTime,
+            arrival_date: form.arrivalDate || form.departureDate, 
+            arrival_time: form.arrivalTime,
             flight_info: form.flightInfo, 
             airline: form.airline,
             capacity: form.capacity,
@@ -177,6 +192,29 @@ export default function TicketFormModal({ isOpen, onClose, ticket, onTicketSaved
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">
+                            도착일<span className="text-destructive ml-0.5">*</span>
+                        </label>
+                        <input 
+                            className="h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
+                            type="date" 
+                            value={form.arrivalDate} 
+                            onChange={e => handleChange('arrivalDate', e.target.value)} 
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">도착 시간</label>
+                        <input 
+                            className="h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
+                            type="time" 
+                            value={form.arrivalTime} 
+                            onChange={e => handleChange('arrivalTime', e.target.value)} 
+                        />
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <SelectField 
                         label={<>도착 공항<span className="text-destructive ml-0.5">*</span></>}
                         options={airports}
@@ -206,23 +244,25 @@ export default function TicketFormModal({ isOpen, onClose, ticket, onTicketSaved
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">기내 여유 (마리)</label>
+                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">기내(마리)</label>
                         <input 
                             className="h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
                             type="number" 
                             min="0" 
-                            value={form.cabinCapacity} 
-                            onChange={e => handleChange('cabinCapacity', parseInt(e.target.value) || 0)} 
+                            value={form.cabinCapacity === 0 ? '' : form.cabinCapacity} 
+                            onChange={e => handleChange('cabinCapacity', e.target.value)} 
+                            placeholder="0"
                         />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">수하물 여유 (마리)</label>
+                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">수하물(마리)</label>
                         <input 
                             className="h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
                             type="number" 
                             min="0" 
-                            value={form.cargoCapacity} 
-                            onChange={e => handleChange('cargoCapacity', parseInt(e.target.value) || 0)} 
+                            value={form.cargoCapacity === 0 ? '' : form.cargoCapacity} 
+                            onChange={e => handleChange('cargoCapacity', e.target.value)} 
+                            placeholder="0"
                         />
                     </div>
                 </div>
