@@ -71,8 +71,13 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick
         setIsSharingImage(true);
         try {
             const originalPadding = contentRef.current.style.padding;
-            // 좌우 패딩을 2px로 설정 (사용자 요청 반영)
+            const originalWidth = contentRef.current.style.width;
+            const originalMinWidth = contentRef.current.style.minWidth;
+
+            // 캡처 시 레이아웃 고정을 위해 너비와 패딩 강제 설정
             contentRef.current.style.padding = '20px 2px';
+            contentRef.current.style.width = '400px';
+            contentRef.current.style.minWidth = '400px';
             
             // 이미지 캡처용 제목 임시 노출 및 이메일 말줄임 해제
             const shareTitle = contentRef.current.querySelector('.share-title-only');
@@ -93,6 +98,8 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick
                 pixelRatio: 2,
                 backgroundColor: '#ffffff',
                 cacheBust: false,
+                width: 400, // 고정 너비 명시
+                height: contentRef.current.offsetHeight,
                 fontEmbedCSS: `
                     @font-face {
                         font-family: 'Pretendard';
@@ -101,8 +108,18 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick
                     }
                     @font-face {
                         font-family: 'Pretendard';
+                        src: url('/fonts/Pretendard-SemiBold.woff2') format('woff2');
+                        font-weight: 600;
+                    }
+                    @font-face {
+                        font-family: 'Pretendard';
                         src: url('/fonts/Pretendard-Bold.woff2') format('woff2');
                         font-weight: 700;
+                    }
+                    @font-face {
+                        font-family: 'Pretendard';
+                        src: url('/fonts/Pretendard-Black.woff2') format('woff2');
+                        font-weight: 900;
                     }
                     @font-face {
                         font-family: 'Gowun Batang';
@@ -124,6 +141,8 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick
                 emailElem.style.whiteSpace = originalEmailWhiteSpace;
             }
             contentRef.current.style.padding = originalPadding;
+            contentRef.current.style.width = originalWidth;
+            contentRef.current.style.minWidth = originalMinWidth;
 
             if (!blob) throw new Error('이미지 생성에 실패했습니다.');
 
@@ -248,12 +267,12 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick
                     <div className="col-span-2 pt-2 pb-2 border-y border-slate-100/50">
                         <div className="flex items-center justify-between gap-4">
                             <div className="flex flex-col items-start justify-center space-y-1.5 flex-1">
-                                <label className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground">출발 정보</label>
+                                <label className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground whitespace-nowrap">출발 정보</label>
                                 <div className="flex flex-col">
                                     <span className="text-4xl font-black text-foreground tracking-tighter">
                                         {ticket.departure_time || '-'}
                                     </span>
-                                    <span className="text-[11px] font-bold text-muted-foreground pb-1">
+                                    <span className="text-[11px] font-bold text-muted-foreground pb-1 whitespace-nowrap">
                                         ({formatDate(ticket.departure_date)})
                                     </span>
                                 </div>
@@ -262,12 +281,12 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick
                             <div className="h-10 w-px bg-slate-100/80" />
 
                             <div className="flex flex-col items-start justify-center space-y-1.5 flex-1">
-                                <label className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground">도착 정보</label>
+                                <label className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground whitespace-nowrap">도착 정보</label>
                                 <div className="flex flex-col">
                                     <span className="text-4xl font-black text-foreground tracking-tighter">
                                         {ticket.arrival_time || '-'}
                                     </span>
-                                    <span className="text-[11px] font-bold text-muted-foreground pb-1">
+                                    <span className="text-[11px] font-bold text-muted-foreground pb-1 whitespace-nowrap">
                                         ({formatDate(ticket.arrival_date)})
                                     </span>
                                 </div>
