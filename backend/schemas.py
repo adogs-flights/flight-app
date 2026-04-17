@@ -13,10 +13,12 @@ class TicketStatus(str, Enum):
     sharing = "sharing"
     shared = "shared"
 
+
 class TicketApplicationStatus(str, Enum):
     pending = "pending"
     confirmed = "confirmed"
     rejected = "rejected"
+
 
 # ======================================================================================
 # AdminUser Schemas (User에서 참조하기 위해 위로 이동)
@@ -25,11 +27,13 @@ class AdminUserBase(BaseModel):
     user_id: str
     approved: bool
 
+
 class AdminUser(AdminUserBase):
     created_at: datetime
 
     class Config:
         from_attributes = True
+
 
 # ======================================================================================
 # User Schemas
@@ -37,6 +41,7 @@ class AdminUser(AdminUserBase):
 class UserBase(BaseModel):
     email: EmailStr
     name: str
+
 
 class UserCreate(UserBase):
     password: str
@@ -54,6 +59,7 @@ class UserCreate(UserBase):
             raise ValueError("Password must contain at least one special character")
         return v
 
+
 class User(UserBase):
     id: str
     created_at: datetime
@@ -62,6 +68,7 @@ class User(UserBase):
     class Config:
         from_attributes = True
 
+
 # ======================================================================================
 # Ticket Schemas
 # ======================================================================================
@@ -69,7 +76,7 @@ class TicketBase(BaseModel):
     title: str
     arrival_airport: str
     departure_date: date
-    return_date: date
+    arrival_date: date
     departure_time: str | None = ""
     arrival_time: str | None = ""
     flight_info: str | None = ""
@@ -81,14 +88,16 @@ class TicketBase(BaseModel):
     contact: str
     memo: str | None = None
 
+
 class TicketCreate(TicketBase):
     pass
+
 
 class TicketUpdate(BaseModel):
     title: str | None = None
     arrival_airport: str | None = None
     departure_date: date | None = None
-    return_date: date | None = None
+    arrival_date: date | None = None
     departure_time: str | None = None
     arrival_time: str | None = None
     flight_info: str | None = None
@@ -100,6 +109,7 @@ class TicketUpdate(BaseModel):
     manager_name: str | None = None
     contact: str | None = None
     memo: str | None = None
+
 
 class Ticket(TicketBase):
     id: str
@@ -113,6 +123,7 @@ class Ticket(TicketBase):
     class Config:
         from_attributes = True
 
+
 # ======================================================================================
 # TicketApplication Schemas
 # ======================================================================================
@@ -120,11 +131,14 @@ class TicketApplicationBase(BaseModel):
     message: str
     contact: str
 
+
 class TicketApplicationCreate(TicketApplicationBase):
     ticket_id: str
 
+
 class TicketApplicationUpdate(BaseModel):
     status: TicketApplicationStatus
+
 
 class TicketApplication(TicketApplicationBase):
     id: str
@@ -139,6 +153,7 @@ class TicketApplication(TicketApplicationBase):
     class Config:
         from_attributes = True
 
+
 # ======================================================================================
 # NeedPost Schemas
 # ======================================================================================
@@ -152,8 +167,10 @@ class NeedPostBase(BaseModel):
     detail: str | None = None
     is_urgent: bool | None = False
 
+
 class NeedPostCreate(NeedPostBase):
     pass
+
 
 class NeedPostUpdate(BaseModel):
     title: str | None = None
@@ -166,6 +183,7 @@ class NeedPostUpdate(BaseModel):
     is_urgent: bool | None = None
     is_resolved: bool | None = None
 
+
 class NeedPost(NeedPostBase):
     id: str
     is_resolved: bool
@@ -177,6 +195,7 @@ class NeedPost(NeedPostBase):
     class Config:
         from_attributes = True
 
+
 # ======================================================================================
 # Token Schemas
 # ======================================================================================
@@ -185,15 +204,19 @@ class Token(BaseModel):
     refresh_token: str
     token_type: str
 
+
 class TokenRefresh(BaseModel):
     refresh_token: str
+
 
 class TokenData(BaseModel):
     email: EmailStr | None = None
 
+
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
 
 class PasswordUpdate(BaseModel):
     old_password: str
@@ -224,8 +247,10 @@ class AirportBase(BaseModel):
     text_color: str | None = "#475569"
     is_active: bool | None = True
 
+
 class AirportCreate(AirportBase):
     pass
+
 
 class AirportUpdate(BaseModel):
     code: str | None = None
@@ -234,6 +259,7 @@ class AirportUpdate(BaseModel):
     bg_color: str | None = None
     text_color: str | None = None
     is_active: bool | None = None
+
 
 class Airport(AirportBase):
     id: int
@@ -247,13 +273,16 @@ class AirlineBase(BaseModel):
     name: str
     is_active: bool | None = True
 
+
 class AirlineCreate(AirlineBase):
     pass
+
 
 class AirlineUpdate(BaseModel):
     code: str | None = None
     name: str | None = None
     is_active: bool | None = None
+
 
 class Airline(AirlineBase):
     id: int

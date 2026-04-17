@@ -1,5 +1,3 @@
-
-
 from datetime import date
 from typing import Annotated
 
@@ -37,16 +35,19 @@ def create_need_post(
 @router.get("", response_model=list[schemas.NeedPost])
 def list_need_posts(db: DBSession, current_user: CurrentUser) -> list[models.NeedPost]:
     """
-    List all 'need' posts that have a desired_date >= today, ordered by desired_date.
+    List 'need' posts.
+    - Admin: See all posts.
+    - Normal: See only future posts (desired_date >= today).
     """
-    today = date.today()
-    return (
-        db.query(models.NeedPost)
-        .options(joinedload(models.NeedPost.author))
-        .filter(models.NeedPost.desired_date >= today)
-        .order_by(models.NeedPost.desired_date.asc())
-        .all()
-    )
+    is_admin = current_user.admin_info and current_user.admin_info.approved
+
+    query = db.query(models.NeedPost).options(joinedload(models.NeedPost.author))
+
+    if not is_admin:
+        today = date.today()
+        query = query.filter(models.NeedPost.desired_date >= today)
+
+    return query.order_by(models.NeedPost.desired_date.asc()).all()
 
 
 @router.get("/{post_id}", response_model=schemas.NeedPost)

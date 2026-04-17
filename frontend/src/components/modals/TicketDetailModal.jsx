@@ -19,8 +19,13 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick
 
     const formatDate = (dateString) => {
         if (!dateString) return '';
-        const date = new Date(dateString);
-        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return '-';
+            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        } catch (e) {
+            return '-';
+        }
     };
 
     const statusLabel = {
@@ -241,15 +246,31 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick
                         </div>
                     </div>
                     <div className="col-span-2 pt-2 pb-2 border-y border-slate-100/50">
-                        <div className="flex flex-col items-start justify-center space-y-1.5">
-                            <label className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground">출발 정보</label>
-                            <div className="flex items-end gap-2">
-                                <span className="text-5xl font-black text-foreground tracking-tighter">
-                                    {ticket.departure_time || '-'}
-                                </span>
-                                <span className="text-sm font-bold text-muted-foreground">
-                                    ({formatDate(ticket.departure_date)})
-                                </span>
+                        <div className="flex items-center justify-between gap-4">
+                            <div className="flex flex-col items-start justify-center space-y-1.5 flex-1">
+                                <label className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground">출발 정보</label>
+                                <div className="flex flex-col">
+                                    <span className="text-4xl font-black text-foreground tracking-tighter">
+                                        {ticket.departure_time || '-'}
+                                    </span>
+                                    <span className="text-[11px] font-bold text-muted-foreground pb-1">
+                                        ({formatDate(ticket.departure_date)})
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div className="h-10 w-px bg-slate-100/80" />
+
+                            <div className="flex flex-col items-start justify-center space-y-1.5 flex-1">
+                                <label className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground">도착 정보</label>
+                                <div className="flex flex-col">
+                                    <span className="text-4xl font-black text-foreground tracking-tighter">
+                                        {ticket.arrival_time || '-'}
+                                    </span>
+                                    <span className="text-[11px] font-bold text-muted-foreground pb-1">
+                                        ({formatDate(ticket.arrival_date)})
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -265,11 +286,11 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick
                         <div className="text-s font-semibold text-foreground">{ticket.flight_info || '-'}</div>
                     </div>
                     <div className="space-y-1">
-                        <label className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground/70">기내 여유</label>
+                        <label className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground/70">기내</label>
                         <div className="text-s font-semibold text-foreground">{Number(ticket.cabin_capacity || 0)} 석</div>
                     </div>
                     <div className="space-y-1 text-right">
-                        <label className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground/70">수하물 여유</label>
+                        <label className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground/70">수하물</label>
                         <div className="text-s font-semibold text-foreground">{Number(ticket.cargo_capacity || 0)} 석</div>
                     </div>
                 </div>
@@ -277,17 +298,17 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick
                 <div className="flex flex-col gap-3 pt-2 px-2">
                     <div className="space-y-1.5">
                         <label className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground">소유자</label>
-                        <div className="text-sm font-semibold text-foreground">{ticket.owner?.name || ticket.manager_name || '-'}</div>
+                        <div className="text-m font-semibold text-foreground">{ticket.owner?.name || ticket.manager_name || '-'}</div>
                     </div>
                     <div className="space-y-1.5">
                         <label className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground">연락처</label>
-                        <div className="text-sm font-semibold text-foreground truncate share-email-target">{ticket.owner?.email || ticket.contact || '-'}</div>
+                        <div className="text-m font-semibold text-foreground truncate share-email-target">{ticket.owner?.email || ticket.contact || '-'}</div>
                     </div>
                 </div>
 
                 {ticket.memo && (
                     <div className="space-y-1.5 pt-2 px-1">
-                        <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground pl-1">메모</label>
+                        <label className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground pl-1">메모</label>
                         <div className="text-sm leading-relaxed text-muted-foreground bg-accent/30 p-3 rounded-lg border border-border/50 whitespace-pre-wrap">
                             {ticket.memo}
                         </div>

@@ -1,4 +1,3 @@
-
 import os
 import smtplib
 from email.header import Header
@@ -29,20 +28,21 @@ SMTP_USERNAME = os.environ.get("SMTP_USERNAME")
 SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD")
 SENDER_EMAIL = os.environ.get("SENDER_EMAIL")
 
+
 def send_email(receiver_email: str, subject: str, body: str):
     """
     Sends an email using SMTP configuration from environment variables.
     If configuration is not set, it prints the email to the console instead.
     """
     if not all([SMTP_SERVER, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, SENDER_EMAIL]):
-        print("="*80)
+        print("=" * 80)
         print("!!! EMAIL SENDING IS NOT CONFIGURED !!!")
         print("To enable, set SMTP environment variables.")
         print(f"TO: {receiver_email}")
         print(f"SUBJECT: {subject}")
         print("--- BODY ---")
         print(body)
-        print("="*80)
+        print("=" * 80)
         return
 
     try:
@@ -50,14 +50,13 @@ def send_email(receiver_email: str, subject: str, body: str):
         smtp.starttls()
         smtp.login(SMTP_USERNAME, SMTP_PASSWORD)
 
-        msg = MIMEText(body, 'html', 'utf-8')
-        msg['Subject'] = Header(subject, 'utf-8')
-        msg['From'] = SENDER_EMAIL
-        msg['To'] = receiver_email
+        msg = MIMEText(body, "html", "utf-8")
+        msg["Subject"] = Header(subject, "utf-8")
+        msg["From"] = SENDER_EMAIL
+        msg["To"] = receiver_email
 
         smtp.sendmail(SENDER_EMAIL, [receiver_email], msg.as_string())
         smtp.quit()
         print(f"Successfully sent email to {receiver_email}")
     except Exception as e:
         print(f"Failed to send email to {receiver_email}. Error: {e}")
-
