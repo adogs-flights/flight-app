@@ -12,7 +12,7 @@ import { useModal } from '../hooks/useModal';
 import { getAirportColor } from '../utils/airportUtils';
 
 export default function ScheduleView() {
-    const { apiClient, airports, rawAirports, user } = useAuth();
+    const { apiClient, airports, rawAirports } = useAuth();
     
     const [ticketsState, setTicketsState] = useState({
         data: [],
@@ -163,33 +163,19 @@ export default function ScheduleView() {
         setIsSaving(true);
         const el = calendarRef.current;
         
-        const originalStyle = {
-            border: el.style.border,
-            borderRadius: el.style.borderRadius,
-            boxShadow: el.style.boxShadow,
-            backgroundColor: el.style.backgroundColor,
-            overflow: el.style.overflow
-        };
-
         try {
-            el.style.border = '2px solid #e4e4e7';
-            el.style.borderRadius = '16px';
-            el.style.boxShadow = '0 4px 6px -1px rgb(0 0 0 / 0.1)';
-            el.style.backgroundColor = '#ffffff';
-            el.style.overflow = 'hidden';
-
             const blob = await toBlob(el, {
                 pixelRatio: 2,
                 backgroundColor: '#ffffff',
                 cacheBust: false,
+                width: el.offsetWidth,
+                height: el.offsetHeight,
                 style: { margin: '0', padding: '0', transform: 'none' },
                 fontEmbedCSS: `
                     @font-face { font-family: 'Pretendard'; src: url('/fonts/Pretendard-Regular.woff2') format('woff2'); font-weight: 400; }
                     @font-face { font-family: 'Pretendard'; src: url('/fonts/Pretendard-Bold.woff2') format('woff2'); font-weight: 700; }
                 `,
             });
-
-            Object.assign(el.style, originalStyle);
 
             if (!blob) throw new Error('이미지 생성 실패');
 
@@ -202,7 +188,6 @@ export default function ScheduleView() {
             }
         } catch (err) {
             console.error('Share failed:', err);
-            Object.assign(el.style, originalStyle);
             if (err.name !== 'AbortError') alert('공유에 실패했습니다.');
         } finally {
             setIsSaving(false);
@@ -239,10 +224,8 @@ export default function ScheduleView() {
             <div className="min-h-[400px]">
                 {view === 'cal' ? (
                     <div className="flex flex-col">
-                        <div className="bg-card rounded-xl border-2 border-border shadow-sm overflow-hidden">
-                            <CalendarView tickets={filteredTickets} onTicketClick={handleTicketClick} onMoreClick={handleDayMoreClick} currentDate={currentDate} setCurrentDate={setCurrentDate} calendarRef={calendarRef} isSaving={isSaving} />
-                        </div>
-                        <div className="py-4 px-1 sm:hidden">
+                        <CalendarView tickets={filteredTickets} onTicketClick={handleTicketClick} onMoreClick={handleDayMoreClick} currentDate={currentDate} setCurrentDate={setCurrentDate} calendarRef={calendarRef} isSaving={isSaving} />
+                        <div className="py-4 sm:hidden">
                             <button className="w-full flex items-center justify-center gap-2 h-11 px-4 text-sm font-bold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm" onClick={handleShare}>일정 공유하기</button>
                         </div>
                     </div>

@@ -53,7 +53,7 @@ export default function CalendarView({
     const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
 
     return (
-        <div className="flex flex-col relative">
+        <div className="flex flex-col relative shadow-sm rounded-xl">
             {isSaving && (
                 <div className="loading-overlay">
                     <div className="spinner"></div>
@@ -61,7 +61,10 @@ export default function CalendarView({
                 </div>
             )}
             
-            <div className="calendar-view" ref={calendarRef}>
+            <div 
+                className="calendar-view bg-card rounded-xl border-2 border-border overflow-hidden flex flex-col" 
+                ref={calendarRef}
+            >
                 <div className="flex items-center justify-between px-6 py-4 border-b bg-background/50">
                     <h3 className="text-xl font-bold text-foreground">{year}년 {month + 1}월</h3>
                     <div className="flex items-center gap-1">
