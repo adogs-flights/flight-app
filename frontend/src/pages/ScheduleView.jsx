@@ -230,7 +230,7 @@ export default function ScheduleView() {
                         </div>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <div className="robust-grid animate-in fade-in slide-in-from-bottom-2 duration-300">
                         {renderListContent()}
                     </div>
                 )}

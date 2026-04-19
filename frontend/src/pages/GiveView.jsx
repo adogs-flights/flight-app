@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import TicketCard from '../components/TicketCard';
 import ApplyModal from '../components/modals/ApplyModal';
+import ApplicantListModal from '../components/modals/ApplicantListModal';
 import TicketDetailModal from '../components/modals/TicketDetailModal';
 import DateFilterModal from '../components/modals/DateFilterModal';
 import { useModal } from '../hooks/useModal';
@@ -23,6 +24,7 @@ export default function GiveView() {
     const [searchText, setSearchText] = useState('');
 
     const { isOpen: isApplyOpen, openModal: openApplyModal, closeModal: closeApplyModal } = useModal();
+    const { isOpen: isApplicantsOpen, openModal: openApplicantsModal, closeModal: closeApplicantsModal } = useModal();
     const { isOpen: isDetailOpen, openModal: openDetailModal, closeModal: closeDetailModal } = useModal();
     const { isOpen: isDateOpen, openModal: openDateModal, closeModal: closeDateModal } = useModal();
 
@@ -46,6 +48,11 @@ export default function GiveView() {
     const handleApplyClick = (ticket) => {
         setCurrentTicket(ticket);
         openApplyModal();
+    };
+
+    const handleViewApplicantsClick = (ticket) => {
+        setCurrentTicket(ticket);
+        openApplicantsModal();
     };
 
     const handleTicketClick = (ticket) => {
@@ -117,6 +124,7 @@ export default function GiveView() {
                 key={ticket.id} 
                 ticket={ticket} 
                 onApplyClick={handleApplyClick}
+                onViewApplicantsClick={handleViewApplicantsClick}
                 onClick={() => handleTicketClick(ticket)}
             />
         ));
@@ -219,10 +227,17 @@ export default function GiveView() {
                 ticket={currentTicket}
                 onApplicationSaved={handleApplicationSaved}
             />
+            <ApplicantListModal
+                isOpen={isApplicantsOpen}
+                onClose={closeApplicantsModal}
+                ticket={currentTicket}
+                onStatusChanged={handleTicketUpdated}
+            />
             <TicketDetailModal
                 isOpen={isDetailOpen}
                 onClose={closeDetailModal}
                 ticket={currentTicket}
+                onViewApplicantsClick={handleViewApplicantsClick}
                 onUpdate={handleTicketUpdated}
             />
         </div>

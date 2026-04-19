@@ -110,7 +110,7 @@ export default function NeedPostDetailModal({ isOpen, onClose, post, onEditClick
                 <div className="space-y-1.5">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground pl-1">상세 내용</label>
                     <div className="p-5 rounded-xl bg-background border-2 border-border/50 text-sm leading-relaxed text-foreground whitespace-pre-wrap min-h-[120px] shadow-inner">
-                        {post.content || '내용이 없습니다.'}
+                        {post.detail || '내용이 없습니다.'}
                     </div>
                 </div>
 

@@ -6,7 +6,7 @@ import NeedPostDetailModal from '../components/modals/NeedPostDetailModal';
 import { useModal } from '../hooks/useModal';
 
 export default function NeedPostView() {
-    const { apiClient, user } = useAuth();
+    const { apiClient } = useAuth();
     
     // 상태 통합 관리
     const [postsState, setPostsState] = useState({
