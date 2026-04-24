@@ -41,6 +41,7 @@ class AdminUser(AdminUserBase):
 class UserBase(BaseModel):
     email: EmailStr
     name: str
+    organization: str | None = None # 단체명 추가
 
 
 class UserCreate(UserBase):
@@ -64,6 +65,37 @@ class User(UserBase):
     id: str
     created_at: datetime
     admin_info: AdminUser | None = None
+
+    class Config:
+        from_attributes = True
+
+
+# ======================================================================================
+# Google Drive Sync Schemas
+# ======================================================================================
+class GoogleDriveSyncBase(BaseModel):
+    ticket_id: str
+    google_folder_id: str
+    sync_source: str
+
+
+class GoogleDriveSync(GoogleDriveSyncBase):
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class UserGoogleTokenBase(BaseModel):
+    user_id: str
+    access_token: str | None = None # 연동 해제 시 NULL 허용
+    refresh_token: str | None = None
+    expires_at: datetime
+
+
+class UserGoogleToken(UserGoogleTokenBase):
+    id: int
+    created_at: datetime
 
     class Config:
         from_attributes = True
@@ -119,6 +151,7 @@ class Ticket(TicketBase):
     created_at: datetime
     updated_at: datetime
     owner: User | None = None
+    google_sync: GoogleDriveSync | None = None
 
     class Config:
         from_attributes = True
@@ -289,3 +322,4 @@ class Airline(AirlineBase):
 
     class Config:
         from_attributes = True
+s = True
