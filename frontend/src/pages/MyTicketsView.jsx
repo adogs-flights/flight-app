@@ -5,8 +5,177 @@ import TicketFormModal from '../components/modals/TicketFormModal';
 import ApplicantListModal from '../components/modals/ApplicantListModal';
 import TicketDetailModal from '../components/modals/TicketDetailModal';
 import DateFilterModal from '../components/modals/DateFilterModal';
+import FolderSelectModal from '../components/modals/FolderSelectModal';
 import { useModal } from '../hooks/useModal';
 import { getAirportColor } from '../utils/airportUtils';
+import { gdriveApi } from '../utils/api';
+
+function GoogleDriveSyncPanel({ onStatusUpdate }) {
+    const [status, setStatus] = useState({ is_connected: false, root_folder_id: null, loading: true });
+    const [actionLoading, setActionLoading] = useState(false);
+    const { isOpen: isSelectOpen, openModal: openSelectModal, closeModal: closeSelectModal } = useModal();
+
+    const fetchStatus = async () => {
+        try {
+            const res = await gdriveApi.getStatus();
+            setStatus({ ...res.data, loading: false });
+        } catch (err) {
+            console.error('GDrive status error:', err);
+            setStatus({ is_connected: false, root_folder_id: null, loading: false });
+        }
+    };
+
+    useEffect(() => {
+        fetchStatus();
+        
+        // OAuth 리다이렉트 성공 후 돌아왔을 때 처리
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('gdrive') === 'success') {
+            window.history.replaceState({}, document.title, window.location.pathname);
+            alert('구글 계정 연동에 성공했습니다! 동기화 폴더 설정을 진행해주세요.');
+        }
+    }, []);
+
+    const handleConnect = async () => {
+        setActionLoading(true);
+        try {
+            const res = await gdriveApi.connect();
+            window.location.href = res.data.authorization_url;
+        } catch (err) {
+            alert('구글 연동을 시작하지 못했습니다.');
+            setActionLoading(false);
+        }
+    };
+
+    const handleDisconnect = async () => {
+        if (!window.confirm('구글 드라이브 연동을 해제하시겠습니까?')) return;
+        
+        setActionLoading(true);
+        try {
+            await gdriveApi.disconnect();
+            alert('구글 드라이브 연동이 해제되었습니다.');
+            fetchStatus();
+            onStatusUpdate && onStatusUpdate();
+        } catch (err) {
+            alert('연동 해제에 실패했습니다.');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleSetupFolder = async (folderName) => {
+        setActionLoading(true);
+        try {
+            await gdriveApi.setupFolder(folderName, true);
+            alert(`'${folderName}' 폴더가 생성되고 연동되었습니다.`);
+            closeSelectModal();
+            fetchStatus();
+            onStatusUpdate && onStatusUpdate();
+        } catch (err) {
+            alert('폴더 생성에 실패했습니다.');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleSelectFolder = async (folder) => {
+        if (!window.confirm(`'${folder.name}' 폴더를 동기화 폴더로 설정하시겠습니까?`)) return;
+        
+        setActionLoading(true);
+        try {
+            await gdriveApi.setFolder(folder.id);
+            alert('폴더 설정이 완료되었습니다.');
+            closeSelectModal();
+            fetchStatus();
+            onStatusUpdate && onStatusUpdate();
+        } catch (err) {
+            alert('폴더 설정에 실패했습니다.');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    if (status.loading) return null;
+
+    return (
+        <>
+            <div className="bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200 rounded-2xl p-4 sm:p-5 mb-8 shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-white rounded-xl shadow-inner flex items-center justify-center text-2xl shrink-0">
+                            📁
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                                구글 드라이브 동기화
+                                {status.is_connected && status.root_folder_id && (
+                                    <span className="bg-green-100 text-green-700 text-[10px] px-2 py-0.5 rounded-full font-black">연동중</span>
+                                )}
+                            </h3>
+                            <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                                {!status.is_connected 
+                                    ? '구글 계정을 연결하여 티켓을 구글 드라이브와 자동으로 동기화해보세요.'
+                                    : !status.root_folder_id 
+                                        ? '연동이 완료되었습니다. 아래 버튼을 눌러 동기화 폴더를 설정해주세요.'
+                                        : "구글 드라이브의 '해봉티켓_동기화' 폴더와 연결되어 있습니다."}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 sm:ml-auto w-full sm:w-auto">
+                        {!status.is_connected ? (
+                            <button 
+                                onClick={handleConnect}
+                                disabled={actionLoading}
+                                className="w-full sm:w-auto bg-[#4285F4] hover:bg-[#3367D6] text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50"
+                            >
+                                {actionLoading ? '연결 중...' : '구글 계정 연결'}
+                            </button>
+                        ) : !status.root_folder_id ? (
+                            <div className="flex items-center gap-2 w-full sm:w-auto">
+                                <button 
+                                    onClick={openSelectModal}
+                                    disabled={actionLoading}
+                                    className="flex-1 sm:flex-none bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold px-5 py-2.5 rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50 whitespace-nowrap"
+                                >
+                                    동기화 폴더 설정
+                                </button>
+                                <button 
+                                    onClick={handleDisconnect}
+                                    disabled={actionLoading}
+                                    className="shrink-0 bg-destructive/10 hover:bg-destructive/20 text-destructive border-2 border-destructive/10 text-xs font-bold px-4 py-2.5 rounded-xl transition-all active:scale-95 disabled:opacity-50"
+                                    title="연동 해제"
+                                >
+                                    연동 해제
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-2 w-full sm:w-auto">
+                                <div className="flex-1 sm:flex-none text-center text-xs font-bold text-slate-400 bg-white px-4 py-2.5 rounded-xl border-2 border-slate-100 whitespace-nowrap">
+                                    설정 완료
+                                </div>
+                                <button 
+                                    onClick={handleDisconnect}
+                                    disabled={actionLoading}
+                                    className="shrink-0 bg-destructive/10 hover:bg-destructive/20 text-destructive border-2 border-destructive/10 text-xs font-bold px-4 py-2.5 rounded-xl transition-all active:scale-95 disabled:opacity-50"
+                                >
+                                    연동 해제
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            <FolderSelectModal 
+                isOpen={isSelectOpen} 
+                onClose={closeSelectModal} 
+                onSelect={handleSelectFolder}
+                onCreate={handleSetupFolder} 
+            />
+        </>
+    );
+}
 
 export default function MyTicketsView() {
     const { apiClient, user, airports, rawAirports } = useAuth();
@@ -44,6 +213,11 @@ export default function MyTicketsView() {
     useEffect(() => {
         fetchMyTickets();
     }, [fetchMyTickets]);
+
+    const handleCreateClick = () => {
+        setCurrentTicket(null);
+        openFormModal();
+    };
 
     const handleEditClick = (ticket) => {
         setCurrentTicket(ticket);
@@ -184,8 +358,16 @@ export default function MyTicketsView() {
                             지난 일정
                         </button>
                     </div>
+                    <button 
+                        className="inline-flex items-center justify-center px-4 py-2 text-sm font-bold transition-colors rounded-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm" 
+                        onClick={handleCreateClick}
+                    >
+                        + 티켓 등록
+                    </button>
                 </div>
             </div>
+
+            <GoogleDriveSyncPanel onStatusUpdate={fetchMyTickets} />
 
             <div className="space-y-3">
                 <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">

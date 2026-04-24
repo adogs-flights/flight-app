@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light">
+    <meta name="supported-color-schemes" content="light">
+    <style>
+        /* 기본 초기화 */
+        body { margin: 0; padding: 0; background-color: #f1f5f9; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+        table { border-spacing: 0; border-collapse: collapse; }
+        td { padding: 0; }
+        img { border: 0; }
+
+        /* 다크모드 강제 라이트 테마 유지 (일부 클라이언트 대응) */
+        :root { color-scheme: light; supported-color-schemes: light; }
+        
+        @media (prefers-color-scheme: dark) {
+            body, .wrapper-table { background-color: #f1f5f9 !important; color: #1e293b !important; }
+            .container { background-color: #ffffff !important; }
+            .welcome-title, .logo-text, .credential-value-text { color: #0f172a !important; }
+            .description, .credential-label-text { color: #64748b !important; }
+            .credential-card-bg { background-color: #f8fafc !important; border-color: #e2e8f0 !important; }
+            .value-bg { background-color: #ffffff !important; border-color: #f1f5f9 !important; }
+        }
+
+        /* 모바일 전용 스타일 */
+        @media only screen and (max-width: 600px) {
+            .container { width: 100% !important; border-radius: 0 !important; }
+            .content-padding { padding: 30px 20px !important; }
+            .welcome-title { font-size: 20px !important; }
+            .description { font-size: 14px !important; }
+            .credential-box { padding: 20px 15px !important; }
+            
+            /* 세로 배치로 변경 */
+            .credential-label { 
+                display: block !important; 
+                width: 100% !important; 
+                padding-bottom: 6px !important; 
+                font-size: 13px !important; 
+            }
+            .credential-value { 
+                display: block !important; 
+                width: 100% !important; 
+                padding-bottom: 16px !important; 
+            }
+            .credential-value span { 
+                padding: 6px 10px !important; 
+                font-size: 15px !important; 
+                display: block !important; 
+                text-align: center !important;
+            }
+            
+            .btn-full { display: block !important; width: 100% !important; box-sizing: border-box !important; padding: 16px 20px !important; }
+        }
+    </style>
+</head>
+<body style="font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; background-color: #f1f5f9; color: #1e293b;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f1f5f9" style="table-layout: fixed;" class="wrapper-table">
+        <tr>
+            <td align="center" style="padding: 40px 10px;" class="wrapper-td">
+                <!--[if mso]>
+                <table align="center" width="600" style="border-spacing: 0; border-collapse: collapse;">
+                <tr>
+                <td align="center">
+                <![endif]-->
+                <table width="100%" cellpadding="0" cellspacing="0" border="0" class="container" style="max-width: 600px; background-color: #ffffff; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);">
+                    <!-- 헤더 -->
+                    <tr>
+                        <td align="center" style="padding: 40px 20px 20px;">
+                            <table cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                    <td style="vertical-align: middle; padding-right: 10px;">
+                                        <img src="https://admin-s3.conkiri.com/api/v1/download-shared-object/aHR0cHM6Ly9zMy1idWNrZXQuY29ua2lyaS5jb20vZmxpZ2h0LWxvZ28vZmxpZ2h0LWFwcC5QTkc_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1WRTBCVlJVUDU5V1RTVVA4Qk5RNyUyRjIwMjYwNDI0JTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI2MDQyNFQwMzE4MjFaJlgtQW16LUV4cGlyZXM9NDMyMDAmWC1BbXotU2VjdXJpdHktVG9rZW49ZXlKaGJHY2lPaUpJVXpVeE1pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SmhZMk5sYzNOTFpYa2lPaUpXUlRCQ1ZsSlZVRFU1VjFSVFZWQTRRazVSTnlJc0ltVjRjQ0k2TVRjM056QTBNemM1T0N3aWNHRnlaVzUwSWpvaVkyOXVhMmx5YVMxaFpHMXBiaUo5LjBMZWRVUHpEZGY0THdtajBfeXFYazR3N2tuYVhZUUVrSENxNGNKNXl6dGNuXzZrME5tMVZTVkJtMnBvVjkyX2lJU1JNalVCOFFIeV80U0N1LVBGTFpBJlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCZ2ZXJzaW9uSWQ9bnVsbCZYLUFtei1TaWduYXR1cmU9MmQyNTczMTg2YjdhOTA4NmJkYTVkY2FlZjA4YmI2ZDZhMjMwZWVhNGQzOTJiODg1MDY4NjhiODJhNzQ1ZjQ3MQ" width="40" height="40" style="display: block; border: 0;" />
+                                    </td>
+                                    <td style="vertical-align: middle; font-size: 22px; font-weight: 800; color: #0367A6; letter-spacing: -0.5px;" class="logo-text">
+                                        해봉티켓
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    
+                    <!-- 컨텐츠 -->
+                    <tr>
+                        <td style="padding: 0 40px 40px;" class="content-padding">
+                            <h1 style="font-size: 24px; font-weight: 700; color: #0f172a; margin: 0 0 12px; text-align: center;" class="welcome-title">$name님, 환영합니다!</h1>
+                            <p style="font-size: 16px; color: #64748b; text-align: center; margin: 0 0 32px; line-height: 1.6;" class="description">
+                                새로운 회원이 되신 것을 환영합니다.<br>
+                                아래 계정 정보로 서비스를 이용해 보세요.
+                            </p>
+                            
+                            <!-- 인증 정보 박스 -->
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;" class="credential-card-bg">
+                                <tr>
+                                    <td style="padding: 28px;" class="credential-box">
+                                        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                            <tr>
+                                                <td width="90" style="font-size: 14px; font-weight: 600; color: #94a3b8; padding-bottom: 16px;" class="credential-label credential-label-text">접속 ID</td>
+                                                <td style="padding-bottom: 16px;" class="credential-value">
+                                                    <span style="font-family: monospace; color: #0f172a; font-size: 16px; font-weight: 600; background: #ffffff; padding: 4px 12px; border-radius: 6px; border: 1px solid #f1f5f9; display: inline-block;" class="value-bg credential-value-text">$email</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td width="90" style="font-size: 14px; font-weight: 600; color: #94a3b8;" class="credential-label credential-label-text">임시 PW</td>
+                                                <td class="credential-value">
+                                                    <span style="font-family: monospace; color: #0f172a; font-size: 16px; font-weight: 600; background: #ffffff; padding: 4px 12px; border-radius: 6px; border: 1px solid #f1f5f9; display: inline-block;" class="value-bg credential-value-text">$password</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                        
+                                        <!-- 경고 문구 -->
+                                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top: 24px;">
+                                            <tr>
+                                                <td align="center" style="font-size: 13px; color: #e11d48; font-weight: 500;">
+                                                    <span style="margin-right: 4px;">⚠️</span> 로그인 후 반드시 비밀번호를 변경해 주세요.
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- 버튼 -->
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top: 32px;">
+                                <tr>
+                                    <td align="center">
+                                        <a href="$base_url/login" style="background-color: #0367A6; color: #ffffff !important; padding: 16px 40px; border-radius: 10px; text-decoration: none; font-weight: 600; display: inline-block;" class="btn-full">로그인하기</a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+                <!-- 푸터 -->
+                <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px;">
+                    <tr>
+                        <td align="center" style="padding: 30px 20px; font-size: 12px; color: #94a3b8; line-height: 1.8;">
+                            © 2026 해봉티켓. All rights reserved.<br>
+                            본 메일은 발신 전용이며, <br>
+                            관련 문의는 고객센터를 이용해 주시기 바랍니다.
+                        </td>
+                    </tr>
+                </table>
+                <!--[if mso]>
+                </td>
+                </tr>
+                </table>
+                <![endif]-->
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

@@ -1,5 +1,6 @@
 import os
 import sys
+from typing import Annotated
 
 from alembic.config import Config
 from fastapi import Depends, FastAPI, HTTPException, Request
@@ -11,7 +12,7 @@ from sqlalchemy.orm import Session
 import models
 from alembic import command
 from database import engine, get_db
-from routers import auth, master, need_posts, ticket_applications, tickets
+from routers import auth, gdrive, master, need_posts, ticket_applications, tickets
 
 # --- 🔒 필수 환경변수 검증 ---
 SECRET_KEY = os.environ.get("SECRET_KEY")
@@ -118,21 +119,26 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
+app.include_router(gdrive.router)
 app.include_router(tickets.router)
 app.include_router(ticket_applications.router)
 app.include_router(need_posts.router)
 app.include_router(master.router)
 
 
+# --- Annotated types ---
+DBSession = Annotated[Session, Depends(get_db)]
+
+
 @app.get("/api/static/airlines")
-async def get_airlines(db: Session = Depends(get_db)):
-    airlines = db.query(models.Airline).filter(models.Airline.is_active == True).all()
+async def get_airlines(db: DBSession) -> list[dict[str, str]]:
+    airlines = db.query(models.Airline).filter(models.Airline.is_active).all()
     return [{"value": a.code, "label": a.name} for a in airlines]
 
 
 @app.get("/api/static/airports")
-async def get_airports(db: Session = Depends(get_db)):
-    airports = db.query(models.Airport).filter(models.Airport.is_active == True).all()
+async def get_airports(db: DBSession) -> list[dict[str, str]]:
+    airports = db.query(models.Airport).filter(models.Airport.is_active).all()
     return [{"value": a.code, "label": a.name} for a in airports]
 
 

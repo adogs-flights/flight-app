@@ -21,6 +21,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "super-secret-key-for-dev")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30  # Short-lived for security
 REFRESH_TOKEN_EXPIRE_DAYS = 14  # Long-lived for convenience
+BASE_URL = os.environ.get("BASE_URL", "http://localhost:5173") # 프론트엔드 주소
 
 router = APIRouter(prefix="/api", tags=["Authentication"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/token")
@@ -216,18 +217,38 @@ def create_user_by_admin(
         email=user_in.email,
         name=user_in.name,
         hashed_password=hashed_password,
+        organization=user_in.organization, # 단체명 저장
     )
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
 
+    # 이메일 템플릿 파일 읽기
+    from pathlib import Path
+    import string
+    template_path = Path(__file__).parent.parent / "templates" / "email" / "account_created.html"
+    
+    try:
+        with open(template_path, "r", encoding="utf-8") as f:
+            template_content = f.read()
+        
+        # CSS 중괄호({})와 충돌을 피하기 위해 Template ($변수) 방식 사용
+        t = string.Template(template_content)
+        body = t.safe_substitute(
+            base_url=BASE_URL,
+            name=user_in.name,
+            email=user_in.email,
+            password=user_in.password
+        )
+    except Exception as e:
+        print(f"Failed to load email template: {e}")
+        # 폴백 디자인 (파일을 못 읽을 경우)
+        body = f"안녕하세요 {user_in.name}님, 계정이 생성되었습니다. ID: {user_in.email}, PW: {user_in.password}"
+
     subject = "해봉티켓 계정이 생성되었습니다."
-    body = (
-        f"<html><body><h2>안녕하세요, {user_in.name}님!</h2>"
-        "<p>해봉티켓 계정이 생성되었습니다. 즉시 비밀번호를 변경해주세요.</p><hr>"
-        f"<p>ID: {user_in.email}</p><p>임시 PW: {user_in.password}</p></body></html>"
-    )
     send_email(receiver_email=user_in.email, subject=subject, body=body)
+
+    return db_user
 
     return db_user
 

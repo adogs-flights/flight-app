@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -8,28 +10,34 @@ from routers.auth import AdminUser
 
 router = APIRouter(prefix="/api/master", tags=["master"])
 
+# --- Annotated types ---
+DBSession = Annotated[Session, Depends(get_db)]
+
+
 # --- Airport API ---
 
 
 @router.get("/airports", response_model=list[schemas.Airport])
-def get_airports(db: Session = Depends(get_db)):
+def get_airports(db: DBSession) -> list[models.Airport]:
     return db.query(models.Airport).order_by(models.Airport.code).all()
 
 
 @router.post("/airports", response_model=schemas.Airport)
 def create_airport(
     airport: schemas.AirportCreate,
-    db: Session = Depends(get_db),
+    db: DBSession,
     current_admin: AdminUser = None,
-):
+) -> models.Airport:
     db_airport = models.Airport(**airport.model_dump())
     db.add(db_airport)
     try:
         db.commit()
         db.refresh(db_airport)
-    except Exception:
+    except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=400, detail="이미 존재하는 공항 코드입니다.")
+        raise HTTPException(
+            status_code=400, detail="이미 존재하는 공항 코드입니다."
+        ) from e
     return db_airport
 
 
@@ -37,9 +45,9 @@ def create_airport(
 def update_airport(
     airport_id: int,
     airport_update: schemas.AirportUpdate,
-    db: Session = Depends(get_db),
+    db: DBSession,
     current_admin: AdminUser = None,
-):
+) -> models.Airport:
     db_airport = (
         db.query(models.Airport).filter(models.Airport.id == airport_id).first()
     )
@@ -57,8 +65,8 @@ def update_airport(
 
 @router.delete("/airports/{airport_id}")
 def delete_airport(
-    airport_id: int, db: Session = Depends(get_db), current_admin: AdminUser = None
-):
+    airport_id: int, db: DBSession, current_admin: AdminUser = None
+) -> dict[str, str]:
     db_airport = (
         db.query(models.Airport).filter(models.Airport.id == airport_id).first()
     )
@@ -73,24 +81,26 @@ def delete_airport(
 
 
 @router.get("/airlines", response_model=list[schemas.Airline])
-def get_airlines(db: Session = Depends(get_db)):
+def get_airlines(db: DBSession) -> list[models.Airline]:
     return db.query(models.Airline).order_by(models.Airline.name).all()
 
 
 @router.post("/airlines", response_model=schemas.Airline)
 def create_airline(
     airline: schemas.AirlineCreate,
-    db: Session = Depends(get_db),
+    db: DBSession,
     current_admin: AdminUser = None,
-):
+) -> models.Airline:
     db_airline = models.Airline(**airline.model_dump())
     db.add(db_airline)
     try:
         db.commit()
         db.refresh(db_airline)
-    except Exception:
+    except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=400, detail="이미 존재하는 항공사 코드입니다.")
+        raise HTTPException(
+            status_code=400, detail="이미 존재하는 항공사 코드입니다."
+        ) from e
     return db_airline
 
 
@@ -98,9 +108,9 @@ def create_airline(
 def update_airline(
     airline_id: int,
     airline_update: schemas.AirlineUpdate,
-    db: Session = Depends(get_db),
+    db: DBSession,
     current_admin: AdminUser = None,
-):
+) -> models.Airline:
     db_airline = (
         db.query(models.Airline).filter(models.Airline.id == airline_id).first()
     )
@@ -118,8 +128,8 @@ def update_airline(
 
 @router.delete("/airlines/{airline_id}")
 def delete_airline(
-    airline_id: int, db: Session = Depends(get_db), current_admin: AdminUser = None
-):
+    airline_id: int, db: DBSession, current_admin: AdminUser = None
+) -> dict[str, str]:
     db_airline = (
         db.query(models.Airline).filter(models.Airline.id == airline_id).first()
     )

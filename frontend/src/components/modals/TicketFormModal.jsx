@@ -97,9 +97,9 @@ export default function TicketFormModal({ isOpen, onClose, ticket, onTicketSaved
         let finalTitle = form.title.trim();
         if (!finalTitle) {
             if (form.cabinCapacity > 0 && form.cargoCapacity > 0) {
-                finalTitle = `기내 ${form.cabinCapacity}석 / 수화물 ${form.cargoCapacity}석`;
+                finalTitle = `기내 ${form.cabinCapacity}석 / 수하물 ${form.cargoCapacity}석`;
             } else if (form.cargoCapacity > 0) {
-                finalTitle = `수화물 ${form.cargoCapacity}석`;
+                finalTitle = `수하물 ${form.cargoCapacity}석`;
             } else if (form.cabinCapacity > 0) {
                 finalTitle = `기내 ${form.cabinCapacity}석`;
             } else {

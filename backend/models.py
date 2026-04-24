@@ -28,6 +28,7 @@ class User(Base):
     name = Column(String, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
+    organization = Column(String, nullable=True)  # 단체명 추가
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     admin_info = relationship(
@@ -59,6 +60,12 @@ class User(Base):
     refresh_tokens = relationship(
         "RefreshToken",
         back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    google_token = relationship(
+        "UserGoogleToken",
+        back_populates="user",
+        uselist=False,
         cascade="all, delete-orphan",
     )
 
@@ -129,6 +136,9 @@ class Ticket(Base):
     )
     applications = relationship(
         "TicketApplication", back_populates="ticket", cascade="all, delete-orphan"
+    )
+    google_sync = relationship(
+        "GoogleDriveSync", back_populates="ticket", uselist=False, cascade="all, delete-orphan"
     )
 
 
@@ -205,3 +215,34 @@ class Airline(Base):
     code = Column(String, unique=True, index=True, nullable=False)  # KE, OZ
     name = Column(String, nullable=False)  # 대한항공
     is_active = Column(Boolean, default=True)
+
+
+class UserGoogleToken(Base):
+    __tablename__ = "user_google_tokens"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(
+        String, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False
+    )
+    access_token = Column(String, nullable=False)
+    refresh_token = Column(String, nullable=True)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    root_folder_id = Column(String, nullable=True)  # 동기화 루트 폴더 ID
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User", back_populates="google_token")
+
+
+class GoogleDriveSync(Base):
+    __tablename__ = "google_drive_sync"
+
+    ticket_id = Column(
+        String, ForeignKey("tickets.id", ondelete="CASCADE"), primary_key=True
+    )
+    google_folder_id = Column(String, unique=True, index=True, nullable=False)
+    sync_source = Column(String)  # 'WEB' 또는 'DRIVE'
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    ticket = relationship("Ticket", back_populates="google_sync")

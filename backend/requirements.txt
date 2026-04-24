@@ -11,3 +11,6 @@ email-validator
 python-multipart
 aiofiles
 psycopg2-binary
+google-api-python-client
+google-auth-oauthlib
+google-auth-httplib2
