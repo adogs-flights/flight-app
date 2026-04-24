@@ -19,8 +19,8 @@ function GoogleDriveSyncPanel({ onStatusUpdate }) {
         try {
             const res = await gdriveApi.getStatus();
             setStatus({ ...res.data, loading: false });
-        } catch (err) {
-            console.error('GDrive status error:', err);
+        } catch (error) {
+            console.error('GDrive status error:', error);
             setStatus({ is_connected: false, root_folder_id: null, loading: false });
         }
     };
@@ -41,7 +41,7 @@ function GoogleDriveSyncPanel({ onStatusUpdate }) {
         try {
             const res = await gdriveApi.connect();
             window.location.href = res.data.authorization_url;
-        } catch (err) {
+        } catch {
             alert('구글 연동을 시작하지 못했습니다.');
             setActionLoading(false);
         }
@@ -56,7 +56,7 @@ function GoogleDriveSyncPanel({ onStatusUpdate }) {
             alert('구글 드라이브 연동이 해제되었습니다.');
             fetchStatus();
             onStatusUpdate && onStatusUpdate();
-        } catch (err) {
+        } catch {
             alert('연동 해제에 실패했습니다.');
         } finally {
             setActionLoading(false);
@@ -71,7 +71,7 @@ function GoogleDriveSyncPanel({ onStatusUpdate }) {
             closeSelectModal();
             fetchStatus();
             onStatusUpdate && onStatusUpdate();
-        } catch (err) {
+        } catch {
             alert('폴더 생성에 실패했습니다.');
         } finally {
             setActionLoading(false);
@@ -88,7 +88,7 @@ function GoogleDriveSyncPanel({ onStatusUpdate }) {
             closeSelectModal();
             fetchStatus();
             onStatusUpdate && onStatusUpdate();
-        } catch (err) {
+        } catch {
             alert('폴더 설정에 실패했습니다.');
         } finally {
             setActionLoading(false);
@@ -204,8 +204,8 @@ export default function MyTicketsView() {
             const response = await apiClient.get('/tickets');
             const myTickets = response.data.filter(t => t.owner_id === user.id);
             setTicketsState({ data: myTickets, loading: false, error: '' });
-        } catch (err) {
-            console.error(err);
+        } catch (error) {
+            console.error('Fetch tickets error:', error);
             setTicketsState({ data: [], loading: false, error: '내 티켓을 불러오는 데 실패했습니다.' });
         }
     }, [apiClient, user.id]);

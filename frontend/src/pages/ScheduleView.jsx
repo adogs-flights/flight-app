@@ -195,7 +195,7 @@ export default function ScheduleView() {
     };
 
     return (
-        <div className="space-y-4 pb-10">
+        <div className="space-y-4">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-1">
                     <h1 className="text-2xl font-bold tracking-tight text-foreground">일정 관리</h1>

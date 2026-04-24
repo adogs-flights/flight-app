@@ -4,6 +4,17 @@ const apiClient = axios.create({
     baseURL: '/api'
 });
 
+// Request Interceptor: 모든 요청에 토큰 자동 포함
+apiClient.interceptors.request.use((config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+}, (error) => {
+    return Promise.reject(error);
+});
+
 // Google Drive Sync API
 export const gdriveApi = {
     getStatus: () => apiClient.get('/gdrive/status'),

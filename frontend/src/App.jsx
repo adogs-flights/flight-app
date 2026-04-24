@@ -9,6 +9,8 @@ import GiveView from './pages/GiveView';
 import MyTicketsView from './pages/MyTicketsView';
 import MyApplicationsView from './pages/MyApplicationsView';
 import AdminView from './pages/AdminView';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
 
 function App() {
   return (
@@ -37,6 +39,8 @@ function AppContent() {
           <Route path="give" element={<GiveView />} />
           <Route path="mytickets" element={<MyTicketsView />} />
           <Route path="myapplications" element={<MyApplicationsView />} />
+          <Route path="privacy" element={<PrivacyPolicy />} />
+          <Route path="terms" element={<TermsOfService />} />
           {user.admin_info?.approved && <Route path="admin" element={<AdminView />} />}
           <Route path="*" element={<Navigate to="/" />} />
         </Route>

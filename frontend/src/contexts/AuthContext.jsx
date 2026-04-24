@@ -50,14 +50,12 @@ export const AuthProvider = ({ children }) => {
 
         const token = localStorage.getItem('token');
         if (token) {
-            apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
             apiClient.get('/users/me')
                 .then(response => {
                     setUser(response.data);
                 })
                 .catch(() => {
                     localStorage.removeItem('token');
-                    delete apiClient.defaults.headers.common['Authorization'];
                 })
                 .finally(() => setLoading(false));
         } else {
@@ -73,7 +71,6 @@ export const AuthProvider = ({ children }) => {
         const { access_token, refresh_token } = response.data;
         localStorage.setItem('token', access_token);
         localStorage.setItem('refresh_token', refresh_token);
-        apiClient.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
         
         const userResponse = await apiClient.get('/users/me');
         setUser(userResponse.data);
@@ -90,7 +87,6 @@ export const AuthProvider = ({ children }) => {
         }
         localStorage.removeItem('token');
         localStorage.setItem('refresh_token', ''); // Clear
-        delete apiClient.defaults.headers.common['Authorization'];
         setUser(null);
     };
 

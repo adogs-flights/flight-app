@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Header from './Header';
 import Sidebar from './Sidebar';
+import Footer from './Footer';
 import { useModal } from '../../hooks/useModal';
 import ChangePasswordModal from '../modals/ChangePasswordModal';
 
@@ -44,6 +45,7 @@ export default function MainLayout() {
             </div>
 
             <ChangePasswordModal isOpen={isPwModalOpen} onClose={closePwModal} />
+            <Footer />
         </div>
     );
 }
