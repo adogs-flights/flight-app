@@ -9,8 +9,6 @@ import GiveView from './pages/GiveView';
 import MyTicketsView from './pages/MyTicketsView';
 import MyApplicationsView from './pages/MyApplicationsView';
 import AdminView from './pages/AdminView';
-import PrivacyPolicy from './pages/PrivacyPolicy';
-import TermsOfService from './pages/TermsOfService';
 
 function App() {
   return (
@@ -29,10 +27,6 @@ function AppContent() {
 
   return (
     <Routes>
-      {/* 공통 라우트 (로그인 여부 상관없음) */}
-      <Route path="/privacy" element={<PrivacyPolicy />} />
-      <Route path="/terms" element={<TermsOfService />} />
-
       {!user ? (
         <Route path="*" element={<LoginScreen />} />
       ) : (
@@ -43,9 +37,6 @@ function AppContent() {
           <Route path="give" element={<GiveView />} />
           <Route path="mytickets" element={<MyTicketsView />} />
           <Route path="myapplications" element={<MyApplicationsView />} />
-          {/* MainLayout 내부에서도 접근 가능하게 유지 */}
-          <Route path="privacy" element={<PrivacyPolicy />} />
-          <Route path="terms" element={<TermsOfService />} />
           {user.admin_info?.approved && <Route path="admin" element={<AdminView />} />}
           <Route path="*" element={<Navigate to="/" />} />
         </Route>
