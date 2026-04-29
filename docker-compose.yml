@@ -27,6 +27,8 @@ services:
       - OTEL_SERVICE_NAME=flight-backend
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:4318
       - OTEL_METRICS_EXPORTER=none
+      - OTEL_LOGS_EXPORTER=console,otlp
+      - OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED=true
     networks:
       - flight-app
     depends_on:
