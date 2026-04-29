@@ -4,11 +4,12 @@ import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
-import { Resource } from '@opentelemetry/resources';
+import { resourceFromAttributes } from '@opentelemetry/resources'; // ✅ 대체 함수 임포트
 
 const initTracer = () => {
   const provider = new WebTracerProvider({
-    resource: new Resource({
+    // ✅ new Resource() 대신 resourceFromAttributes() 함수 사용
+    resource: resourceFromAttributes({
       [SemanticResourceAttributes.SERVICE_NAME]: 'flight-frontend',
     }),
   });
