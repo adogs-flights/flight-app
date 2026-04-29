@@ -2,29 +2,31 @@ import { WebTracerProvider } from '@opentelemetry/sdk-trace-web';
 import { getWebAutoInstrumentations } from '@opentelemetry/auto-instrumentations-web';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
-// ✅ 1. 구형 SemanticResourceAttributes 대신 개별 상수인 ATTR_SERVICE_NAME을 가져옵니다.
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions'; 
-// ✅ 2. SimpleSpanProcessor 대신 브라우저용 BatchSpanProcessor를 가져옵니다.
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base'; 
 import { resourceFromAttributes } from '@opentelemetry/resources';
 
 const initTracer = () => {
-  const provider = new WebTracerProvider({
-    resource: resourceFromAttributes({
-      // ✅ 3. 변경된 상수(ATTR_SERVICE_NAME)를 적용합니다.
-      [ATTR_SERVICE_NAME]: 'flight-frontend',
-    }),
-  });
-
-  // 목적지 설정
+  // ✅ 1. 목적지(Exporter)를 먼저 생성합니다.
   const exporter = new OTLPTraceExporter({
     url: 'https://monitor.dev-uk.shop/otel/v1/traces',
   });
 
-  // ✅ 4. 브라우저 환경의 Best Practice인 BatchSpanProcessor로 변경합니다.
-  provider.addSpanProcessor(new BatchSpanProcessor(exporter));
+  // ✅ 2. Provider를 생성할 때 spanProcessors 배열에 주입합니다.
+  const provider = new WebTracerProvider({
+    resource: resourceFromAttributes({
+      [ATTR_SERVICE_NAME]: 'flight-frontend',
+    }),
+    // 👇 새롭게 추가된 설정 방식
+    spanProcessors: [
+      new BatchSpanProcessor(exporter)
+    ],
+  });
+
+  // provider.addSpanProcessor(new BatchSpanProcessor(exporter)); <-- ❌ 이 줄은 삭제(또는 이미 주입했으므로 제거)
   provider.register();
 
+  // 자동 계측 설정 (API 도메인 지정)
   registerInstrumentations({
     instrumentations: [
       getWebAutoInstrumentations({
