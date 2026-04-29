@@ -9,6 +9,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+RUN opentelemetry-bootstrap -a install
+
 # 소스코드 복사
 COPY . .
 
@@ -16,4 +18,4 @@ COPY . .
 RUN mkdir -p /app/data
 
 EXPOSE 8010
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8010"]
+CMD ["opentelemetry-instrument", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8010"]

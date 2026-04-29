@@ -23,6 +23,10 @@ services:
       - ./data:/app/data
     env_file:
       - .env
+    environment:
+      - OTEL_SERVICE_NAME=flight-backend
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:4318
+      - OTEL_METRICS_EXPORTER=none
     networks:
       - flight-app
     depends_on:

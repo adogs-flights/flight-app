@@ -10,6 +10,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@opentelemetry/exporter-trace-otlp-http": "^0.215.0",
+    "@opentelemetry/instrumentation-fetch": "^0.215.0",
+    "@opentelemetry/resources": "^2.7.0",
+    "@opentelemetry/sdk-trace-base": "^2.7.0",
+    "@opentelemetry/sdk-trace-web": "^2.7.0",
+    "@opentelemetry/semantic-conventions": "^1.40.0",
     "@tailwindcss/vite": "^4.2.2",
     "axios": "^1.13.6",
     "date-fns": "^4.1.0",
@@ -18,8 +24,7 @@
     "react-calendar": "^6.0.0",
     "react-dom": "^19.2.4",
     "react-router-dom": "^7.13.2",
-    "react-select": "^5.10.2",
-    "tailwind": "^4.0.0"
+    "react-select": "^5.10.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
