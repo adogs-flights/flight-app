@@ -6,6 +6,7 @@ import App from './App.jsx'
 
 import initTracer from './tracer.js'
 
+// Otel실행
 initTracer();
 
 createRoot(document.getElementById('root')).render(

@@ -24,7 +24,6 @@ CurrentUser = Annotated[models.User, Depends(get_current_user)]
 # OAuth State 유효 시간 (10분)
 STATE_TOKEN_EXPIRE_MINUTES = 10
 
-
 def create_state_token(user_id: str, code_verifier: str | None = None) -> str:
     expire = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(
         minutes=STATE_TOKEN_EXPIRE_MINUTES
