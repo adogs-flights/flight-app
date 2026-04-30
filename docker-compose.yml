@@ -25,12 +25,13 @@ services:
       - .env
     environment:
       - OTEL_SERVICE_NAME=flight-backend
-      - OTEL_EXPORTER_OTLP_ENDPOINT=tempo:4317
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:4317
       - OTEL_METRICS_EXPORTER=none
       - OTEL_LOGS_EXPORTER=console,otlp
       - OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED=false
     networks:
       - flight-app
+      - monitoring_net
     depends_on:
       - flight-db
     restart: unless-stopped
