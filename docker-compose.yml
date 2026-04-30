@@ -51,6 +51,9 @@ networks:
   flight-app:
     name: flight-app
     external: true
+  monitoring_net:
+    name: monitoring_net
+    external: true
 
 volumes:
   postgres_data:
