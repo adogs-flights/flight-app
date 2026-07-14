@@ -1,0 +1,36 @@
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Build, Dist, Cache
+dist/
+build/
+.cache/
+.parcel-cache/
+
+# 환경 변수 및 시크릿
+.env
+.env.local
+.env.*.local
+*.pem
+
+# IDE 설정
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# 로그 및 데이터
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+data/
+uploads/
+
+# Git
+.git/

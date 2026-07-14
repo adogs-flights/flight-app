@@ -1,9 +1,7 @@
 # --- 🛡 Harness Engineering (Local Only) ---
-docs/
 ruff.toml
 backend/pyproject.toml
 backend/ruff.toml
-todo.md
 
 # --- Standard Ignores ---
 node_modules
