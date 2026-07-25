@@ -28,11 +28,11 @@ function AppContent() {
 
   return (
     <Routes>
+      {/* 로그인 여부와 무관하게 항상 접근 가능한 공개 라우트 */}
+      <Route path="/apply" element={<GuestTicketSubmitView />} />
+
       {!user ? (
-        <>
-          <Route path="/apply" element={<GuestTicketSubmitView />} />
-          <Route path="*" element={<LoginScreen />} />
-        </>
+        <Route path="*" element={<LoginScreen />} />
       ) : (
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Navigate to="/schedules" />} />
