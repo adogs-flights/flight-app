@@ -4,15 +4,19 @@ import { useModal } from '../hooks/useModal';
 import RegisterUserModal from '../components/modals/RegisterUserModal';
 import AirportModal from '../components/modals/AirportModal';
 import AirlineModal from '../components/modals/AirlineModal';
+import OrganizationModal from '../components/modals/OrganizationModal';
+import GuestSubmissionReviewModal from '../components/modals/GuestSubmissionReviewModal';
 
 export default function AdminView() {
     const { apiClient, fetchStaticData } = useAuth();
     const [activeTab, setActiveTab] = useState('users');
-    
+
     // 데이터 상태
     const [users, setUsers] = useState([]);
     const [airports, setAirports] = useState([]);
     const [airlines, setAirlines] = useState([]);
+    const [organizations, setOrganizations] = useState([]);
+    const [submissions, setSubmissions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
@@ -22,6 +26,8 @@ export default function AdminView() {
     const userModal = useModal();
     const airportModal = useModal();
     const airlineModal = useModal();
+    const organizationModal = useModal();
+    const submissionModal = useModal();
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -36,6 +42,12 @@ export default function AdminView() {
             } else if (activeTab === 'airlines') {
                 const res = await apiClient.get('/master/airlines');
                 setAirlines(res.data);
+            } else if (activeTab === 'organizations') {
+                const res = await apiClient.get('/organizations');
+                setOrganizations(res.data);
+            } else if (activeTab === 'submissions') {
+                const res = await apiClient.get('/guest-submissions');
+                setSubmissions(res.data);
             }
         } catch {
             setError('데이터를 불러오는데 실패했습니다.');
@@ -57,6 +69,7 @@ export default function AdminView() {
         setSelectedItem(item);
         if (activeTab === 'airports') airportModal.openModal();
         else if (activeTab === 'airlines') airlineModal.openModal();
+        else if (activeTab === 'organizations') organizationModal.openModal();
     };
 
     const handleCreate = () => {
@@ -64,6 +77,7 @@ export default function AdminView() {
         if (activeTab === 'users') userModal.openModal();
         else if (activeTab === 'airports') airportModal.openModal();
         else if (activeTab === 'airlines') airlineModal.openModal();
+        else if (activeTab === 'organizations') organizationModal.openModal();
     };
 
     const handleDelete = async (id) => {
@@ -71,10 +85,16 @@ export default function AdminView() {
         try {
             if (activeTab === 'airports') await apiClient.delete(`/master/airports/${id}`);
             else if (activeTab === 'airlines') await apiClient.delete(`/master/airlines/${id}`);
+            else if (activeTab === 'organizations') await apiClient.delete(`/organizations/${id}`);
             handleSaved();
         } catch {
             alert('삭제에 실패했습니다.');
         }
+    };
+
+    const handleReviewSubmission = (item) => {
+        setSelectedItem(item);
+        submissionModal.openModal();
     };
 
     const renderUsers = () => (
@@ -245,6 +265,113 @@ export default function AdminView() {
         </>
     );
 
+    const renderOrganizations = () => (
+        <>
+            {/* Desktop Table */}
+            <div className="hidden sm:block overflow-x-auto">
+                <table className="w-full text-sm text-left border-collapse">
+                    <thead>
+                        <tr className="bg-muted/50 border-b text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                            <th className="px-6 py-4">단체명</th>
+                            <th className="px-6 py-4">상태</th>
+                            <th className="px-6 py-4 text-right">관리</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/50">
+                        {organizations.map(o => (
+                            <tr key={o.id} className="hover:bg-muted/30 transition-colors">
+                                <td className="px-6 py-4 font-bold">{o.name}</td>
+                                <td className="px-6 py-4 text-xs">{o.is_active ? '✅ 활성' : '❌ 중지'}</td>
+                                <td className="px-6 py-4 text-right">
+                                    <div className="flex items-center justify-end gap-2">
+                                        <button className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-secondary text-secondary-foreground border border-border hover:bg-muted transition-all active:scale-95" onClick={() => handleEdit(o)}>수정</button>
+                                        <button className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20 transition-all active:scale-95" onClick={() => handleDelete(o.id)}>삭제</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+            {/* Mobile Cards */}
+            <div className="sm:hidden divide-y divide-border">
+                {organizations.map(o => (
+                    <div key={o.id} className="p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                            <span className="font-bold text-foreground">{o.name}</span>
+                            <span className="text-[10px] font-bold">{o.is_active ? '✅ 사용 중' : '❌ 중지됨'}</span>
+                        </div>
+                        <div className="flex items-center justify-end gap-2">
+                            <button className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-secondary border border-border" onClick={() => handleEdit(o)}>수정</button>
+                            <button className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-destructive/10 text-destructive border border-destructive/20" onClick={() => handleDelete(o.id)}>삭제</button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </>
+    );
+
+    const submissionStatusLabel = (status) => {
+        if (status === 'approved') return '✅ 승인됨';
+        if (status === 'rejected') return '❌ 반려됨';
+        return '⏳ 검토 대기';
+    };
+
+    const verificationMethodLabel = (method) => method === 'eticket_image' ? '📷 이미지' : '🔢 예약번호';
+
+    const renderSubmissions = () => (
+        <>
+            {/* Desktop Table */}
+            <div className="hidden sm:block overflow-x-auto">
+                <table className="w-full text-sm text-left border-collapse">
+                    <thead>
+                        <tr className="bg-muted/50 border-b text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                            <th className="px-6 py-4">전화번호</th>
+                            <th className="px-6 py-4">증빙 방법</th>
+                            <th className="px-6 py-4">지정 단체</th>
+                            <th className="px-6 py-4">상태</th>
+                            <th className="px-6 py-4">제출일</th>
+                            <th className="px-6 py-4 text-right">관리</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/50">
+                        {submissions.map(s => (
+                            <tr key={s.id} className="hover:bg-muted/30 transition-colors">
+                                <td className="px-6 py-4 font-semibold text-foreground">{s.phone}</td>
+                                <td className="px-6 py-4 text-xs">{verificationMethodLabel(s.verification_method)}</td>
+                                <td className="px-6 py-4 text-muted-foreground">{s.organization?.name || '미지정'}</td>
+                                <td className="px-6 py-4 text-xs">{submissionStatusLabel(s.status)}</td>
+                                <td className="px-6 py-4 text-muted-foreground text-xs">{new Date(s.submitted_at).toLocaleDateString()}</td>
+                                <td className="px-6 py-4 text-right">
+                                    <button className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-secondary text-secondary-foreground border border-border hover:bg-muted transition-all active:scale-95" onClick={() => handleReviewSubmission(s)}>
+                                        {s.status === 'pending' ? '검토' : '상세'}
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+            {/* Mobile Cards */}
+            <div className="sm:hidden divide-y divide-border">
+                {submissions.map(s => (
+                    <div key={s.id} className="p-4 space-y-2">
+                        <div className="flex items-center justify-between">
+                            <span className="font-bold text-foreground">{s.phone}</span>
+                            <span className="text-[10px] font-bold">{submissionStatusLabel(s.status)}</span>
+                        </div>
+                        <div className="text-xs text-muted-foreground">{verificationMethodLabel(s.verification_method)} · {s.organization?.name || '단체 미지정'}</div>
+                        <div className="flex items-center justify-end">
+                            <button className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-secondary border border-border" onClick={() => handleReviewSubmission(s)}>
+                                {s.status === 'pending' ? '검토' : '상세'}
+                            </button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </>
+    );
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -252,12 +379,14 @@ export default function AdminView() {
                     <h1 className="text-2xl font-bold tracking-tight text-foreground">시스템 관리</h1>
                     <p className="text-sm text-muted-foreground">회원 및 마스터 데이터를 관리합니다.</p>
                 </div>
-                <button 
-                    className="inline-flex items-center justify-center px-4 py-2 text-sm font-bold transition-colors rounded-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm" 
-                    onClick={handleCreate}
-                >
-                    + {activeTab === 'users' ? '회원 등록' : activeTab === 'airports' ? '공항 등록' : '항공사 등록'}
-                </button>
+                {activeTab !== 'submissions' && (
+                    <button
+                        className="inline-flex items-center justify-center px-4 py-2 text-sm font-bold transition-colors rounded-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+                        onClick={handleCreate}
+                    >
+                        + {activeTab === 'users' ? '회원 등록' : activeTab === 'airports' ? '공항 등록' : activeTab === 'airlines' ? '항공사 등록' : '단체 등록'}
+                    </button>
+                )}
             </div>
 
             <div className="flex flex-col bg-card rounded-xl border-2 border-border shadow-sm overflow-hidden min-h-[400px]">
@@ -274,11 +403,23 @@ export default function AdminView() {
                     >
                         🏢 공항
                     </button>
-                    <button 
+                    <button
                         className={`shrink-0 px-4 py-3 text-xs font-bold transition-all border-b-2 -mb-[2px] ${activeTab === 'airlines' ? 'text-primary border-primary' : 'text-muted-foreground border-transparent hover:text-foreground'}`}
                         onClick={() => setActiveTab('airlines')}
                     >
                         ✈️ 항공사
+                    </button>
+                    <button
+                        className={`shrink-0 px-4 py-3 text-xs font-bold transition-all border-b-2 -mb-[2px] ${activeTab === 'organizations' ? 'text-primary border-primary' : 'text-muted-foreground border-transparent hover:text-foreground'}`}
+                        onClick={() => setActiveTab('organizations')}
+                    >
+                        🏢 단체
+                    </button>
+                    <button
+                        className={`shrink-0 px-4 py-3 text-xs font-bold transition-all border-b-2 -mb-[2px] ${activeTab === 'submissions' ? 'text-primary border-primary' : 'text-muted-foreground border-transparent hover:text-foreground'}`}
+                        onClick={() => setActiveTab('submissions')}
+                    >
+                        📋 제출 검토
                     </button>
                 </div>
 
@@ -295,7 +436,9 @@ export default function AdminView() {
                         </div>
                     ) : (
                         activeTab === 'users' ? renderUsers() :
-                        activeTab === 'airports' ? renderAirports() : renderAirlines()
+                        activeTab === 'airports' ? renderAirports() :
+                        activeTab === 'airlines' ? renderAirlines() :
+                        activeTab === 'organizations' ? renderOrganizations() : renderSubmissions()
                     )}
                 </div>
             </div>
@@ -303,6 +446,8 @@ export default function AdminView() {
             <RegisterUserModal isOpen={userModal.isOpen} onClose={userModal.closeModal} onUserRegistered={handleSaved} />
             <AirportModal isOpen={airportModal.isOpen} onClose={airportModal.closeModal} airport={selectedItem} onSaved={handleSaved} apiClient={apiClient} />
             <AirlineModal isOpen={airlineModal.isOpen} onClose={airlineModal.closeModal} airline={selectedItem} onSaved={handleSaved} apiClient={apiClient} />
+            <OrganizationModal isOpen={organizationModal.isOpen} onClose={organizationModal.closeModal} organization={selectedItem} onSaved={handleSaved} apiClient={apiClient} />
+            <GuestSubmissionReviewModal isOpen={submissionModal.isOpen} onClose={submissionModal.closeModal} submission={selectedItem} onReviewed={handleSaved} />
         </div>
     );
 }

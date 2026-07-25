@@ -322,4 +322,88 @@ class Airline(AirlineBase):
 
     class Config:
         from_attributes = True
-s = True
+
+
+# ======================================================================================
+# Organization Schemas
+# ======================================================================================
+class OrganizationBase(BaseModel):
+    name: str
+    slug: str | None = None
+    is_active: bool | None = True
+
+    @field_validator("slug")
+    @classmethod
+    def slug_format(cls, v: str | None) -> str | None:
+        if v is None or v == "":
+            return None
+        if not re.fullmatch(r"[a-z0-9-]+", v):
+            raise ValueError("슬러그는 영문 소문자, 숫자, 하이픈(-)만 사용할 수 있습니다.")
+        return v
+
+
+class OrganizationCreate(OrganizationBase):
+    pass
+
+
+class OrganizationUpdate(BaseModel):
+    name: str | None = None
+    slug: str | None = None
+    is_active: bool | None = None
+
+    @field_validator("slug")
+    @classmethod
+    def slug_format(cls, v: str | None) -> str | None:
+        if v is None or v == "":
+            return None
+        if not re.fullmatch(r"[a-z0-9-]+", v):
+            raise ValueError("슬러그는 영문 소문자, 숫자, 하이픈(-)만 사용할 수 있습니다.")
+        return v
+
+
+class Organization(OrganizationBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+
+# ======================================================================================
+# Guest Ticket Submission Schemas
+# ======================================================================================
+class GuestSubmissionVerificationMethod(str, Enum):
+    eticket_image = "eticket_image"
+    reservation_number = "reservation_number"
+
+
+class GuestSubmissionStatus(str, Enum):
+    pending = "pending"
+    approved = "approved"
+    rejected = "rejected"
+
+
+class GuestTicketSubmission(BaseModel):
+    id: str
+    phone: str
+    verification_method: GuestSubmissionVerificationMethod
+    reservation_number: str | None = None
+    passenger_name_en: str | None = None
+    organization_id: int | None = None
+    organization: Organization | None = None
+    eticket_drive_url: str | None = None
+    status: GuestSubmissionStatus
+    admin_note: str | None = None
+    created_ticket_id: str | None = None
+    submitted_at: datetime
+    reviewed_at: datetime | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class GuestSubmissionReject(BaseModel):
+    admin_note: str | None = None
+
+
+class GuestSubmissionApprove(TicketBase):
+    owner_user_id: str | None = None

@@ -9,6 +9,7 @@ import GiveView from './pages/GiveView';
 import MyTicketsView from './pages/MyTicketsView';
 import MyApplicationsView from './pages/MyApplicationsView';
 import AdminView from './pages/AdminView';
+import GuestTicketSubmitView from './pages/GuestTicketSubmitView';
 
 function App() {
   return (
@@ -28,7 +29,10 @@ function AppContent() {
   return (
     <Routes>
       {!user ? (
-        <Route path="*" element={<LoginScreen />} />
+        <>
+          <Route path="/apply" element={<GuestTicketSubmitView />} />
+          <Route path="*" element={<LoginScreen />} />
+        </>
       ) : (
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Navigate to="/schedules" />} />
