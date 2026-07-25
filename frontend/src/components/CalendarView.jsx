@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { getAirportColor } from '../utils/airportUtils';
+import { getAirportColor, MAJOR_AIRPORTS } from '../utils/airportUtils';
 
 export default function CalendarView({ 
     tickets, 
@@ -48,6 +48,18 @@ export default function CalendarView({
     for (let i = 1; i <= remaining; i++) {
         days.push({ day: i, otherMonth: true });
     }
+
+    // 이번 달에 실제로 등장하는 공항들만 색상 범례로 표시 (정렬: 주요 공항 우선, 이후 가나다순)
+    const monthAirportCodes = [...new Set(
+        days.filter(d => !d.otherMonth).flatMap(d => d.tickets || []).map(t => t.arrival_airport).filter(Boolean)
+    )].sort((a, b) => {
+        const aIdx = MAJOR_AIRPORTS.indexOf(a);
+        const bIdx = MAJOR_AIRPORTS.indexOf(b);
+        if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+        if (aIdx !== -1) return -1;
+        if (bIdx !== -1) return 1;
+        return a.localeCompare(b);
+    });
 
     const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
     const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
@@ -128,6 +140,23 @@ export default function CalendarView({
                         </div>
                     ))}
                 </div>
+
+                {monthAirportCodes.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 border-t bg-background/50">
+                        {monthAirportCodes.map(code => {
+                            const colors = getAirportColor(code, rawAirports);
+                            return (
+                                <div key={code} className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground">
+                                    <span
+                                        className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+                                        style={{ backgroundColor: colors.bg, border: `1px solid ${colors.text}` }}
+                                    />
+                                    {code}
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
         </div>
     );

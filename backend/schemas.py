@@ -385,6 +385,7 @@ class GuestSubmissionStatus(str, Enum):
 class GuestTicketSubmission(BaseModel):
     id: str
     phone: str
+    kakao_id: str | None = None
     airline: str | None = None
     verification_method: GuestSubmissionVerificationMethod
     reservation_number: str | None = None
