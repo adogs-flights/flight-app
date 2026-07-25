@@ -7,9 +7,11 @@ from typing import Any
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
+from googleapiclient.http import MediaInMemoryUpload
 from sqlalchemy.orm import Session
 
 import models
+from services import storage_service
 
 # Google API Scopes
 SCOPES = [
@@ -377,6 +379,116 @@ def list_user_folders(user_token: models.UserGoogleToken) -> list[dict[str, str]
     ).execute()
 
     return results.get("files", [])
+
+
+def get_or_create_folder(
+    user_token: models.UserGoogleToken,
+    folder_name: str,
+    parent_id: str | None = None,
+) -> str:
+    """
+    parent_id 아래에서 folder_name 폴더를 찾고, 없으면 새로 생성합니다.
+    """
+    service = get_drive_service(user_token)
+    query = (
+        f"name = '{folder_name}' and "
+        "mimeType = 'application/vnd.google-apps.folder' and trashed = false"
+    )
+    if parent_id:
+        query += f" and '{parent_id}' in parents"
+
+    results = service.files().list(q=query, fields="files(id, name)").execute()
+    folders = results.get("files", [])
+    if folders:
+        return folders[0]["id"]
+
+    file_metadata: dict[str, Any] = {
+        "name": folder_name,
+        "mimeType": "application/vnd.google-apps.folder",
+    }
+    if parent_id:
+        file_metadata["parents"] = [parent_id]
+    folder = service.files().create(body=file_metadata, fields="id").execute()
+    return folder.get("id")
+
+
+def upload_file_to_drive(
+    user_token: models.UserGoogleToken,
+    filename: str,
+    content: bytes,
+    mime_type: str,
+    folder_id: str | None = None,
+) -> str | None:
+    """
+    파일 바이트를 사용자의 구글 드라이브에 업로드하고 파일 ID를 반환합니다.
+    """
+    service = get_drive_service(user_token)
+    file_metadata: dict[str, Any] = {"name": filename}
+    if folder_id:
+        file_metadata["parents"] = [folder_id]
+
+    media = MediaInMemoryUpload(content, mimetype=mime_type, resumable=False)
+    uploaded = service.files().create(
+        body=file_metadata, media_body=media, fields="id, webViewLink"
+    ).execute()
+    return uploaded.get("id")
+
+
+GDRIVE_UPLOAD_ADMIN_EMAIL = os.environ.get("GDRIVE_UPLOAD_ADMIN_EMAIL")
+GUEST_SUBMISSION_FOLDER_NAME = "이동봉사_티켓제출_이미지"
+
+
+def backup_guest_submission_to_drive(
+    db: Session,
+    submission_id: str,
+    object_key: str,
+    mime_type: str,
+) -> None:
+    """
+    [백그라운드] 비로그인 제출자의 e티켓 이미지(MinIO에 저장됨)를
+    대표 관리자(GDRIVE_UPLOAD_ADMIN_EMAIL)의 구글 드라이브에 백업 업로드합니다.
+    대표 관리자 미설정/미연동 시 조용히 건너뜁니다. MinIO 원본은 그대로 유지되며,
+    이 업로드는 어디까지나 백업 용도입니다.
+    """
+    if not GDRIVE_UPLOAD_ADMIN_EMAIL:
+        return
+
+    admin_user = (
+        db.query(models.User)
+        .filter(models.User.email == GDRIVE_UPLOAD_ADMIN_EMAIL)
+        .first()
+    )
+    if not admin_user:
+        return
+
+    user_token = (
+        db.query(models.UserGoogleToken)
+        .filter(models.UserGoogleToken.user_id == admin_user.id)
+        .first()
+    )
+    if not user_token or not user_token.access_token:
+        return
+
+    submission = (
+        db.query(models.GuestTicketSubmission)
+        .filter(models.GuestTicketSubmission.id == submission_id)
+        .first()
+    )
+    if not submission:
+        return
+
+    try:
+        content, _ = storage_service.get_object(object_key)
+        folder_id = get_or_create_folder(
+            user_token, GUEST_SUBMISSION_FOLDER_NAME, parent_id=user_token.root_folder_id
+        )
+        file_id = upload_file_to_drive(user_token, object_key, content, mime_type, folder_id)
+        if file_id:
+            submission.eticket_drive_url = f"https://drive.google.com/file/d/{file_id}/view"
+            db.commit()
+    except Exception as e:
+        print(f"Error backing up guest submission to GDrive: {e}")
+        db.rollback()
 
 
 def create_root_sync_folder(

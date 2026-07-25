@@ -217,6 +217,43 @@ class Airline(Base):
     is_active = Column(Boolean, default=True)
 
 
+class Organization(Base):
+    __tablename__ = "organizations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, index=True, nullable=False)
+    slug = Column(String, unique=True, index=True, nullable=True)  # 전용 제출 링크용
+    is_active = Column(Boolean, default=True)
+
+
+class GuestTicketSubmission(Base):
+    __tablename__ = "guest_ticket_submissions"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    phone = Column(String, nullable=False)
+    verification_method = Column(String, nullable=False, index=True)  # 'eticket_image', 'reservation_number'
+    eticket_object_key = Column(String, nullable=True)  # MinIO 오브젝트 키
+    eticket_drive_url = Column(String, nullable=True)  # 대표 관리자 구글 드라이브 백업 링크
+    reservation_number = Column(String, nullable=True)
+    passenger_name_en = Column(String, nullable=True)
+    organization_id = Column(
+        Integer, ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    status = Column(
+        String, nullable=False, default="pending", index=True
+    )  # 'pending', 'approved', 'rejected'
+    admin_note = Column(Text, nullable=True)
+    created_ticket_id = Column(
+        String, ForeignKey("tickets.id", ondelete="SET NULL"), nullable=True
+    )
+
+    submitted_at = Column(DateTime(timezone=True), server_default=func.now())
+    reviewed_at = Column(DateTime(timezone=True), nullable=True)
+
+    organization = relationship("Organization")
+    created_ticket = relationship("Ticket")
+
+
 class UserGoogleToken(Base):
     __tablename__ = "user_google_tokens"
 

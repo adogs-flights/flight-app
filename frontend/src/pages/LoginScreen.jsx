@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import logo from '../assets/flight-app.PNG';
 import Footer from '../components/layout/Footer';
@@ -67,11 +68,14 @@ export default function LoginScreen() {
                         </button>
                     </form>
 
-                    <div className="text-center space-y-1 pt-4">
+                    <div className="text-center space-y-3 pt-4">
                         <p className="text-xs text-muted-foreground leading-relaxed">
                             계정이 없으신가요? 관리자에게 문의하세요.<br />
                             <span className="font-medium">계정은 관리자만 발급할 수 있습니다.</span>
                         </p>
+                        <Link to="/apply" className="inline-block text-xs font-bold text-primary hover:underline">
+                            🎁 봉사 티켓을 제출하고 싶으신가요? →
+                        </Link>
                     </div>
                 </div>
             </div>

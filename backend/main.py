@@ -12,7 +12,16 @@ from sqlalchemy.orm import Session
 import models
 from alembic import command
 from database import engine, get_db
-from routers import auth, gdrive, master, need_posts, ticket_applications, tickets
+from routers import (
+    auth,
+    gdrive,
+    guest_submissions,
+    master,
+    need_posts,
+    organizations,
+    ticket_applications,
+    tickets,
+)
 
 # --- 🔒 필수 환경변수 검증 ---
 SECRET_KEY = os.environ.get("SECRET_KEY")
@@ -124,6 +133,8 @@ app.include_router(tickets.router)
 app.include_router(ticket_applications.router)
 app.include_router(need_posts.router)
 app.include_router(master.router)
+app.include_router(organizations.router)
+app.include_router(guest_submissions.router)
 
 
 # --- Annotated types ---

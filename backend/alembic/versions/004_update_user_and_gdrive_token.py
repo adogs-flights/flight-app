@@ -20,18 +20,20 @@ def upgrade() -> None:
     op.add_column('users', sa.Column('organization', sa.String(), nullable=True))
     
     # 2. UserGoogleToken 테이블의 access_token 컬럼을 nullable로 변경
-    # PostgreSQL 환경을 고려하여 alter_column 사용
-    op.alter_column('user_google_tokens', 'access_token',
-               existing_type=sa.String(),
-               nullable=True)
+    # batch_alter_table을 사용해 SQLite(로컬 개발 DB)와 PostgreSQL(운영) 모두 지원
+    with op.batch_alter_table('user_google_tokens') as batch_op:
+        batch_op.alter_column('access_token',
+                   existing_type=sa.String(),
+                   nullable=True)
 
 
 def downgrade() -> None:
     # 1. UserGoogleToken 테이블의 access_token 컬럼을 다시 NOT NULL로 변경
     # 주의: 기존 데이터에 NULL이 있을 경우 실패할 수 있으므로 downgrade 시 유의 필요
-    op.alter_column('user_google_tokens', 'access_token',
-               existing_type=sa.String(),
-               nullable=False)
+    with op.batch_alter_table('user_google_tokens') as batch_op:
+        batch_op.alter_column('access_token',
+                   existing_type=sa.String(),
+                   nullable=False)
     
     # 2. User 테이블에서 organization 컬럼 제거
     op.drop_column('users', 'organization')
