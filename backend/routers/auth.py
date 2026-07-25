@@ -223,6 +223,18 @@ def create_user_by_admin(
     db.commit()
     db.refresh(db_user)
 
+    # 계정에 단체명이 있으면 단체 마스터 데이터에도 자동 반영 (없으면 생성)
+    org_name = (user_in.organization or "").strip()
+    if org_name:
+        existing_org = (
+            db.query(models.Organization)
+            .filter(models.Organization.name == org_name)
+            .first()
+        )
+        if not existing_org:
+            db.add(models.Organization(name=org_name, is_active=True))
+            db.commit()
+
     # 이메일 템플릿 파일 읽기
     from pathlib import Path
     import string

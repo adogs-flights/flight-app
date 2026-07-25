@@ -83,7 +83,7 @@ export default function OrganizationModal({ isOpen, onClose, organization, onSav
                             {`${window.location.origin}/apply?org=${form.slug}`}
                         </div>
                     )}
-                    <p className="text-[11px] text-muted-foreground ml-1">이 슬러그를 넣은 링크로 들어오면 소속 단체가 자동으로 고정됩니다.</p>
+                    <p className="text-[11px] text-muted-foreground ml-1">이 슬러그를 넣은 링크로 들어오면 신청 단체가 자동으로 고정됩니다.</p>
                 </div>
                 <div className="flex items-center gap-3 p-4 rounded-xl border-2 border-border bg-muted/30">
                     <label className="relative inline-flex items-center cursor-pointer">

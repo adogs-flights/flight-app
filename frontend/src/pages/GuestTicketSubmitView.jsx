@@ -65,8 +65,8 @@ export default function GuestTicketSubmitView() {
                 })
                 .catch(() => setOrgLookupFailed(true));
         } else {
-            apiClient.get('/organizations')
-                .then(res => setOrganizations(res.data.filter(o => o.is_active)))
+            apiClient.get('/organizations/with-accounts')
+                .then(res => setOrganizations(res.data))
                 .catch(() => setOrganizations([]));
         }
     }, [apiClient, orgSlug]);
@@ -144,26 +144,6 @@ export default function GuestTicketSubmitView() {
                         </div>
                     ) : (
                         <div className="space-y-6">
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">
-                                    전화번호<span className="text-destructive ml-0.5">*</span>
-                                </label>
-                                <input
-                                    className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none"
-                                    value={form.phone}
-                                    onChange={e => handleChange('phone', e.target.value)}
-                                    placeholder="예약 시 남기신 전화번호"
-                                />
-                            </div>
-
-                            <SelectField
-                                label={<>항공사<span className="text-destructive ml-0.5">*</span></>}
-                                options={airlines}
-                                value={form.airline}
-                                onChange={val => handleChange('airline', val)}
-                                placeholder="항공사 선택 또는 직접 입력"
-                            />
-
                             <div className="space-y-3">
                                 <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">증빙 방법</label>
                                 <div className="flex gap-3">
@@ -181,6 +161,14 @@ export default function GuestTicketSubmitView() {
                                     </button>
                                 </div>
                             </div>
+
+                            <SelectField
+                                label={<>항공사<span className="text-destructive ml-0.5">*</span></>}
+                                options={airlines}
+                                value={form.airline}
+                                onChange={val => handleChange('airline', val)}
+                                placeholder="항공사 선택 또는 직접 입력"
+                            />
 
                             {form.verificationMethod === 'eticket_image' ? (
                                 <div className="space-y-2">
@@ -234,9 +222,21 @@ export default function GuestTicketSubmitView() {
                                 </div>
                             )}
 
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">
+                                    전화번호<span className="text-destructive ml-0.5">*</span>
+                                </label>
+                                <input
+                                    className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none"
+                                    value={form.phone}
+                                    onChange={e => handleChange('phone', e.target.value)}
+                                    placeholder="예약 시 남기신 전화번호"
+                                />
+                            </div>
+
                             {lockedOrganization ? (
                                 <div className="space-y-2">
-                                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">소속 단체</label>
+                                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">신청 단체</label>
                                     <div className="flex items-center gap-2 h-11 px-4 rounded-lg border-2 border-primary/30 bg-primary/5 text-sm font-bold text-primary">
                                         🏢 {lockedOrganization.name}
                                     </div>
@@ -244,7 +244,7 @@ export default function GuestTicketSubmitView() {
                             ) : (
                                 <>
                                     <SelectField
-                                        label="소속 단체 (선택)"
+                                        label="신청 단체 (선택)"
                                         options={organizations.map(o => ({ value: String(o.id), label: o.name }))}
                                         value={form.organizationId}
                                         onChange={val => handleChange('organizationId', val)}

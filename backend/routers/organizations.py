@@ -19,6 +19,25 @@ def get_organizations(db: DBSession) -> list[models.Organization]:
     return db.query(models.Organization).order_by(models.Organization.name).all()
 
 
+@router.get("/with-accounts", response_model=list[schemas.Organization])
+def get_organizations_with_accounts(db: DBSession) -> list[models.Organization]:
+    """
+    실제 로그인 계정이 존재하는 단체만 반환 (비로그인 제출 폼의 단체 선택 드롭다운용).
+    """
+    account_org_names = (
+        db.query(models.User.organization)
+        .filter(models.User.organization.isnot(None))
+        .distinct()
+    )
+    return (
+        db.query(models.Organization)
+        .filter(models.Organization.is_active.is_(True))
+        .filter(models.Organization.name.in_(account_org_names))
+        .order_by(models.Organization.name)
+        .all()
+    )
+
+
 @router.get("/by-slug/{slug}", response_model=schemas.Organization)
 def get_organization_by_slug(slug: str, db: DBSession) -> models.Organization:
     organization = (
