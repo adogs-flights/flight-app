@@ -231,11 +231,13 @@ class GuestTicketSubmission(Base):
 
     id = Column(String, primary_key=True, default=generate_uuid)
     phone = Column(String, nullable=False)
+    airline = Column(String, nullable=True)  # 항공사 코드 (마스터 데이터 참조)
     verification_method = Column(String, nullable=False, index=True)  # 'eticket_image', 'reservation_number'
     eticket_object_key = Column(String, nullable=True)  # MinIO 오브젝트 키
     eticket_drive_url = Column(String, nullable=True)  # 대표 관리자 구글 드라이브 백업 링크
     reservation_number = Column(String, nullable=True)
-    passenger_name_en = Column(String, nullable=True)
+    passenger_last_name_en = Column(String, nullable=True)
+    passenger_first_name_en = Column(String, nullable=True)
     organization_id = Column(
         Integer, ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True, index=True
     )

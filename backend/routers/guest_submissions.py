@@ -36,9 +36,11 @@ async def create_guest_submission(
     db: DBSession,
     background_tasks: BackgroundTasks,
     phone: Annotated[str, Form()],
+    airline: Annotated[str, Form()],
     verification_method: Annotated[schemas.GuestSubmissionVerificationMethod, Form()],
     reservation_number: Annotated[str | None, Form()] = None,
-    passenger_name_en: Annotated[str | None, Form()] = None,
+    passenger_last_name_en: Annotated[str | None, Form()] = None,
+    passenger_first_name_en: Annotated[str | None, Form()] = None,
     organization_id: Annotated[int | None, Form()] = None,
     eticket_image: Annotated[UploadFile | None, File()] = None,
 ) -> models.GuestTicketSubmission:
@@ -49,18 +51,23 @@ async def create_guest_submission(
     if not phone.strip():
         raise HTTPException(status_code=400, detail="전화번호를 입력해주세요.")
 
+    if not airline.strip():
+        raise HTTPException(status_code=400, detail="항공사를 선택해주세요.")
+
     if verification_method == schemas.GuestSubmissionVerificationMethod.eticket_image:
         if not eticket_image:
             raise HTTPException(
                 status_code=400, detail="e티켓 이미지를 첨부해주세요."
             )
     else:
-        if not (reservation_number and reservation_number.strip()) or not (
-            passenger_name_en and passenger_name_en.strip()
+        if (
+            not (reservation_number and reservation_number.strip())
+            or not (passenger_last_name_en and passenger_last_name_en.strip())
+            or not (passenger_first_name_en and passenger_first_name_en.strip())
         ):
             raise HTTPException(
                 status_code=400,
-                detail="예약번호와 탑승객 영문명을 모두 입력해주세요.",
+                detail="예약번호와 탑승객 성/이름을 모두 입력해주세요.",
             )
 
     if organization_id is not None:
@@ -94,18 +101,17 @@ async def create_guest_submission(
                 status_code=502, detail="이미지 저장소 연결에 실패했습니다."
             ) from e
 
+    is_reservation_method = (
+        verification_method == schemas.GuestSubmissionVerificationMethod.reservation_number
+    )
     db_submission = models.GuestTicketSubmission(
         phone=phone,
+        airline=airline,
         verification_method=verification_method.value,
         eticket_object_key=eticket_object_key,
-        reservation_number=reservation_number
-        if verification_method
-        == schemas.GuestSubmissionVerificationMethod.reservation_number
-        else None,
-        passenger_name_en=passenger_name_en
-        if verification_method
-        == schemas.GuestSubmissionVerificationMethod.reservation_number
-        else None,
+        reservation_number=reservation_number if is_reservation_method else None,
+        passenger_last_name_en=passenger_last_name_en if is_reservation_method else None,
+        passenger_first_name_en=passenger_first_name_en if is_reservation_method else None,
         organization_id=organization_id,
     )
     db.add(db_submission)

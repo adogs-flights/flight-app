@@ -385,9 +385,11 @@ class GuestSubmissionStatus(str, Enum):
 class GuestTicketSubmission(BaseModel):
     id: str
     phone: str
+    airline: str | None = None
     verification_method: GuestSubmissionVerificationMethod
     reservation_number: str | None = None
-    passenger_name_en: str | None = None
+    passenger_last_name_en: str | None = None
+    passenger_first_name_en: str | None = None
     organization_id: int | None = None
     organization: Organization | None = None
     eticket_drive_url: str | None = None

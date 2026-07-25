@@ -42,7 +42,8 @@ export default function GuestSubmissionReviewModal({ isOpen, onClose, submission
 
         setForm({
             ...emptyForm,
-            contact: submission.phone || ''
+            contact: submission.phone || '',
+            airline: submission.airline || ''
         });
 
         apiClient.get('/users')
@@ -161,6 +162,7 @@ export default function GuestSubmissionReviewModal({ isOpen, onClose, submission
                 <div className="p-4 rounded-xl border-2 border-border bg-muted/30 space-y-2">
                     <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">제출 정보</div>
                     <div className="text-sm"><span className="font-bold">전화번호:</span> {submission.phone}</div>
+                    <div className="text-sm"><span className="font-bold">항공사(제출자 입력):</span> {submission.airline || '-'}</div>
                     {submission.organization && (
                         <div className="text-sm"><span className="font-bold">지정 단체:</span> {submission.organization.name}</div>
                     )}
@@ -187,7 +189,7 @@ export default function GuestSubmissionReviewModal({ isOpen, onClose, submission
                     ) : (
                         <>
                             <div className="text-sm"><span className="font-bold">예약번호:</span> {submission.reservation_number}</div>
-                            <div className="text-sm"><span className="font-bold">탑승객 영문명:</span> {submission.passenger_name_en}</div>
+                            <div className="text-sm"><span className="font-bold">탑승객 영문명:</span> {submission.passenger_last_name_en} {submission.passenger_first_name_en}</div>
                         </>
                     )}
                 </div>

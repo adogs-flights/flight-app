@@ -35,7 +35,7 @@ async function compressImageFile(file, maxDimension = 1920, quality = 0.8) {
 }
 
 export default function GuestTicketSubmitView() {
-    const { apiClient } = useAuth();
+    const { apiClient, airlines } = useAuth();
     const [searchParams] = useSearchParams();
     const orgSlug = searchParams.get('org');
 
@@ -44,9 +44,11 @@ export default function GuestTicketSubmitView() {
     const [orgLookupFailed, setOrgLookupFailed] = useState(false);
     const [form, setForm] = useState({
         phone: '',
+        airline: '',
         verificationMethod: 'eticket_image',
         reservationNumber: '',
-        passengerNameEn: '',
+        passengerLastNameEn: '',
+        passengerFirstNameEn: '',
         organizationId: ''
     });
     const [imageFile, setImageFile] = useState(null);
@@ -79,27 +81,33 @@ export default function GuestTicketSubmitView() {
             setError('전화번호를 입력해주세요.');
             return;
         }
+        if (!form.airline.trim()) {
+            setError('항공사를 선택해주세요.');
+            return;
+        }
         if (form.verificationMethod === 'eticket_image') {
             if (!imageFile) {
                 setError('e티켓 이미지를 첨부해주세요.');
                 return;
             }
         } else {
-            if (!form.reservationNumber.trim() || !form.passengerNameEn.trim()) {
-                setError('예약번호와 탑승객 영문명을 모두 입력해주세요.');
+            if (!form.reservationNumber.trim() || !form.passengerLastNameEn.trim() || !form.passengerFirstNameEn.trim()) {
+                setError('예약번호와 탑승객 성/이름을 모두 입력해주세요.');
                 return;
             }
         }
 
         const formData = new FormData();
         formData.append('phone', form.phone);
+        formData.append('airline', form.airline);
         formData.append('verification_method', form.verificationMethod);
         if (form.verificationMethod === 'eticket_image') {
             const uploadFile = await compressImageFile(imageFile);
             formData.append('eticket_image', uploadFile);
         } else {
             formData.append('reservation_number', form.reservationNumber);
-            formData.append('passenger_name_en', form.passengerNameEn);
+            formData.append('passenger_last_name_en', form.passengerLastNameEn);
+            formData.append('passenger_first_name_en', form.passengerFirstNameEn);
         }
         if (form.organizationId) {
             formData.append('organization_id', form.organizationId);
@@ -148,6 +156,14 @@ export default function GuestTicketSubmitView() {
                                 />
                             </div>
 
+                            <SelectField
+                                label={<>항공사<span className="text-destructive ml-0.5">*</span></>}
+                                options={airlines}
+                                value={form.airline}
+                                onChange={val => handleChange('airline', val)}
+                                placeholder="항공사 선택 또는 직접 입력"
+                            />
+
                             <div className="space-y-3">
                                 <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">증빙 방법</label>
                                 <div className="flex gap-3">
@@ -191,16 +207,29 @@ export default function GuestTicketSubmitView() {
                                             placeholder="예: ABC123"
                                         />
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">
-                                            탑승객 영문명<span className="text-destructive ml-0.5">*</span>
-                                        </label>
-                                        <input
-                                            className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none"
-                                            value={form.passengerNameEn}
-                                            onChange={e => handleChange('passengerNameEn', e.target.value)}
-                                            placeholder="예: HONG GILDONG"
-                                        />
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">
+                                                성 (Last Name)<span className="text-destructive ml-0.5">*</span>
+                                            </label>
+                                            <input
+                                                className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none"
+                                                value={form.passengerLastNameEn}
+                                                onChange={e => handleChange('passengerLastNameEn', e.target.value)}
+                                                placeholder="예: HONG"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">
+                                                이름 (First Name)<span className="text-destructive ml-0.5">*</span>
+                                            </label>
+                                            <input
+                                                className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none"
+                                                value={form.passengerFirstNameEn}
+                                                onChange={e => handleChange('passengerFirstNameEn', e.target.value)}
+                                                placeholder="예: GILDONG"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             )}
