@@ -231,6 +231,7 @@ class GuestTicketSubmission(Base):
 
     id = Column(String, primary_key=True, default=generate_uuid)
     phone = Column(String, nullable=False)
+    kakao_id = Column(String, nullable=True)  # 카카오톡 아이디 (선택)
     airline = Column(String, nullable=True)  # 항공사 코드 (마스터 데이터 참조)
     verification_method = Column(String, nullable=False, index=True)  # 'eticket_image', 'reservation_number'
     eticket_object_key = Column(String, nullable=True)  # MinIO 오브젝트 키

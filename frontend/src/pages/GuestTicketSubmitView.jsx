@@ -44,6 +44,7 @@ export default function GuestTicketSubmitView() {
     const [orgLookupFailed, setOrgLookupFailed] = useState(false);
     const [form, setForm] = useState({
         phone: '',
+        kakaoId: '',
         airline: '',
         verificationMethod: 'eticket_image',
         reservationNumber: '',
@@ -99,6 +100,9 @@ export default function GuestTicketSubmitView() {
 
         const formData = new FormData();
         formData.append('phone', form.phone);
+        if (form.kakaoId.trim()) {
+            formData.append('kakao_id', form.kakaoId);
+        }
         formData.append('airline', form.airline);
         formData.append('verification_method', form.verificationMethod);
         if (form.verificationMethod === 'eticket_image') {
@@ -231,6 +235,16 @@ export default function GuestTicketSubmitView() {
                                     value={form.phone}
                                     onChange={e => handleChange('phone', e.target.value)}
                                     placeholder="예약 시 남기신 전화번호"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">카카오톡 아이디 (선택)</label>
+                                <input
+                                    className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none"
+                                    value={form.kakaoId}
+                                    onChange={e => handleChange('kakaoId', e.target.value)}
+                                    placeholder="카카오톡으로 연락받고 싶다면 아이디를 남겨주세요"
                                 />
                             </div>
 

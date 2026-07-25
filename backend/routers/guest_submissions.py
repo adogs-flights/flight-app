@@ -38,6 +38,7 @@ async def create_guest_submission(
     phone: Annotated[str, Form()],
     airline: Annotated[str, Form()],
     verification_method: Annotated[schemas.GuestSubmissionVerificationMethod, Form()],
+    kakao_id: Annotated[str | None, Form()] = None,
     reservation_number: Annotated[str | None, Form()] = None,
     passenger_last_name_en: Annotated[str | None, Form()] = None,
     passenger_first_name_en: Annotated[str | None, Form()] = None,
@@ -106,6 +107,7 @@ async def create_guest_submission(
     )
     db_submission = models.GuestTicketSubmission(
         phone=phone,
+        kakao_id=kakao_id,
         airline=airline,
         verification_method=verification_method.value,
         eticket_object_key=eticket_object_key,
