@@ -4,6 +4,36 @@ import { useAuth } from '../hooks/useAuth';
 import SelectField from '../components/ui/SelectField';
 import logo from '../assets/flight-app.PNG';
 
+// 리버스 프록시의 요청 크기 제한(흔히 1MB)에 걸리지 않도록,
+// 업로드 전 브라우저에서 미리 이미지를 축소/재압축한다. PDF 등 이미지가 아닌 파일은 그대로 둔다.
+async function compressImageFile(file, maxDimension = 1920, quality = 0.8) {
+    if (!file.type.startsWith('image/') || file.type === 'image/svg+xml') {
+        return file;
+    }
+    try {
+        const bitmap = await createImageBitmap(file);
+        let { width, height } = bitmap;
+        if (width > maxDimension || height > maxDimension) {
+            const scale = maxDimension / Math.max(width, height);
+            width = Math.round(width * scale);
+            height = Math.round(height * scale);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext('2d').drawImage(bitmap, 0, 0, width, height);
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
+
+        if (!blob || blob.size >= file.size) return file; // 압축 결과가 더 크면 원본 유지
+
+        const newName = file.name.replace(/\.[^.]+$/, '') + '.jpg';
+        return new File([blob], newName, { type: 'image/jpeg' });
+    } catch (err) {
+        console.error('이미지 압축 실패, 원본으로 제출합니다.', err);
+        return file;
+    }
+}
+
 export default function GuestTicketSubmitView() {
     const { apiClient } = useAuth();
     const [searchParams] = useSearchParams();
@@ -65,7 +95,8 @@ export default function GuestTicketSubmitView() {
         formData.append('phone', form.phone);
         formData.append('verification_method', form.verificationMethod);
         if (form.verificationMethod === 'eticket_image') {
-            formData.append('eticket_image', imageFile);
+            const uploadFile = await compressImageFile(imageFile);
+            formData.append('eticket_image', uploadFile);
         } else {
             formData.append('reservation_number', form.reservationNumber);
             formData.append('passenger_name_en', form.passengerNameEn);
