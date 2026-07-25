@@ -133,7 +133,7 @@ export default function GuestTicketSubmitView() {
                             <img src={logo} alt="" />
                         </div>
                         <h1 className="text-2xl font-bold tracking-tight text-foreground">이동봉사 티켓 제공하기</h1>
-                        <p className="text-sm text-muted-foreground">로그인 없이 이동봉사 가능한 항공권 정보를 제출할 수 있습니다.<br />관리자 검토 후 정식 티켓으로 등록됩니다.</p>
+                        <p className="text-sm text-muted-foreground">강아지 자리 예약을 위한 정보를 남겨주세요.<br />아래 정보들은 항공사 예약 조회를 위해서만 사용됩니다.</p>
                     </div>
 
                     {submitted ? (
