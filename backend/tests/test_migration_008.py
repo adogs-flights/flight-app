@@ -10,10 +10,11 @@ def test_alembic_env_imports_models():
     env.py는 alembic만 읽는 파일이라 런타임에 그 효과를 관측할 수 없다.
     그래서 소스를 직접 확인한다. 이 import가 없으면 Base.metadata가 비어 있어
     autogenerate가 모든 테이블을 drop하는 마이그레이션을 만든다.
+
+    주석을 떼고 실제 import 문만 본다. env.py에 "we can import models"라는
+    주석이 이미 있어서 단순 부분 문자열 검사로는 없는 import를 있다고 판정한다.
     """
     env_source = (Path(__file__).parent.parent / "alembic" / "env.py").read_text()
-    # 단순 substring 검사는 9번째 줄의 "...so we can import models" 주석과 겹쳐
-    # 오탐(false positive)이 난다. 주석을 제거한 코드 라인만 비교한다.
     code_lines = [line.split("#")[0].strip() for line in env_source.splitlines()]
     assert "import models" in code_lines
 
