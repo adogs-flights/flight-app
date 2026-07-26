@@ -12,7 +12,7 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick
 
     if (!ticket) return null;
 
-    const isAdmin = user.admin_info && user.admin_info.approved;
+    const isAdmin = user?.role === 'admin';
     const isOwner = ticket.owner_id === user.id;
     const canEdit = ticket.created_by_id === user.id || isAdmin;
     const canDelete = isOwner || isAdmin;

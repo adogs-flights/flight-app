@@ -9,7 +9,7 @@ export const AuthProvider = ({ children }) => {
         id: "dev-user-id",
         name: "개발용 관리자",
         email: "dev@example.com",
-        admin_info: { approved: true }
+        role: "admin"
     } : null);
     const [loading, setLoading] = useState(import.meta.env.DEV ? false : true);
     const [airlines, setAirlines] = useState([]);
@@ -48,50 +48,48 @@ export const AuthProvider = ({ children }) => {
 
         if (import.meta.env.DEV) return; // 개발 모드 패스
 
-        const token = localStorage.getItem('token');
-        if (token) {
-            apiClient.get('/users/me')
-                .then(response => {
-                    setUser(response.data);
-                })
-                .catch(() => {
-                    localStorage.removeItem('token');
-                })
-                .finally(() => setLoading(false));
-        } else {
-            setLoading(false);
-        }
+        // 토큰이 HttpOnly 쿠키에 있어 JS가 존재 여부를 확인할 수 없다.
+        // /users/me 성공 여부로만 로그인 상태를 판단한다.
+        apiClient.get('/users/me')
+            .then(response => setUser(response.data))
+            .catch(() => setUser(null))
+            .finally(() => setLoading(false));
     }, [fetchStaticData]);
 
     const login = async (email, password) => {
-        const response = await apiClient.post('/token', new URLSearchParams({
+        await apiClient.post('/token', new URLSearchParams({
             username: email,
             password: password
         }));
-        const { access_token, refresh_token } = response.data;
-        localStorage.setItem('token', access_token);
-        localStorage.setItem('refresh_token', refresh_token);
-        
+        // 쿠키가 심어졌다. 사용자 정보를 새로 읽는다.
         const userResponse = await apiClient.get('/users/me');
         setUser(userResponse.data);
     };
 
+    const startKakaoLogin = async () => {
+        const response = await apiClient.get('/auth/kakao/login-url');
+        // href에 대입하면 react-compiler가 "외부 변수 쓰기"로 잡는다. assign은 동일 동작.
+        window.location.assign(response.data.authorize_url);
+    };
+
+    const completeKakaoLogin = useCallback(async (code, state) => {
+        await apiClient.post('/auth/kakao', { code, state });
+        const userResponse = await apiClient.get('/users/me');
+        setUser(userResponse.data);
+    }, []);
+
     const logout = async () => {
-        const refreshToken = localStorage.getItem('refresh_token');
-        if (refreshToken) {
-            try {
-                await apiClient.post('/logout', { refresh_token: refreshToken });
-            } catch (e) {
-                console.error("Logout from server failed", e);
-            }
+        try {
+            // refresh 토큰은 쿠키로 전달된다. 본문이 없다.
+            await apiClient.post('/logout');
+        } catch (e) {
+            console.error("Logout from server failed", e);
         }
-        localStorage.removeItem('token');
-        localStorage.setItem('refresh_token', ''); // Clear
         setUser(null);
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, loading, apiClient, airlines, airports, rawAirports, fetchStaticData }}>
+        <AuthContext.Provider value={{ user, login, logout, startKakaoLogin, completeKakaoLogin, loading, apiClient, airlines, airports, rawAirports, fetchStaticData }}>
             {children}
         </AuthContext.Provider>
     );

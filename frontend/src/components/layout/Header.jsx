@@ -39,7 +39,7 @@ export default function Header({ onMenuClick, onPwChangeClick }) {
                                         {user.name ? user.name[0].toUpperCase() : 'U'}
                                     </div>
                                     <span className="hidden text-sm font-medium text-foreground lg:block">{user.name}</span>
-                                    {user.admin_info?.approved && (
+                                    {user.role === 'admin' && (
                                         <span className="hidden px-2 py-0.5 rounded-full text-[10px] font-bold bg-earth-foreground text-earth border border-earth/20 sm:block">관리자</span>
                                     )}
                                 </div>

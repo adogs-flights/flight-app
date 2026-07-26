@@ -10,6 +10,7 @@ import MyTicketsView from './pages/MyTicketsView';
 import MyApplicationsView from './pages/MyApplicationsView';
 import AdminView from './pages/AdminView';
 import GuestTicketSubmitView from './pages/GuestTicketSubmitView';
+import KakaoCallback from './pages/KakaoCallback';
 
 function App() {
   return (
@@ -30,6 +31,8 @@ function AppContent() {
     <Routes>
       {/* 로그인 여부와 무관하게 항상 접근 가능한 공개 라우트 */}
       <Route path="/apply" element={<GuestTicketSubmitView />} />
+      {/* 카카오 콜백은 로그인 전 상태에서 도착하므로 !user 분기 바깥에 있어야 한다 */}
+      <Route path="/auth/kakao/callback" element={<KakaoCallback />} />
 
       {!user ? (
         <Route path="*" element={<LoginScreen />} />
@@ -41,7 +44,7 @@ function AppContent() {
           <Route path="give" element={<GiveView />} />
           <Route path="mytickets" element={<MyTicketsView />} />
           <Route path="myapplications" element={<MyApplicationsView />} />
-          {user.admin_info?.approved && <Route path="admin" element={<AdminView />} />}
+          {user.role === 'admin' && <Route path="admin" element={<AdminView />} />}
           <Route path="*" element={<Navigate to="/" />} />
         </Route>
       )}

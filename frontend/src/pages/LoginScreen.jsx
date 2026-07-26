@@ -8,7 +8,16 @@ export default function LoginScreen() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
-    const { login } = useAuth();
+    const { login, startKakaoLogin } = useAuth();
+
+    const handleKakaoLogin = async () => {
+        setError('');
+        try {
+            await startKakaoLogin();
+        } catch {
+            setError('카카오 로그인을 시작할 수 없습니다. 잠시 후 다시 시도해주세요.');
+        }
+    };
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -67,6 +76,26 @@ export default function LoginScreen() {
                             로그인
                         </button>
                     </form>
+
+                    <div>
+                        <div className="flex items-center gap-3 my-5">
+                            <div className="flex-1 h-px bg-border" />
+                            <span className="text-xs text-muted-foreground">또는</span>
+                            <div className="flex-1 h-px bg-border" />
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={handleKakaoLogin}
+                            className="w-full inline-flex items-center justify-center h-11 px-4 py-2 text-sm font-bold transition-all rounded-lg shadow-sm hover:scale-[0.99] active:scale-[0.97]"
+                            style={{ backgroundColor: '#FEE500', color: '#191600' }}
+                        >
+                            카카오로 시작하기
+                        </button>
+                        <p className="mt-2 text-center text-xs text-muted-foreground">
+                            이동봉사를 신청하신 분은 카카오로 로그인해 진행 상황을 확인하세요
+                        </p>
+                    </div>
 
                     <div className="text-center space-y-3 pt-4">
                         <p className="text-xs text-muted-foreground leading-relaxed">
