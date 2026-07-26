@@ -32,7 +32,9 @@ REFRESH_COOKIE_NAME = "refresh_token"
 REFRESH_COOKIE_PATH = "/api"
 
 router = APIRouter(prefix="/api", tags=["Authentication"])
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/token")
+# auto_error=False가 필수다. 기본값(True)이면 Authorization 헤더가 없는 요청을
+# 스킴이 먼저 401로 끊어버려서 쿠키 인증이 통째로 죽는다
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/token", auto_error=False)
 
 # --- Annotated types for clean dependencies ---
 DBSession = Annotated[Session, Depends(get_db)]
@@ -171,7 +173,13 @@ def _user_from_refresh_cookie(
 
 
 def get_current_user(
-    request: Request, response: Response, db: DBSession
+    request: Request,
+    response: Response,
+    db: DBSession,
+    # 값을 쓰지 않는다. OpenAPI 문서에 시큐리티 스킴을 등록해 /docs의 Authorize
+    # 버튼을 살리는 용도이며, 실제 토큰 추출은 _extract_access_token이 담당한다.
+    # 기본값 None을 유지해야 get_current_user(request, response, db) 직접 호출이 깨지지 않는다
+    _bearer: Annotated[str | None, Depends(oauth2_scheme)] = None,
 ) -> models.User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,

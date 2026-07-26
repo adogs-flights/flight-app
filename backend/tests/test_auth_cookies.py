@@ -200,6 +200,16 @@ def test_refresh_endpoint_without_cookie_or_body_returns_401(client):
     assert response.status_code == 401
 
 
+def test_openapi_registers_bearer_security_scheme(client):
+    """Bearer 지원의 유일한 존재 이유가 API 문서 화면 테스트이므로,
+    스킴이 OpenAPI 문서에 실제로 등록되어 Authorize 버튼이 떠야 한다."""
+    schema = client.get("/openapi.json").json()
+    security_schemes = schema.get("components", {}).get("securitySchemes", {})
+
+    assert "OAuth2PasswordBearer" in security_schemes
+    assert security_schemes["OAuth2PasswordBearer"]["type"] == "oauth2"
+
+
 def test_authorization_header_still_works(client, make_user, make_organization):
     """API 문서 화면 테스트용으로 Bearer 헤더도 계속 받는다."""
     org = make_organization()
