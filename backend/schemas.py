@@ -21,15 +21,44 @@ class TicketApplicationStatus(str, Enum):
 
 
 # ======================================================================================
-# AdminUser Schemas (User에서 참조하기 위해 위로 이동)
+# Organization Schemas (User에서 참조하기 위해 위로 이동)
 # ======================================================================================
-class AdminUserBase(BaseModel):
-    user_id: str
-    approved: bool
+class OrganizationBase(BaseModel):
+    name: str
+    slug: str | None = None
+    is_active: bool | None = True
+
+    @field_validator("slug")
+    @classmethod
+    def slug_format(cls, v: str | None) -> str | None:
+        if v is None or v == "":
+            return None
+        if not re.fullmatch(r"[a-z0-9-]+", v):
+            raise ValueError("슬러그는 영문 소문자, 숫자, 하이픈(-)만 사용할 수 있습니다.")
+        return v
 
 
-class AdminUser(AdminUserBase):
-    created_at: datetime
+class OrganizationCreate(OrganizationBase):
+    pass
+
+
+class OrganizationUpdate(BaseModel):
+    name: str | None = None
+    slug: str | None = None
+    is_active: bool | None = None
+
+    @field_validator("slug")
+    @classmethod
+    def slug_format(cls, v: str | None) -> str | None:
+        if v is None or v == "":
+            return None
+        if not re.fullmatch(r"[a-z0-9-]+", v):
+            raise ValueError("슬러그는 영문 소문자, 숫자, 하이픈(-)만 사용할 수 있습니다.")
+        return v
+
+
+class Organization(OrganizationBase):
+    id: int
 
     class Config:
         from_attributes = True
@@ -41,11 +70,12 @@ class AdminUser(AdminUserBase):
 class UserBase(BaseModel):
     email: EmailStr
     name: str
-    organization: str | None = None # 단체명 추가
 
 
 class UserCreate(UserBase):
     password: str
+    organization_id: int
+    role: str = "org"
 
     @field_validator("password")
     @classmethod
@@ -61,10 +91,14 @@ class UserCreate(UserBase):
         return v
 
 
-class User(UserBase):
+class User(BaseModel):
     id: str
+    name: str
+    email: EmailStr | None = None
+    role: str
+    organization_id: int | None = None
+    organization: Organization | None = None
     created_at: datetime
-    admin_info: AdminUser | None = None
 
     class Config:
         from_attributes = True
@@ -318,50 +352,6 @@ class AirlineUpdate(BaseModel):
 
 
 class Airline(AirlineBase):
-    id: int
-
-    class Config:
-        from_attributes = True
-
-
-# ======================================================================================
-# Organization Schemas
-# ======================================================================================
-class OrganizationBase(BaseModel):
-    name: str
-    slug: str | None = None
-    is_active: bool | None = True
-
-    @field_validator("slug")
-    @classmethod
-    def slug_format(cls, v: str | None) -> str | None:
-        if v is None or v == "":
-            return None
-        if not re.fullmatch(r"[a-z0-9-]+", v):
-            raise ValueError("슬러그는 영문 소문자, 숫자, 하이픈(-)만 사용할 수 있습니다.")
-        return v
-
-
-class OrganizationCreate(OrganizationBase):
-    pass
-
-
-class OrganizationUpdate(BaseModel):
-    name: str | None = None
-    slug: str | None = None
-    is_active: bool | None = None
-
-    @field_validator("slug")
-    @classmethod
-    def slug_format(cls, v: str | None) -> str | None:
-        if v is None or v == "":
-            return None
-        if not re.fullmatch(r"[a-z0-9-]+", v):
-            raise ValueError("슬러그는 영문 소문자, 숫자, 하이픈(-)만 사용할 수 있습니다.")
-        return v
-
-
-class Organization(OrganizationBase):
     id: int
 
     class Config:

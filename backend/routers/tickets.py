@@ -59,7 +59,7 @@ def list_tickets(
         - 'owned' tickets are only visible to the owner or an admin.
         - 'sharing' and 'shared' tickets are visible to all logged-in users.
     """
-    is_admin = current_user.admin_info and current_user.admin_info.approved
+    is_admin = current_user.role == "admin"
 
     # 1. Schedule View: Show active/owned tickets (not sharing)
     if schedule:
@@ -136,7 +136,7 @@ def get_ticket(
         )
 
     is_owner = ticket.owner_id == current_user.id
-    is_admin = current_user.admin_info and current_user.admin_info.approved
+    is_admin = current_user.role == "admin"
 
     if ticket.status == "owned" and not is_owner and not is_admin:
         raise HTTPException(
@@ -165,7 +165,7 @@ def update_ticket(
         )
 
     is_owner = ticket.owner_id == current_user.id
-    is_admin = current_user.admin_info and current_user.admin_info.approved
+    is_admin = current_user.role == "admin"
 
     if not is_owner and not is_admin:
         raise HTTPException(
@@ -228,7 +228,7 @@ def delete_ticket(
         )
 
     is_owner = ticket.owner_id == current_user.id
-    is_admin = current_user.admin_info and current_user.admin_info.approved
+    is_admin = current_user.role == "admin"
 
     if not is_owner and not is_admin:
         raise HTTPException(

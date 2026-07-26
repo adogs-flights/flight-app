@@ -104,7 +104,7 @@ def list_applications_for_ticket(
         )
 
     is_owner = ticket.owner_id == current_user.id
-    is_admin = current_user.admin_info and current_user.admin_info.approved
+    is_admin = current_user.role == "admin"
 
     if not is_owner and not is_admin:
         raise HTTPException(
@@ -153,7 +153,7 @@ def update_application_status(
 
     ticket = application.ticket
     is_owner = ticket.owner_id == current_user.id
-    is_admin = current_user.admin_info and current_user.admin_info.approved
+    is_admin = current_user.role == "admin"
 
     if not is_owner and not is_admin:
         raise HTTPException(
@@ -239,7 +239,7 @@ def get_application(
 
     is_owner = application.ticket.owner_id == current_user.id
     is_applicant = application.applicant_id == current_user.id
-    is_admin = current_user.admin_info and current_user.admin_info.approved
+    is_admin = current_user.role == "admin"
 
     if not any([is_owner, is_applicant, is_admin]):
         raise HTTPException(

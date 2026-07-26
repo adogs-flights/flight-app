@@ -39,7 +39,7 @@ def list_need_posts(db: DBSession, current_user: CurrentUser) -> list[models.Nee
     - Admin: See all posts.
     - Normal: See only future posts (desired_date >= today).
     """
-    is_admin = current_user.admin_info and current_user.admin_info.approved
+    is_admin = current_user.role == "admin"
 
     query = db.query(models.NeedPost).options(joinedload(models.NeedPost.author))
 
@@ -89,7 +89,7 @@ def update_need_post(
         )
 
     is_author = post.author_id == current_user.id
-    is_admin = current_user.admin_info and current_user.admin_info.approved
+    is_admin = current_user.role == "admin"
 
     if not is_author and not is_admin:
         raise HTTPException(
@@ -119,7 +119,7 @@ def delete_need_post(post_id: str, db: DBSession, current_user: CurrentUser) -> 
         )
 
     is_author = post.author_id == current_user.id
-    is_admin = current_user.admin_info and current_user.admin_info.approved
+    is_admin = current_user.role == "admin"
 
     if not is_author and not is_admin:
         raise HTTPException(
