@@ -276,6 +276,11 @@ class TokenRefresh(BaseModel):
     refresh_token: str
 
 
+class KakaoLoginRequest(BaseModel):
+    code: str
+    state: str
+
+
 class TokenData(BaseModel):
     email: EmailStr | None = None
 

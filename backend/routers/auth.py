@@ -13,6 +13,7 @@ import models
 import schemas
 from database import get_db
 from email_utils import send_email
+from services import kakao_service
 
 # ======================================================================================
 # Configuration
@@ -331,6 +332,81 @@ def logout(
         ).delete()
         db.commit()
     clear_auth_cookies(response)
+
+
+# ======================================================================================
+# Kakao Login
+# ======================================================================================
+KAKAO_STATE_EXPIRE_MINUTES = 10
+
+
+def _create_kakao_state() -> str:
+    """docs/security.md 규칙: OAuth state는 서명된 단기 JWT."""
+    return jwt.encode(
+        {
+            "purpose": "kakao_login",
+            "nonce": secrets.token_urlsafe(16),
+            "exp": datetime.now(timezone.utc)
+            + timedelta(minutes=KAKAO_STATE_EXPIRE_MINUTES),
+        },
+        SECRET_KEY,
+        algorithm=ALGORITHM,
+    )
+
+
+def _verify_kakao_state(state: str) -> None:
+    try:
+        payload = jwt.decode(state, SECRET_KEY, algorithms=[ALGORITHM])
+    except jwt.PyJWTError as err:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="잘못된 인증 요청입니다. 다시 시도해주세요.",
+        ) from err
+    if payload.get("purpose") != "kakao_login":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="잘못된 인증 요청입니다. 다시 시도해주세요.",
+        )
+
+
+@router.get("/auth/kakao/login-url")
+def kakao_login_url() -> dict[str, str]:
+    state = _create_kakao_state()
+    return {"authorize_url": kakao_service.build_authorize_url(state), "state": state}
+
+
+@router.post("/auth/kakao", response_model=schemas.Token)
+def kakao_login(
+    login_in: schemas.KakaoLoginRequest, db: DBSession, response: Response
+) -> dict[str, str]:
+    _verify_kakao_state(login_in.state)
+
+    try:
+        profile = kakao_service.exchange_code_for_profile(login_in.code)
+    except kakao_service.KakaoAPIError as err:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="카카오 로그인에 실패했습니다. 잠시 후 다시 시도해주세요.",
+        ) from err
+
+    user = (
+        db.query(models.User)
+        .filter(models.User.kakao_user_id == profile.id)
+        .first()
+    )
+    if user is None:
+        # 카카오 이메일로 기존 계정과 병합하지 않는다. 검증되지 않은 이메일로
+        # 남의 단체 계정을 가져갈 길을 막는다. email은 비워 둔다
+        user = models.User(
+            name=profile.nickname or "봉사자",
+            role="general",
+            kakao_user_id=profile.id,
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+    return issue_tokens(db, response, user)
 
 
 # ======================================================================================
