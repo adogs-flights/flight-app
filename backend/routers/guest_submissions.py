@@ -19,7 +19,8 @@ from sqlalchemy.orm import Session, joinedload
 import models
 import schemas
 from database import get_db
-from routers.auth import AdminUser
+from permissions import scope_to_org
+from routers.auth import AdminUser, OrgUser
 from services import gdrive_service, storage_service
 
 router = APIRouter(prefix="/api/guest-submissions", tags=["Guest Ticket Submissions"])
@@ -135,12 +136,13 @@ async def create_guest_submission(
 @router.get("", response_model=list[schemas.GuestTicketSubmission])
 def list_guest_submissions(
     db: DBSession,
-    current_admin: AdminUser,
+    current_user: OrgUser,
     submission_status: schemas.GuestSubmissionStatus | None = None,
 ) -> list[models.GuestTicketSubmission]:
     query = db.query(models.GuestTicketSubmission).options(
         joinedload(models.GuestTicketSubmission.organization)
     )
+    query = scope_to_org(query, current_user, models.GuestTicketSubmission)
     if submission_status:
         query = query.filter(models.GuestTicketSubmission.status == submission_status.value)
     return query.order_by(models.GuestTicketSubmission.submitted_at.desc()).all()
@@ -148,13 +150,14 @@ def list_guest_submissions(
 
 @router.get("/{submission_id}/image")
 def get_guest_submission_image(
-    submission_id: str, db: DBSession, current_admin: AdminUser
+    submission_id: str, db: DBSession, current_user: OrgUser
 ) -> Response:
-    submission = (
-        db.query(models.GuestTicketSubmission)
-        .filter(models.GuestTicketSubmission.id == submission_id)
-        .first()
+    query = db.query(models.GuestTicketSubmission).filter(
+        models.GuestTicketSubmission.id == submission_id
     )
+    submission = scope_to_org(
+        query, current_user, models.GuestTicketSubmission
+    ).first()
     if not submission or not submission.eticket_object_key:
         raise HTTPException(status_code=404, detail="이미지를 찾을 수 없습니다.")
 

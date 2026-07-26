@@ -214,7 +214,7 @@ CurrentUser = Annotated[models.User, Depends(get_current_user)]
 
 
 def get_current_admin_user(current_user: CurrentUser) -> models.User:
-    if not current_user.admin_info or not current_user.admin_info.approved:
+    if current_user.role != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="The user does not have admin privileges",
@@ -223,6 +223,31 @@ def get_current_admin_user(current_user: CurrentUser) -> models.User:
 
 
 AdminUser = Annotated[models.User, Depends(get_current_admin_user)]
+
+
+def get_current_org_user(current_user: CurrentUser) -> models.User:
+    if current_user.role not in ("org", "admin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="단체 계정만 접근할 수 있습니다.",
+        )
+    return current_user
+
+
+OrgUser = Annotated[models.User, Depends(get_current_org_user)]
+
+
+def get_optional_user(
+    request: Request, response: Response, db: DBSession
+) -> models.User | None:
+    """로그인하지 않아도 통과한다. 공개 화면에서 쓴다."""
+    try:
+        return get_current_user(request, response, db)
+    except HTTPException:
+        return None
+
+
+OptionalUser = Annotated[models.User | None, Depends(get_optional_user)]
 
 
 # ======================================================================================
