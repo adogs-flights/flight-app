@@ -1,4 +1,5 @@
 import os
+import secrets
 import uuid
 from datetime import datetime, timezone
 from typing import Annotated
@@ -20,7 +21,7 @@ import models
 import schemas
 from database import get_db
 from permissions import scope_to_org
-from routers.auth import AdminUser, OrgUser
+from routers.auth import AdminUser, CurrentUser, OrgUser
 from services import gdrive_service, storage_service
 
 router = APIRouter(prefix="/api/guest-submissions", tags=["Guest Ticket Submissions"])
@@ -116,6 +117,7 @@ async def create_guest_submission(
         passenger_last_name_en=passenger_last_name_en if is_reservation_method else None,
         passenger_first_name_en=passenger_first_name_en if is_reservation_method else None,
         organization_id=organization_id,
+        lookup_token=secrets.token_urlsafe(24),
     )
     db.add(db_submission)
     db.commit()
@@ -237,6 +239,43 @@ def reject_guest_submission(
     submission.status = "rejected"
     submission.admin_note = reject_in.admin_note
     submission.reviewed_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(submission)
+    return submission
+
+
+@router.post(
+    "/{submission_id}/claim", response_model=schemas.GuestTicketSubmission
+)
+def claim_guest_submission(
+    submission_id: str,
+    claim_in: schemas.GuestSubmissionClaim,
+    db: DBSession,
+    current_user: CurrentUser,
+) -> models.GuestTicketSubmission:
+    """조회링크에서 본인이 눌러 자기 계정에 담는다.
+
+    lookup_token 불일치는 404로 답한다. 제출이 존재하는지조차 알려주지 않는다.
+    """
+    submission = (
+        db.query(models.GuestTicketSubmission)
+        .filter(
+            models.GuestTicketSubmission.id == submission_id,
+            models.GuestTicketSubmission.lookup_token == claim_in.lookup_token,
+        )
+        .first()
+    )
+    if not submission:
+        raise HTTPException(status_code=404, detail="제출 내역을 찾을 수 없습니다.")
+
+    if submission.user_id is not None:
+        if submission.user_id == current_user.id:
+            return submission
+        raise HTTPException(
+            status_code=409, detail="이미 다른 계정에 등록된 제출 내역입니다."
+        )
+
+    submission.user_id = current_user.id
     db.commit()
     db.refresh(submission)
     return submission

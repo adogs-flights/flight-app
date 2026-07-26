@@ -388,6 +388,8 @@ class GuestTicketSubmission(BaseModel):
     passenger_first_name_en: str | None = None
     organization_id: int | None = None
     organization: Organization | None = None
+    user_id: str | None = None
+    lookup_token: str
     eticket_drive_url: str | None = None
     status: GuestSubmissionStatus
     admin_note: str | None = None
@@ -405,3 +407,7 @@ class GuestSubmissionReject(BaseModel):
 
 class GuestSubmissionApprove(TicketBase):
     owner_user_id: str | None = None
+
+
+class GuestSubmissionClaim(BaseModel):
+    lookup_token: str
