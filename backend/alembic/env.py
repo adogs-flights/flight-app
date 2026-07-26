@@ -9,6 +9,7 @@ from alembic import context
 # Add current directory to path so we can import models
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
+import models  # noqa: F401  # Base.metadata에 모델을 등록한다. 지우면 autogenerate가 테이블을 drop한다
 from database import SQLALCHEMY_DATABASE_URL, Base
 
 # this is the Alembic Config object, which provides
