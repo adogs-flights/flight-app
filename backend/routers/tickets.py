@@ -7,21 +7,20 @@ from sqlalchemy.orm import Session, joinedload
 import models
 import schemas
 from database import get_db
-from routers.auth import get_current_user
+from routers.auth import OrgUser
 from services import gdrive_service
 
 router = APIRouter(prefix="/api/tickets", tags=["Tickets"])
 
 # --- Annotated types ---
 DBSession = Annotated[Session, Depends(get_db)]
-CurrentUser = Annotated[models.User, Depends(get_current_user)]
 
 
 @router.post("", response_model=schemas.Ticket, status_code=status.HTTP_201_CREATED)
 def create_ticket(
     ticket_in: schemas.TicketCreate,
     db: DBSession,
-    current_user: CurrentUser,
+    current_user: OrgUser,
     background_tasks: BackgroundTasks,
 ) -> models.Ticket:
     """
@@ -50,7 +49,7 @@ def create_ticket(
 
 @router.get("", response_model=list[schemas.Ticket])
 def list_tickets(
-    db: DBSession, current_user: CurrentUser, schedule: bool = False
+    db: DBSession, current_user: OrgUser, schedule: bool = False
 ) -> list[models.Ticket]:
     """
     List tickets.
@@ -119,7 +118,7 @@ def list_tickets(
 def get_ticket(
     ticket_id: str,
     db: DBSession,
-    current_user: CurrentUser,
+    current_user: OrgUser,
 ) -> models.Ticket:
     """
     Get a single ticket by ID, respecting visibility rules.
@@ -152,7 +151,7 @@ def update_ticket(
     ticket_id: str,
     ticket_update: schemas.TicketUpdate,
     db: DBSession,
-    current_user: CurrentUser,
+    current_user: OrgUser,
     background_tasks: BackgroundTasks,
 ) -> models.Ticket:
     """
@@ -215,7 +214,7 @@ def update_ticket(
 def delete_ticket(
     ticket_id: str,
     db: DBSession,
-    current_user: CurrentUser,
+    current_user: OrgUser,
     background_tasks: BackgroundTasks,
 ) -> None:
     """

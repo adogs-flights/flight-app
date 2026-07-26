@@ -33,7 +33,11 @@ ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp", "application/p
 MAX_UPLOAD_SIZE = 10 * 1024 * 1024  # 10MB
 
 
-@router.post("", response_model=schemas.GuestTicketSubmission, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    response_model=schemas.GuestTicketSubmissionCreated,
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_guest_submission(
     db: DBSession,
     background_tasks: BackgroundTasks,
@@ -257,6 +261,14 @@ def claim_guest_submission(
 
     lookup_token 불일치는 404로 답한다. 제출이 존재하는지조차 알려주지 않는다.
     """
+    # unclaim 엔드포인트가 없어서 한 번 잘못 담기면 진짜 제출자는 영영 409를 받는다.
+    # 토큰이 다른 경로로 새더라도 업무 계정이 남의 제출을 가져가지 못하게 막는다
+    if current_user.role != "general":
+        raise HTTPException(
+            status_code=403,
+            detail="단체·관리자 계정으로는 제출 내역을 담을 수 없습니다.",
+        )
+
     submission = (
         db.query(models.GuestTicketSubmission)
         .filter(

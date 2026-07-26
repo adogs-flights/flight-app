@@ -93,6 +93,43 @@ def test_claim_same_user_twice_returns_200(client, db_session, make_user):
     assert submission.user_id == user.id
 
 
+def test_org_user_cannot_claim_submission(
+    client, db_session, make_user, make_organization
+):
+    """단체 계정은 목록에서 본 lookup_token으로 남의 제출을 가로챌 수 없다.
+
+    unclaim 엔드포인트가 없으므로 한 번 가로채이면 진짜 제출자는 영영 409를 받는다.
+    """
+    submission = _make_submission(db_session)
+    org = make_organization()
+    org_user = make_user(role="org", organization_id=org.id, email="org@b.com")
+    _authenticate(client, org_user)
+
+    response = client.post(
+        f"/api/guest-submissions/{submission.id}/claim",
+        json={"lookup_token": "lookup-token-1"},
+    )
+
+    assert response.status_code == 403
+    db_session.refresh(submission)
+    assert submission.user_id is None
+
+
+def test_admin_cannot_claim_submission(client, db_session, make_user):
+    submission = _make_submission(db_session)
+    admin = make_user(role="admin", email="admin@b.com")
+    _authenticate(client, admin)
+
+    response = client.post(
+        f"/api/guest-submissions/{submission.id}/claim",
+        json={"lookup_token": "lookup-token-1"},
+    )
+
+    assert response.status_code == 403
+    db_session.refresh(submission)
+    assert submission.user_id is None
+
+
 def test_create_guest_submission_generates_lookup_token(client, db_session):
     """공개 제출 엔드포인트가 실제로 lookup_token을 발급하는지 end-to-end로 증명한다.
 

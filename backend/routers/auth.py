@@ -338,14 +338,16 @@ def logout(
 # Kakao Login
 # ======================================================================================
 KAKAO_STATE_EXPIRE_MINUTES = 10
+KAKAO_STATE_COOKIE_NAME = "kakao_oauth_state"
+KAKAO_STATE_ERROR_DETAIL = "잘못된 인증 요청입니다. 다시 시도해주세요."
 
 
-def _create_kakao_state() -> str:
+def _create_kakao_state(nonce: str) -> str:
     """docs/security.md 규칙: OAuth state는 서명된 단기 JWT."""
     return jwt.encode(
         {
             "purpose": "kakao_login",
-            "nonce": secrets.token_urlsafe(16),
+            "nonce": nonce,
             "exp": datetime.now(timezone.utc)
             + timedelta(minutes=KAKAO_STATE_EXPIRE_MINUTES),
         },
@@ -354,32 +356,87 @@ def _create_kakao_state() -> str:
     )
 
 
-def _verify_kakao_state(state: str) -> None:
+def set_kakao_state_cookie(response: Response, nonce: str) -> None:
+    # samesite는 반드시 lax다. 카카오에서 돌아오는 길은 top-level GET 내비게이션이라
+    # lax 쿠키는 전송되지만, strict였다면 콜백 화면에서 쿠키가 사라져 로그인이 죽는다
+    response.set_cookie(
+        key=KAKAO_STATE_COOKIE_NAME,
+        value=nonce,
+        httponly=True,
+        secure=COOKIE_SECURE,
+        samesite="lax",
+        path="/",
+        max_age=KAKAO_STATE_EXPIRE_MINUTES * 60,
+    )
+
+
+def clear_kakao_state_cookie(response: Response) -> None:
+    response.delete_cookie(KAKAO_STATE_COOKIE_NAME, path="/")
+
+
+def _kakao_state_clearing_headers() -> dict[str, str]:
+    """HTTPException으로 빠져나가면 주입된 Response의 헤더가 버려진다.
+
+    에러 응답에도 삭제 쿠키를 직접 실어야 실패한 state가 브라우저에 남아
+    재시도에 섞이지 않는다.
+    """
+    carrier = Response()
+    clear_kakao_state_cookie(carrier)
+    return {"set-cookie": carrier.headers["set-cookie"]}
+
+
+def _kakao_state_error() -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail=KAKAO_STATE_ERROR_DETAIL,
+        headers=_kakao_state_clearing_headers(),
+    )
+
+
+def _verify_kakao_state(state: str, cookie_nonce: str | None) -> None:
+    """서명·만료·용도에 더해 흐름을 시작한 브라우저인지까지 확인한다.
+
+    login-url이 비로그인 공개 엔드포인트라 누구나 유효한 state를 찍어낼 수 있다.
+    서명만 보면 "이 서버가 최근에 발급한 state"라는 사실밖에 증명되지 않으므로,
+    공격자가 자기 카카오 계정으로 받은 code와 자기가 발급받은 state를 피해자에게
+    열게 해 피해자를 공격자 계정으로 로그인시킬 수 있다(세션 고정).
+    쿠키에 심어둔 nonce와 대조해 그 경로를 막는다.
+
+    어느 검사에서 걸렸는지는 응답으로 구분되지 않게 한다.
+    """
     try:
         payload = jwt.decode(state, SECRET_KEY, algorithms=[ALGORITHM])
     except jwt.PyJWTError as err:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="잘못된 인증 요청입니다. 다시 시도해주세요.",
-        ) from err
+        raise _kakao_state_error() from err
     if payload.get("purpose") != "kakao_login":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="잘못된 인증 요청입니다. 다시 시도해주세요.",
-        )
+        raise _kakao_state_error()
+
+    nonce = payload.get("nonce")
+    if not isinstance(nonce, str) or not cookie_nonce:
+        raise _kakao_state_error()
+    # 쿠키 값에는 비ASCII가 들어올 수 있어 compare_digest에 str을 그대로 주면 터진다
+    if not secrets.compare_digest(nonce.encode("utf-8"), cookie_nonce.encode("utf-8")):
+        raise _kakao_state_error()
 
 
 @router.get("/auth/kakao/login-url")
-def kakao_login_url() -> dict[str, str]:
-    state = _create_kakao_state()
+def kakao_login_url(response: Response) -> dict[str, str]:
+    nonce = secrets.token_urlsafe(16)
+    state = _create_kakao_state(nonce)
+    set_kakao_state_cookie(response, nonce)
     return {"authorize_url": kakao_service.build_authorize_url(state), "state": state}
 
 
 @router.post("/auth/kakao", response_model=schemas.Token)
 def kakao_login(
-    login_in: schemas.KakaoLoginRequest, db: DBSession, response: Response
+    login_in: schemas.KakaoLoginRequest,
+    request: Request,
+    db: DBSession,
+    response: Response,
 ) -> dict[str, str]:
-    _verify_kakao_state(login_in.state)
+    _verify_kakao_state(login_in.state, request.cookies.get(KAKAO_STATE_COOKIE_NAME))
+    # state는 1회용이다. 이 아래로는 성공하든 실패하든 소진된 것으로 본다
+    clear_kakao_state_cookie(response)
 
     try:
         profile = kakao_service.exchange_code_for_profile(login_in.code)
@@ -387,6 +444,7 @@ def kakao_login(
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="카카오 로그인에 실패했습니다. 잠시 후 다시 시도해주세요.",
+            headers=_kakao_state_clearing_headers(),
         ) from err
 
     user = (

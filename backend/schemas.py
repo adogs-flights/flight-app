@@ -389,7 +389,6 @@ class GuestTicketSubmission(BaseModel):
     organization_id: int | None = None
     organization: Organization | None = None
     user_id: str | None = None
-    lookup_token: str
     eticket_drive_url: str | None = None
     status: GuestSubmissionStatus
     admin_note: str | None = None
@@ -399,6 +398,17 @@ class GuestTicketSubmission(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class GuestTicketSubmissionCreated(GuestTicketSubmission):
+    """제출 직후 본인에게만 돌려주는 응답.
+
+    lookup_token은 남의 개인정보(전화번호·e티켓)를 지키는 유일한 비밀이다.
+    자기 조회 링크를 만들어야 하는 제출자 본인 외에는 아무도 볼 필요가 없으므로
+    공용 응답 모델에서 빼고 이 생성 응답에만 싣는다.
+    """
+
+    lookup_token: str
 
 
 class GuestSubmissionReject(BaseModel):

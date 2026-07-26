@@ -11,6 +11,7 @@ import MyApplicationsView from './pages/MyApplicationsView';
 import AdminView from './pages/AdminView';
 import GuestTicketSubmitView from './pages/GuestTicketSubmitView';
 import KakaoCallback from './pages/KakaoCallback';
+import GeneralHome from './pages/GeneralHome';
 
 function App() {
   return (
@@ -36,6 +37,10 @@ function AppContent() {
 
       {!user ? (
         <Route path="*" element={<LoginScreen />} />
+      ) : user.role === 'general' ? (
+        // 카카오로 셀프 가입한 일반 사용자는 단체 업무 화면에 들어오면 안 된다.
+        // ScheduleView/NeedPostView 등이 게스트 전화번호와 담당자 정보를 노출한다.
+        <Route path="*" element={<GeneralHome />} />
       ) : (
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Navigate to="/schedules" />} />
