@@ -22,6 +22,14 @@ import models
 from database import Base, get_db
 
 
+@pytest.fixture(autouse=True)
+def no_smtp(monkeypatch):
+    """테스트가 실제 메일을 보내지 않게 한다."""
+    import routers.auth
+
+    monkeypatch.setattr(routers.auth, "send_email", lambda **kwargs: None)
+
+
 @pytest.fixture
 def db_engine():
     """테스트마다 격리된 인메모리 SQLite. StaticPool이라 같은 연결을 공유한다."""

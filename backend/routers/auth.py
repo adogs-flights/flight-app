@@ -428,58 +428,67 @@ def create_user_by_admin(
     db: DBSession,
     admin_user: AdminUser,
 ) -> models.User:
+    if user_in.role not in ("org", "admin"):
+        raise HTTPException(
+            status_code=400,
+            detail="관리자는 단체 또는 관리자 계정만 만들 수 있습니다. "
+            "일반 사용자는 카카오 로그인으로 가입합니다.",
+        )
+
     if db.query(models.User).filter(models.User.email == user_in.email).first():
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    hashed_password = get_password_hash(user_in.password)
+    organization_id = None
+    if user_in.role == "org":
+        organization = (
+            db.query(models.Organization)
+            .filter(models.Organization.id == user_in.organization_id)
+            .first()
+        )
+        if not organization:
+            raise HTTPException(status_code=404, detail="단체를 찾을 수 없습니다.")
+        organization_id = organization.id
+
     db_user = models.User(
         email=user_in.email,
         name=user_in.name,
-        hashed_password=hashed_password,
-        organization=user_in.organization, # 단체명 저장
+        hashed_password=get_password_hash(user_in.password),
+        role=user_in.role,
+        organization_id=organization_id,
     )
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
 
-    # 계정에 단체명이 있으면 단체 마스터 데이터에도 자동 반영 (없으면 생성)
-    org_name = (user_in.organization or "").strip()
-    if org_name:
-        existing_org = (
-            db.query(models.Organization)
-            .filter(models.Organization.name == org_name)
-            .first()
-        )
-        if not existing_org:
-            db.add(models.Organization(name=org_name, is_active=True))
-            db.commit()
-
     # 이메일 템플릿 파일 읽기
     from pathlib import Path
     import string
-    template_path = Path(__file__).parent.parent / "templates" / "email" / "account_created.html"
-    
+
+    template_path = (
+        Path(__file__).parent.parent / "templates" / "email" / "account_created.html"
+    )
+
     try:
         with open(template_path, "r", encoding="utf-8") as f:
             template_content = f.read()
-        
+
         # CSS 중괄호({})와 충돌을 피하기 위해 Template ($변수) 방식 사용
         t = string.Template(template_content)
         body = t.safe_substitute(
             base_url=BASE_URL,
             name=user_in.name,
             email=user_in.email,
-            password=user_in.password
+            password=user_in.password,
         )
     except Exception as e:
         print(f"Failed to load email template: {e}")
-        # 폴백 디자인 (파일을 못 읽을 경우)
-        body = f"안녕하세요 {user_in.name}님, 계정이 생성되었습니다. ID: {user_in.email}, PW: {user_in.password}"
+        body = (
+            f"안녕하세요 {user_in.name}님, 계정이 생성되었습니다. "
+            f"ID: {user_in.email}, PW: {user_in.password}"
+        )
 
     subject = "해봉티켓 계정이 생성되었습니다."
     send_email(receiver_email=user_in.email, subject=subject, body=body)
-
-    return db_user
 
     return db_user
 

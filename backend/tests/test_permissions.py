@@ -111,3 +111,88 @@ def test_admin_sees_all_organizations_submissions(
 
     assert response.status_code == 200
     assert len(response.json()) == 2
+
+
+def test_admin_creates_org_user_with_organization(
+    client, db_session, make_user, make_organization
+):
+    org = make_organization()
+    admin = make_user(role="admin", email="admin@b.com")
+    _login(client, admin.email)
+
+    response = client.post(
+        "/api/users",
+        json={
+            "email": "neworg@b.com",
+            "name": "새단체담당",
+            "password": "Pw1234!@",
+            "organization_id": org.id,
+            "role": "org",
+        },
+    )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["role"] == "org"
+    assert body["organization_id"] == org.id
+
+
+def test_admin_creates_admin_user_without_organization(
+    client, db_session, make_user, make_organization
+):
+    org = make_organization()
+    admin = make_user(role="admin", email="admin@b.com")
+    _login(client, admin.email)
+
+    response = client.post(
+        "/api/users",
+        json={
+            "email": "newadmin@b.com",
+            "name": "새관리자",
+            "password": "Pw1234!@",
+            "organization_id": org.id,
+            "role": "admin",
+        },
+    )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["role"] == "admin"
+    assert body["organization_id"] is None
+
+
+def test_create_user_rejects_unknown_organization(client, make_user):
+    admin = make_user(role="admin", email="admin@b.com")
+    _login(client, admin.email)
+
+    response = client.post(
+        "/api/users",
+        json={
+            "email": "x@b.com",
+            "name": "x",
+            "password": "Pw1234!@",
+            "organization_id": 99999,
+            "role": "org",
+        },
+    )
+
+    assert response.status_code == 404
+
+
+def test_create_user_rejects_general_role(client, make_user):
+    """general 계정은 카카오 로그인으로만 만들어진다."""
+    admin = make_user(role="admin", email="admin@b.com")
+    _login(client, admin.email)
+
+    response = client.post(
+        "/api/users",
+        json={
+            "email": "x@b.com",
+            "name": "x",
+            "password": "Pw1234!@",
+            "organization_id": 1,
+            "role": "general",
+        },
+    )
+
+    assert response.status_code == 400
