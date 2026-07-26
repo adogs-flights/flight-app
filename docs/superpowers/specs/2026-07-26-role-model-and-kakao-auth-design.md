@@ -167,7 +167,9 @@ Redirect URI를 백엔드가 아니라 프론트 라우트로 등록한다. 302 
 | 쿠키 | 속성 |
 |---|---|
 | `access_token` | HttpOnly, Secure, SameSite=Lax, Path=/ |
-| `refresh_token` | HttpOnly, Secure, SameSite=Lax, Path=/api/auth |
+| `refresh_token` | HttpOnly, Secure, SameSite=Lax, Path=/api |
+
+`refresh_token`의 `Path`가 `/api/auth`가 아니라 `/api`인 이유는, 사일런트 리프레시가 `get_current_user` 안에서 일어나기 때문이다. 모든 `/api/*` 요청이 refresh 쿠키를 들고 와야 갱신할 수 있다.
 
 동작 순서는 이렇다.
 
