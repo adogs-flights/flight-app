@@ -12,6 +12,11 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - flight-app
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     restart: unless-stopped
 
   flight-backend:
@@ -33,7 +38,8 @@ services:
       - flight-app
       - monitoring_net
     depends_on:
-      - flight-db
+      flight-db:
+        condition: service_healthy
     restart: unless-stopped
 
   flight-frontend:
