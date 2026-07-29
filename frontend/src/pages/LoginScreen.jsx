@@ -25,9 +25,9 @@ export default function LoginScreen() {
             <div className="flex-1 flex items-center justify-center p-4">
                 <div className="w-full max-w-[400px] p-8 space-y-8 bg-card rounded-2xl border-2 border-border shadow-xl animate-in fade-in zoom-in-95 duration-500">
                     <div className="flex flex-col items-center text-center space-y-2">
-                        <div className="flex items-center justify-center w-14 h-14 rounded-2xl text-primary-foreground text-2xl font-bold mb-2">
+                        <Link to="/" className="flex items-center justify-center w-14 h-14 rounded-2xl text-primary-foreground text-2xl font-bold mb-2">
                             <img src={logo} alt="" />
-                        </div>
+                        </Link>
                         <h1 className="text-2xl font-bold tracking-tight text-foreground">해봉티켓</h1>
                         <p className="text-sm text-muted-foreground">해외이동봉사 일정 관리 플랫폼</p>
                     </div>
