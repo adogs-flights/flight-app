@@ -139,15 +139,15 @@ export default function TicketFormModal({ isOpen, onClose, ticket, onTicketSaved
     };
 
     const footer = (
-        <div className="flex items-center justify-end w-full gap-2">
-            <button 
-                className="px-4 py-2 text-sm font-bold rounded-md bg-secondary text-secondary-foreground border border-border hover:bg-muted transition-colors" 
+        <div className="flex flex-col-reverse sm:flex-row items-center justify-end w-full gap-2">
+            <button
+                className="w-full sm:w-auto h-11 sm:h-auto px-4 py-2 text-sm font-bold rounded-md bg-secondary text-secondary-foreground border border-border hover:bg-muted transition-colors"
                 onClick={onClose}
             >
                 취소
             </button>
-            <button 
-                className="px-6 py-2 text-sm font-bold transition-all rounded-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm" 
+            <button
+                className="w-full sm:w-auto h-11 sm:h-auto px-6 py-2 text-sm font-bold transition-all rounded-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
                 onClick={handleSubmit}
             >
                 {isEditing ? '수정하기' : '등록하기'}
@@ -157,7 +157,7 @@ export default function TicketFormModal({ isOpen, onClose, ticket, onTicketSaved
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={isEditing ? '✈️ 티켓 수정' : '✈️ 티켓 등록'} footer={footer} error={error}>
-            <div className="space-y-6">
+            <div className="space-y-5 sm:space-y-6">
                 <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">티켓 제목 (미입력 시 자동 생성)</label>
                     <input 

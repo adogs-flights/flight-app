@@ -130,13 +130,13 @@ export default function GuestTicketSubmitView() {
 
     return (
         <div className="min-h-screen flex flex-col bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-sky/10 via-background to-earth/5">
-            <div className="flex-1 flex items-center justify-center p-4">
-                <div className="w-full max-w-[480px] p-8 space-y-8 bg-card rounded-2xl border-2 border-border shadow-xl animate-in fade-in zoom-in-95 duration-500">
+            <div className="flex-1 flex items-center justify-center p-3 sm:p-4">
+                <div className="w-full max-w-[480px] p-5 sm:p-8 space-y-6 sm:space-y-8 bg-card rounded-2xl border-2 border-border shadow-xl animate-in fade-in zoom-in-95 duration-500">
                     <div className="flex flex-col items-center text-center space-y-2">
-                        <div className="flex items-center justify-center w-14 h-14 rounded-2xl text-primary-foreground text-2xl font-bold mb-2">
+                        <div className="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-2xl text-primary-foreground text-2xl font-bold mb-2">
                             <img src={logo} alt="" />
                         </div>
-                        <h1 className="text-2xl font-bold tracking-tight text-foreground">이동봉사 티켓 제공하기</h1>
+                        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">이동봉사 티켓 제공하기</h1>
                         <p className="text-sm text-muted-foreground">강아지 자리 예약을 위한 정보를 남겨주세요.<br />아래 정보들은 항공사 예약 조회를 위해서만 사용됩니다.</p>
                     </div>
 
@@ -147,7 +147,7 @@ export default function GuestTicketSubmitView() {
                             <div className="text-xs text-muted-foreground">관리자 검토 후 남겨주신 연락처로 안내드리겠습니다.</div>
                         </div>
                     ) : (
-                        <div className="space-y-6">
+                        <div className="space-y-5 sm:space-y-6">
                             <div className="space-y-3">
                                 <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">증빙 방법</label>
                                 <div className="flex gap-3">
