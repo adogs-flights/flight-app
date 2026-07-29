@@ -26,14 +26,19 @@ export default function Modal({ isOpen, onClose, title, children, footer, error 
     }
 
     return (
-        <div 
-            className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300 sm:p-6" 
+        <div
+            className="fixed inset-0 z-[1000] flex items-end justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300 sm:items-center sm:p-6"
             onClick={onClose}
         >
-            <div 
-                className="w-full max-w-[520px] max-h-[90vh] flex flex-col relative bg-card rounded-2xl border-2 border-border shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 overflow-hidden" 
+            <div
+                className="w-full max-w-[520px] max-h-[92vh] sm:max-h-[90vh] flex flex-col relative bg-card rounded-t-2xl sm:rounded-2xl border-2 border-border shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 overflow-hidden"
                 onClick={(e) => e.stopPropagation()}
             >
+                {/* Mobile drag handle */}
+                <div className="flex justify-center pt-2.5 pb-1 sm:hidden">
+                    <div className="w-9 h-1 rounded-full bg-border" />
+                </div>
+
                 {/* Toast Error Message */}
                 {error && (
                     <div className="absolute top-[68px] left-1/2 -translate-x-1/2 z-[1010] w-[90%] animate-in slide-in-from-top-4 duration-300 pointer-events-none">
@@ -43,10 +48,10 @@ export default function Modal({ isOpen, onClose, title, children, footer, error 
                     </div>
                 )}
 
-                <div className="flex items-center justify-between px-6 py-4 border-b bg-background/50">
-                    <h3 className="text-lg font-bold text-foreground">{title}</h3>
-                    <button 
-                        className="inline-flex items-center justify-center w-8 h-8 rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors" 
+                <div className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 border-b bg-background/50">
+                    <h3 className="text-base sm:text-lg font-bold text-foreground">{title}</h3>
+                    <button
+                        className="inline-flex items-center justify-center w-8 h-8 rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
                         onClick={onClose}
                     >
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -55,13 +60,13 @@ export default function Modal({ isOpen, onClose, title, children, footer, error 
                         </svg>
                     </button>
                 </div>
-                
-                <div className="flex-1 px-6 py-6 overflow-y-auto scrollbar-hide">
+
+                <div className="flex-1 px-4 py-5 sm:px-6 sm:py-6 overflow-y-auto scrollbar-hide">
                     {children}
                 </div>
-                
+
                 {footer && (
-                    <div className="px-6 py-4 border-t bg-muted/30 flex items-center justify-end gap-2">
+                    <div className="px-4 py-3 sm:px-6 sm:py-4 border-t bg-muted/30 flex items-center justify-end gap-2">
                         {footer}
                     </div>
                 )}
