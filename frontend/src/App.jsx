@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { useAuth } from './hooks/useAuth';
+import LandingPage from './pages/LandingPage';
 import LoginScreen from './pages/LoginScreen';
 import MainLayout from './components/layout/MainLayout';
 import ScheduleView from './pages/ScheduleView';
@@ -10,6 +11,7 @@ import MyTicketsView from './pages/MyTicketsView';
 import MyApplicationsView from './pages/MyApplicationsView';
 import AdminView from './pages/AdminView';
 import GuestTicketSubmitView from './pages/GuestTicketSubmitView';
+import VolunteerGuideView from './pages/VolunteerGuideView';
 
 function App() {
   return (
@@ -30,9 +32,14 @@ function AppContent() {
     <Routes>
       {/* 로그인 여부와 무관하게 항상 접근 가능한 공개 라우트 */}
       <Route path="/apply" element={<GuestTicketSubmitView />} />
+      <Route path="/guide" element={<VolunteerGuideView />} />
 
       {!user ? (
-        <Route path="*" element={<LoginScreen />} />
+        <>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<LoginScreen />} />
+          <Route path="*" element={<Navigate to="/" />} />
+        </>
       ) : (
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Navigate to="/schedules" />} />
