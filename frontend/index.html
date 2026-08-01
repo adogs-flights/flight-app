@@ -1,15 +1,45 @@
 <!doctype html>
-<html lang="en">
+<html lang="ko">
   <head>
     <meta charset="UTF-8" />
     <meta name="google-site-verification" content="8aUstOyICGlYSxD6VjZac3ShOfWD7V-PVKybJFiIb74" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>해봉티켓 — 해외이동봉사 일정 관리</title>
+    <meta
+      name="description"
+      content="해봉티켓은 출국을 앞둔 항공권 소유자와 이동봉사가 필요한 유기견 구조 단체를 연결해, 구조된 강아지의 해외 입양·이동을 돕는 해외이동봉사 매칭 서비스입니다."
+    />
+    <meta property="og:site_name" content="해봉티켓" />
+    <meta property="og:title" content="해봉티켓 — 해외이동봉사 매칭 서비스" />
+    <meta
+      property="og:description"
+      content="해봉티켓은 출국을 앞둔 항공권 소유자와 이동봉사가 필요한 유기견 구조 단체를 연결해, 구조된 강아지의 해외 입양·이동을 돕는 해외이동봉사 매칭 서비스입니다."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://adogs-ticket.shop" />
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
   </head>
   <body>
-    <div id="root"></div>
+    <!--
+      #root 안의 정적 소개는 JS가 로드되기 전(그리고 크롤러가 JS를 실행하지 않을 때)
+      앱 이름과 서비스 목적을 그대로 보여준다. React가 마운트되면 이 내용은 대체된다.
+      구글 OAuth 브랜딩 심사가 JS 미실행 상태로 홈페이지를 확인해도 이름·목적이 보이도록 한다.
+    -->
+    <div id="root">
+      <main style="max-width:640px;margin:0 auto;padding:64px 24px;font-family:Pretendard,system-ui,-apple-system,sans-serif;text-align:center;color:#1f2937;">
+        <h1 style="font-size:30px;font-weight:800;letter-spacing:-0.02em;margin:0 0 16px;">해봉티켓</h1>
+        <p style="font-size:17px;line-height:1.75;color:#4b5563;margin:0 0 24px;">
+          해봉티켓은 출국을 앞둔 항공권 소유자와 이동봉사가 필요한 유기견 구조 단체를 연결해,
+          구조된 강아지의 해외 입양·이동을 돕는 <strong>해외이동봉사 매칭 서비스</strong>입니다.
+        </p>
+        <p style="font-size:14px;color:#9ca3af;margin:0 0 28px;">잠시만 기다려 주세요…</p>
+        <p style="font-size:13px;margin:0;">
+          <a href="/privacy" style="color:#2563eb;text-decoration:none;margin:0 8px;">개인정보 처리방침</a>
+          <a href="/terms" style="color:#2563eb;text-decoration:none;margin:0 8px;">이용약관</a>
+        </p>
+      </main>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
