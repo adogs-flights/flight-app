@@ -33,6 +33,12 @@ export default function LandingPage() {
                     </div>
                     <div className="flex items-center gap-1">
                         <Link
+                            to="/board"
+                            className="inline-flex items-center justify-center h-9 px-4 text-sm font-bold rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+                        >
+                            구해요 게시판
+                        </Link>
+                        <Link
                             to="/guide"
                             className="inline-flex items-center justify-center h-9 px-4 text-sm font-bold rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
                         >
@@ -67,18 +73,26 @@ export default function LandingPage() {
                     </div>
                     <div className="flex flex-col sm:flex-row gap-3 animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both" style={{ animationDelay: '200ms' }}>
                         <Link
+                            to="/board"
+                            className="group inline-flex items-center justify-center gap-2 h-14 px-10 text-base font-black rounded-xl bg-primary text-primary-foreground shadow-xl shadow-primary/30 transition-all hover:scale-[1.02] hover:shadow-2xl hover:shadow-primary/40 active:scale-[0.98]"
+                        >
+                            🐶 이동 기다리는 아이들 보기
+                            <span className="transition-transform group-hover:translate-x-1">→</span>
+                        </Link>
+                        <Link
                             to="/apply"
-                            className="inline-flex items-center justify-center h-12 px-8 text-sm font-bold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all hover:scale-[0.99] active:scale-[0.97]"
+                            className="inline-flex items-center justify-center h-14 px-8 text-sm font-bold rounded-xl border-2 border-border bg-card text-foreground hover:bg-secondary transition-all hover:scale-[0.99] active:scale-[0.97]"
                         >
                             🎁 봉사 티켓 제출하기
                         </Link>
-                        <Link
-                            to="/login"
-                            className="inline-flex items-center justify-center h-12 px-8 text-sm font-bold rounded-lg border-2 border-border bg-card text-foreground hover:bg-secondary transition-all hover:scale-[0.99] active:scale-[0.97]"
-                        >
-                            로그인하고 시작하기
-                        </Link>
                     </div>
+                    <Link
+                        to="/login"
+                        className="text-sm font-bold text-muted-foreground hover:text-foreground underline underline-offset-4 transition-colors animate-in fade-in duration-700 fill-mode-both"
+                        style={{ animationDelay: '300ms' }}
+                    >
+                        단체·관리자 로그인 →
+                    </Link>
                 </div>
             </section>
 

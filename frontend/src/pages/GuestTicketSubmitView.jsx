@@ -38,6 +38,11 @@ export default function GuestTicketSubmitView() {
     const { apiClient, airlines } = useAuth();
     const [searchParams] = useSearchParams();
     const orgSlug = searchParams.get('org');
+    // 게시글에서 바로 제출하는 경우: 단체 id/이름과 게시글 id/제목이 넘어온다.
+    const orgIdParam = searchParams.get('orgId');
+    const orgNameParam = searchParams.get('orgName');
+    const postId = searchParams.get('postId');
+    const postTitle = searchParams.get('postTitle');
 
     const [organizations, setOrganizations] = useState([]);
     const [lockedOrganization, setLockedOrganization] = useState(null); // slug로 고정된 단체
@@ -65,12 +70,16 @@ export default function GuestTicketSubmitView() {
                     setForm(prev => ({ ...prev, organizationId: String(res.data.id) }));
                 })
                 .catch(() => setOrgLookupFailed(true));
+        } else if (orgIdParam) {
+            // 게시글에서 넘어온 단체는 id/이름을 그대로 고정한다(추가 조회 불필요).
+            setLockedOrganization({ id: Number(orgIdParam), name: orgNameParam || '지정 단체' });
+            setForm(prev => ({ ...prev, organizationId: orgIdParam }));
         } else {
             apiClient.get('/organizations/with-accounts')
                 .then(res => setOrganizations(res.data))
                 .catch(() => setOrganizations([]));
         }
-    }, [apiClient, orgSlug]);
+    }, [apiClient, orgSlug, orgIdParam, orgNameParam]);
 
     const handleChange = (field, value) => {
         setForm(prev => ({ ...prev, [field]: value }));
@@ -116,6 +125,9 @@ export default function GuestTicketSubmitView() {
         if (form.organizationId) {
             formData.append('organization_id', form.organizationId);
         }
+        if (postId) {
+            formData.append('need_post_id', postId);
+        }
 
         setSubmitting(true);
         try {
@@ -139,6 +151,15 @@ export default function GuestTicketSubmitView() {
                         <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">이동봉사 티켓 제공하기</h1>
                         <p className="text-sm text-muted-foreground">강아지 자리 예약을 위한 정보를 남겨주세요.<br />아래 정보들은 항공사 예약 조회를 위해서만 사용됩니다.</p>
                     </div>
+
+                    {postTitle && !submitted && (
+                        <div className="flex items-start gap-2 px-4 py-3 rounded-xl border-2 border-primary/20 bg-primary/5 text-left">
+                            <span className="text-lg">🐶</span>
+                            <p className="text-xs font-bold text-foreground leading-relaxed">
+                                <span className="text-primary">‘{postTitle}’</span> 게시글에 티켓을 제출합니다.
+                            </p>
+                        </div>
+                    )}
 
                     {submitted ? (
                         <div className="p-6 rounded-xl border-2 border-green/20 bg-green/5 text-center space-y-2 animate-in fade-in duration-500">

@@ -191,6 +191,9 @@ class NeedPost(Base):
     detail = Column(Text)
     is_urgent = Column(Boolean, nullable=False, default=False)
     is_resolved = Column(Boolean, nullable=False, default=False, index=True)
+    # 이동을 기다리는 강아지 사진. 스토리지(오브젝트) 키만 저장하고 파일은
+    # storage_service가 관리한다.
+    image_object_key = Column(String, nullable=True)
 
     author_id = Column(String, ForeignKey("users.id", ondelete="SET NULL"), index=True)
 
@@ -200,6 +203,15 @@ class NeedPost(Base):
     )
 
     author = relationship("User", back_populates="need_posts")
+
+    @property
+    def has_image(self) -> bool:
+        return self.image_object_key is not None
+
+    @property
+    def organization(self):
+        """게시글을 올린 단체. 작성자의 소속 단체를 그대로 노출한다."""
+        return self.author.organization if self.author else None
 
 
 class Airport(Base):
@@ -251,6 +263,10 @@ class GuestTicketSubmission(Base):
     user_id = Column(
         String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
     )
+    # 어떤 '구해요' 게시글에 응답해 제출했는지. 게시글에서 바로 제출할 때 채워진다.
+    need_post_id = Column(
+        String, ForeignKey("need_posts.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     lookup_token = Column(String, unique=True, index=True, nullable=False)
     status = Column(
         String, nullable=False, default="pending", index=True
@@ -266,6 +282,7 @@ class GuestTicketSubmission(Base):
     organization = relationship("Organization")
     user = relationship("User")
     created_ticket = relationship("Ticket")
+    need_post = relationship("NeedPost")
 
 
 class UserGoogleToken(Base):
