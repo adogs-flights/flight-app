@@ -7,12 +7,25 @@ import AirlineModal from '../components/modals/AirlineModal';
 import OrganizationModal from '../components/modals/OrganizationModal';
 import GuestSubmissionReviewModal from '../components/modals/GuestSubmissionReviewModal';
 
+const ROLE_LABEL = {
+    admin: '관리자',
+    org: '단체',
+    general: '일반'
+};
+
+const ROLE_BADGE = {
+    admin: 'bg-sky/10 text-sky border-sky/20',
+    org: 'bg-earth/10 text-earth-foreground border-earth/20',
+    general: 'bg-muted text-muted-foreground border-border'
+};
+
 export default function AdminView() {
     const { apiClient, fetchStaticData } = useAuth();
     const [activeTab, setActiveTab] = useState('users');
 
     // 데이터 상태
     const [users, setUsers] = useState([]);
+    const [pendingUsers, setPendingUsers] = useState([]);
     const [airports, setAirports] = useState([]);
     const [airlines, setAirlines] = useState([]);
     const [organizations, setOrganizations] = useState([]);
@@ -36,6 +49,9 @@ export default function AdminView() {
             if (activeTab === 'users') {
                 const res = await apiClient.get('/users');
                 setUsers(res.data);
+            } else if (activeTab === 'pending') {
+                const res = await apiClient.get('/users/pending');
+                setPendingUsers(res.data);
             } else if (activeTab === 'airports') {
                 const res = await apiClient.get('/master/airports');
                 setAirports(res.data);
@@ -97,6 +113,82 @@ export default function AdminView() {
         submissionModal.openModal();
     };
 
+    const handleApprove = async (u) => {
+        if (!window.confirm(`'${u.organization?.name || u.name}' 단체 계정을 승인하시겠습니까?`)) return;
+        try {
+            await apiClient.post(`/users/${u.id}/approve`);
+            handleSaved();
+        } catch {
+            alert('승인에 실패했습니다.');
+        }
+    };
+
+    const handleReject = async (u) => {
+        if (!window.confirm(`'${u.organization?.name || u.name}' 가입 신청을 거부(삭제)하시겠습니까?`)) return;
+        try {
+            await apiClient.post(`/users/${u.id}/reject`);
+            handleSaved();
+        } catch {
+            alert('거부 처리에 실패했습니다.');
+        }
+    };
+
+    const renderPending = () => (
+        pendingUsers.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-[240px] gap-2 text-muted-foreground">
+                <span className="text-3xl">🎉</span>
+                <p className="text-sm">승인 대기 중인 가입 신청이 없습니다.</p>
+            </div>
+        ) : (
+            <>
+                {/* Desktop Table */}
+                <div className="hidden sm:block overflow-x-auto">
+                    <table className="w-full text-sm text-left border-collapse">
+                        <thead>
+                            <tr className="bg-muted/50 border-b text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                                <th className="px-6 py-4">단체명</th>
+                                <th className="px-6 py-4">담당자</th>
+                                <th className="px-6 py-4">이메일</th>
+                                <th className="px-6 py-4">신청일</th>
+                                <th className="px-6 py-4 text-right">처리</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border/50">
+                            {pendingUsers.map(u => (
+                                <tr key={u.id} className="hover:bg-muted/30 transition-colors">
+                                    <td className="px-6 py-4 font-bold text-foreground">{u.organization?.name || '-'}</td>
+                                    <td className="px-6 py-4">{u.name}</td>
+                                    <td className="px-6 py-4 text-muted-foreground">{u.email}</td>
+                                    <td className="px-6 py-4 text-muted-foreground text-xs">{new Date(u.created_at).toLocaleDateString()}</td>
+                                    <td className="px-6 py-4 text-right">
+                                        <div className="flex items-center justify-end gap-2">
+                                            <button className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-green/10 text-green border border-green/20 hover:bg-green/20 transition-all active:scale-95" onClick={() => handleApprove(u)}>승인</button>
+                                            <button className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20 transition-all active:scale-95" onClick={() => handleReject(u)}>거부</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+                {/* Mobile Cards */}
+                <div className="sm:hidden divide-y divide-border">
+                    {pendingUsers.map(u => (
+                        <div key={u.id} className="p-4 space-y-2">
+                            <div className="font-bold text-foreground">{u.organization?.name || '-'}</div>
+                            <div className="text-xs text-muted-foreground">{u.name} · {u.email}</div>
+                            <div className="text-[10px] text-muted-foreground/60 italic">{new Date(u.created_at).toLocaleDateString()} 신청</div>
+                            <div className="flex items-center justify-end gap-2 pt-1">
+                                <button className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-green/10 text-green border border-green/20" onClick={() => handleApprove(u)}>승인</button>
+                                <button className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-destructive/10 text-destructive border border-destructive/20" onClick={() => handleReject(u)}>거부</button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </>
+        )
+    );
+
     const renderUsers = () => (
         <>
             {/* Desktop Table */}
@@ -107,6 +199,7 @@ export default function AdminView() {
                             <th className="px-6 py-4">이름</th>
                             <th className="px-6 py-4">이메일</th>
                             <th className="px-6 py-4">권한</th>
+                            <th className="px-6 py-4">단체</th>
                             <th className="px-6 py-4 text-right">가입일</th>
                         </tr>
                     </thead>
@@ -116,10 +209,11 @@ export default function AdminView() {
                                 <td className="px-6 py-4 font-semibold text-foreground">{u.name}</td>
                                 <td className="px-6 py-4 text-muted-foreground">{u.email}</td>
                                 <td className="px-6 py-4">
-                                    {u.admin_info?.approved && (
-                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky/10 text-sky border border-sky/20 whitespace-nowrap">관리자</span>
-                                    )}
+                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border whitespace-nowrap ${ROLE_BADGE[u.role] || ROLE_BADGE.general}`}>
+                                        {ROLE_LABEL[u.role] || u.role}
+                                    </span>
                                 </td>
+                                <td className="px-6 py-4 text-muted-foreground">{u.organization?.name || '-'}</td>
                                 <td className="px-6 py-4 text-muted-foreground text-xs text-right">{new Date(u.created_at).toLocaleDateString()}</td>
                             </tr>
                         ))}
@@ -132,11 +226,14 @@ export default function AdminView() {
                     <div key={u.id} className="p-4 space-y-2">
                         <div className="flex items-center justify-between">
                             <span className="font-bold text-foreground">{u.name}</span>
-                            {u.admin_info?.approved && (
-                                <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-sky/10 text-sky border border-sky/20">관리자</span>
-                            )}
+                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${ROLE_BADGE[u.role] || ROLE_BADGE.general}`}>
+                                {ROLE_LABEL[u.role] || u.role}
+                            </span>
                         </div>
                         <div className="text-xs text-muted-foreground">{u.email}</div>
+                        {u.organization?.name && (
+                            <div className="text-xs text-muted-foreground">{u.organization.name}</div>
+                        )}
                         <div className="text-[10px] text-muted-foreground/60 italic">{new Date(u.created_at).toLocaleDateString()} 가입</div>
                     </div>
                 ))}
@@ -379,7 +476,7 @@ export default function AdminView() {
                     <h1 className="text-2xl font-bold tracking-tight text-foreground">시스템 관리</h1>
                     <p className="text-sm text-muted-foreground">회원 및 마스터 데이터를 관리합니다.</p>
                 </div>
-                {activeTab !== 'submissions' && (
+                {['users', 'airports', 'airlines', 'organizations'].includes(activeTab) && (
                     <button
                         className="inline-flex items-center justify-center px-4 py-2 text-sm font-bold transition-colors rounded-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
                         onClick={handleCreate}
@@ -397,7 +494,13 @@ export default function AdminView() {
                     >
                         👥 회원
                     </button>
-                    <button 
+                    <button
+                        className={`shrink-0 px-4 py-3 text-xs font-bold transition-all border-b-2 -mb-[2px] ${activeTab === 'pending' ? 'text-primary border-primary' : 'text-muted-foreground border-transparent hover:text-foreground'}`}
+                        onClick={() => setActiveTab('pending')}
+                    >
+                        ✅ 가입 승인{pendingUsers.length > 0 ? ` (${pendingUsers.length})` : ''}
+                    </button>
+                    <button
                         className={`shrink-0 px-4 py-3 text-xs font-bold transition-all border-b-2 -mb-[2px] ${activeTab === 'airports' ? 'text-primary border-primary' : 'text-muted-foreground border-transparent hover:text-foreground'}`}
                         onClick={() => setActiveTab('airports')}
                     >
@@ -436,6 +539,7 @@ export default function AdminView() {
                         </div>
                     ) : (
                         activeTab === 'users' ? renderUsers() :
+                        activeTab === 'pending' ? renderPending() :
                         activeTab === 'airports' ? renderAirports() :
                         activeTab === 'airlines' ? renderAirlines() :
                         activeTab === 'organizations' ? renderOrganizations() : renderSubmissions()

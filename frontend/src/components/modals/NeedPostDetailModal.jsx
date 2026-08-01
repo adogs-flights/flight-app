@@ -8,7 +8,7 @@ export default function NeedPostDetailModal({ isOpen, onClose, post, onEditClick
 
     if (!post) return null;
 
-    const isAdmin = user.admin_info && user.admin_info.approved;
+    const isAdmin = user?.role === 'admin';
     const isAuthor = post.author_id === user.id;
     const canEdit = isAuthor || isAdmin;
 

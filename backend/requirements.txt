@@ -16,6 +16,10 @@ google-auth-oauthlib
 google-auth-httplib2
 minio
 
+pytest
+httpx
+requests
+
 opentelemetry-distro
 opentelemetry-exporter-otlp
 opentelemetry-instrumentation-fastapi

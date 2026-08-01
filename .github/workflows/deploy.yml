@@ -134,6 +134,13 @@ jobs:
             export IMAGE_NAME_BACKEND=$IMAGE_NAME_BACKEND
             
             docker compose pull
+
+            # DB가 healthy가 될 때까지 기다린 뒤 마이그레이션을 먼저 적용한다.
+            # main.py도 기동 시 alembic upgrade를 돌리지만 그쪽은 예외를 삼켜서
+            # 실패해도 앱이 그대로 뜬다. 여기서 돌려야 set -e로 배포가 멈춘다.
+            docker compose up -d flight-db
+            docker compose run --rm flight-backend alembic upgrade head
+
             docker compose up -d --remove-orphans
             
             # 사용하지 않는 이미지 정리 (선택 사항)

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -14,7 +14,19 @@ export default function RegisterUserModal({ isOpen, onClose, onUserRegistered })
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [role, setRole] = useState('org');
+    const [organizationId, setOrganizationId] = useState('');
+    const [organizations, setOrganizations] = useState([]);
     const [error, setError] = useState('');
+
+    // 단체 목록은 모달이 열릴 때 직접 읽는다. AdminView의 '단체' 탭 상태에
+    // 의존하면 '회원' 탭에서 열었을 때 목록이 비어 있다.
+    useEffect(() => {
+        if (!isOpen) return;
+        apiClient.get('/organizations')
+            .then(res => setOrganizations(res.data))
+            .catch(() => setError('단체 목록을 불러오지 못했습니다.'));
+    }, [isOpen, apiClient]);
 
     const checks = {
         length: password.length >= 8,
@@ -35,12 +47,26 @@ export default function RegisterUserModal({ isOpen, onClose, onUserRegistered })
             setError('보안 정책에 맞는 비밀번호를 입력해주세요.');
             return;
         }
+        if (role === 'org' && !organizationId) {
+            setError('단체 계정은 소속 단체를 선택해야 합니다.');
+            return;
+        }
 
         try {
-            await apiClient.post('/users', { name, email, password });
+            await apiClient.post('/users', {
+                name,
+                email,
+                password,
+                role,
+                // 백엔드는 role='admin'이면 이 값을 무시하고 organization_id를 NULL로 저장한다.
+                // 다만 UserCreate에서 필수 필드라 값은 보내야 한다.
+                organization_id: role === 'org' ? Number(organizationId) : 0
+            });
             setName('');
             setEmail('');
             setPassword('');
+            setRole('org');
+            setOrganizationId('');
             onUserRegistered();
             onClose();
         } catch (err) {
@@ -62,8 +88,8 @@ export default function RegisterUserModal({ isOpen, onClose, onUserRegistered })
                 </button>
                 <button 
                     className="px-6 py-2 text-sm font-bold transition-all rounded-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm disabled:opacity-50 disabled:grayscale" 
-                    onClick={handleSubmit} 
-                    disabled={!isAllPassed || !name || !email}
+                    onClick={handleSubmit}
+                    disabled={!isAllPassed || !name || !email || (role === 'org' && !organizationId)}
                 >
                     등록하기
                 </button>
@@ -100,6 +126,37 @@ export default function RegisterUserModal({ isOpen, onClose, onUserRegistered })
                         />
                     </div>
                     
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">권한</label>
+                        <select
+                            className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none"
+                            value={role}
+                            onChange={e => setRole(e.target.value)}
+                        >
+                            <option value="org">단체 담당자</option>
+                            <option value="admin">관리자</option>
+                        </select>
+                        <p className="text-[11px] text-muted-foreground ml-1">
+                            일반 봉사자 계정은 카카오 로그인으로만 만들어집니다.
+                        </p>
+                    </div>
+
+                    {role === 'org' && (
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">소속 단체</label>
+                            <select
+                                className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none"
+                                value={organizationId}
+                                onChange={e => setOrganizationId(e.target.value)}
+                            >
+                                <option value="">단체를 선택하세요</option>
+                                {organizations.map(org => (
+                                    <option key={org.id} value={org.id}>{org.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+
                     <div className="space-y-2">
                         <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">임시 비밀번호</label>
                         <input 

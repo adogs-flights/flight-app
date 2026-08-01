@@ -7,13 +7,12 @@ import models
 import schemas
 from database import get_db
 from email_utils import send_email
-from routers.auth import get_current_user
+from routers.auth import OrgUser
 
 router = APIRouter(prefix="/api", tags=["Ticket Applications"])
 
 # --- Annotated types ---
 DBSession = Annotated[Session, Depends(get_db)]
-CurrentUser = Annotated[models.User, Depends(get_current_user)]
 
 
 @router.post(
@@ -25,7 +24,7 @@ def create_application_for_ticket(
     ticket_id: str,
     application_in: schemas.TicketApplicationCreate,
     db: DBSession,
-    current_user: CurrentUser,
+    current_user: OrgUser,
 ) -> models.TicketApplication:
     """
     Create a new application for a ticket.
@@ -92,7 +91,7 @@ def create_application_for_ticket(
 def list_applications_for_ticket(
     ticket_id: str,
     db: DBSession,
-    current_user: CurrentUser,
+    current_user: OrgUser,
 ) -> list[models.TicketApplication]:
     """
     List all applications for a specific ticket. Only visible to ticket owner or admin.
@@ -104,7 +103,7 @@ def list_applications_for_ticket(
         )
 
     is_owner = ticket.owner_id == current_user.id
-    is_admin = current_user.admin_info and current_user.admin_info.approved
+    is_admin = current_user.role == "admin"
 
     if not is_owner and not is_admin:
         raise HTTPException(
@@ -117,7 +116,7 @@ def list_applications_for_ticket(
 
 @router.get("/me/applications", response_model=list[schemas.TicketApplication])
 def list_my_applications(
-    db: DBSession, current_user: CurrentUser
+    db: DBSession, current_user: OrgUser
 ) -> list[models.TicketApplication]:
     """
     List all applications made by the current logged-in user.
@@ -134,7 +133,7 @@ def update_application_status(
     application_id: str,
     application_update: schemas.TicketApplicationUpdate,
     db: DBSession,
-    current_user: CurrentUser,
+    current_user: OrgUser,
 ) -> models.TicketApplication:
     """
     Update an application's status (e.g., to 'confirmed' or 'rejected').
@@ -153,7 +152,7 @@ def update_application_status(
 
     ticket = application.ticket
     is_owner = ticket.owner_id == current_user.id
-    is_admin = current_user.admin_info and current_user.admin_info.approved
+    is_admin = current_user.role == "admin"
 
     if not is_owner and not is_admin:
         raise HTTPException(
@@ -221,7 +220,7 @@ def update_application_status(
 def get_application(
     application_id: str,
     db: DBSession,
-    current_user: CurrentUser,
+    current_user: OrgUser,
 ) -> models.TicketApplication:
     """
     Get details of a specific application.
@@ -239,7 +238,7 @@ def get_application(
 
     is_owner = application.ticket.owner_id == current_user.id
     is_applicant = application.applicant_id == current_user.id
-    is_admin = current_user.admin_info and current_user.admin_info.approved
+    is_admin = current_user.role == "admin"
 
     if not any([is_owner, is_applicant, is_admin]):
         raise HTTPException(
@@ -252,7 +251,7 @@ def get_application(
 
 @router.delete("/applications/{application_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_application(
-    application_id: str, db: DBSession, current_user: CurrentUser
+    application_id: str, db: DBSession, current_user: OrgUser
 ) -> None:
     """
     Delete an application. Can only be done by applicant while status is 'pending'.

@@ -31,7 +31,7 @@ function NavItem({ to, icon, children, count }) {
 
 export default function Sidebar({ isOpen, onClose, onPwChangeClick }) {
     const { user } = useAuth();
-    const isAdmin = user?.admin_info?.approved;
+    const isAdmin = user?.role === 'admin';
 
     // These counts would come from API calls
     const scheduleCount = 0;

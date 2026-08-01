@@ -24,15 +24,15 @@ def get_organizations_with_accounts(db: DBSession) -> list[models.Organization]:
     """
     실제 로그인 계정이 존재하는 단체만 반환 (비로그인 제출 폼의 단체 선택 드롭다운용).
     """
-    account_org_names = (
-        db.query(models.User.organization)
-        .filter(models.User.organization.isnot(None))
+    account_org_ids = (
+        db.query(models.User.organization_id)
+        .filter(models.User.organization_id.isnot(None))
         .distinct()
     )
     return (
         db.query(models.Organization)
         .filter(models.Organization.is_active.is_(True))
-        .filter(models.Organization.name.in_(account_org_names))
+        .filter(models.Organization.id.in_(account_org_ids))
         .order_by(models.Organization.name)
         .all()
     )

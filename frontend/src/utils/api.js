@@ -1,18 +1,11 @@
 import axios from 'axios';
 
 const apiClient = axios.create({
-    baseURL: '/api'
-});
-
-// Request Interceptor: 모든 요청에 토큰 자동 포함
-apiClient.interceptors.request.use((config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-}, (error) => {
-    return Promise.reject(error);
+    baseURL: '/api',
+    // 토큰은 HttpOnly 쿠키로 오간다. 자바스크립트가 토큰을 다루지 않는다.
+    // access가 만료되면 백엔드가 refresh 쿠키로 조용히 재발급하므로
+    // 프론트에 재시도 인터셉터가 필요 없다.
+    withCredentials: true
 });
 
 // Google Drive Sync API
@@ -20,7 +13,7 @@ export const gdriveApi = {
     getStatus: () => apiClient.get('/gdrive/status'),
     connect: () => apiClient.get('/gdrive/connect'),
     disconnect: () => apiClient.delete('/gdrive/disconnect'),
-    setupFolder: (folderName, autoCreate = true) => 
+    setupFolder: (folderName, autoCreate = true) =>
         apiClient.post(`/gdrive/setup-folder?folder_name=${encodeURIComponent(folderName)}&auto_create=${autoCreate}`),
     listFolders: () => apiClient.get('/gdrive/folders'),
     setFolder: (folderId) => apiClient.post(`/gdrive/set-folder?folder_id=${folderId}`),
