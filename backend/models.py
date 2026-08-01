@@ -45,6 +45,9 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=True)
     hashed_password = Column(String, nullable=True)
     role = Column(String, nullable=False, default="org", index=True)
+    # 단체 자율 회원가입은 관리자 승인 전까지 False로 남는다. 관리자 발급 계정과
+    # 카카오 일반 계정은 승인 개념이 없어 True로 만들어진다.
+    is_approved = Column(Boolean, nullable=False, default=True)
     organization_id = Column(
         Integer, ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True, index=True
     )

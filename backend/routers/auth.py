@@ -227,12 +227,16 @@ AdminUser = Annotated[models.User, Depends(get_current_admin_user)]
 
 
 def get_current_org_user(current_user: CurrentUser) -> models.User:
-    if current_user.role not in ("org", "admin"):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="단체 계정만 접근할 수 있습니다.",
-        )
-    return current_user
+    if current_user.role == "admin":
+        return current_user
+    # 단체 자율 회원가입 계정은 관리자 승인 전까지 단체 업무 화면에 접근할 수 없다.
+    # 승인 없이 통과하면 GET /api/tickets 한 번으로 게스트 전화번호를 전부 읽는다.
+    if current_user.role == "org" and current_user.is_approved:
+        return current_user
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="단체 계정만 접근할 수 있습니다.",
+    )
 
 
 OrgUser = Annotated[models.User, Depends(get_current_org_user)]
@@ -268,6 +272,13 @@ def login_for_access_token(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # 단체 자율 회원가입 계정은 관리자 승인 전까지 로그인시키지 않는다.
+    if user.role == "org" and not user.is_approved:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="가입 승인 대기 중입니다. 관리자 승인 후 이용할 수 있습니다.",
         )
 
     return issue_tokens(db, response, user)
@@ -468,6 +479,56 @@ def kakao_login(
 
 
 # ======================================================================================
+# Self-service Registration
+# ======================================================================================
+@router.post(
+    "/auth/register-org",
+    response_model=schemas.User,
+    status_code=status.HTTP_201_CREATED,
+)
+def register_org(reg_in: schemas.OrgRegisterRequest, db: DBSession) -> models.User:
+    """단체 자율 회원가입. 새 단체를 만들고 승인 대기(is_approved=False) 상태로 계정을 만든다.
+
+    관리자가 승인해야 로그인·데이터 접근이 열린다. 그전까지 단체는 비활성이라
+    공개 제출 폼의 단체 드롭다운에도 나타나지 않는다.
+    """
+    if db.query(models.User).filter(models.User.email == reg_in.email).first():
+        raise HTTPException(status_code=400, detail="이미 가입된 이메일입니다.")
+
+    org_name = reg_in.organization_name.strip()
+    if (
+        db.query(models.Organization)
+        .filter(models.Organization.name == org_name)
+        .first()
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="이미 등록된 단체명입니다. 담당자 계정 추가는 관리자에게 문의해주세요.",
+        )
+
+    organization = models.Organization(name=org_name, is_active=False)
+    db.add(organization)
+    db.flush()  # organization.id 확보
+
+    db_user = models.User(
+        email=reg_in.email,
+        name=reg_in.name,
+        hashed_password=get_password_hash(reg_in.password),
+        role="org",
+        organization_id=organization.id,
+        is_approved=False,
+    )
+    db.add(db_user)
+    try:
+        db.commit()
+    except Exception as err:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="가입에 실패했습니다.") from err
+    db.refresh(db_user)
+    return db_user
+
+
+# ======================================================================================
 # User Management Endpoints
 # ======================================================================================
 @router.get(
@@ -478,6 +539,81 @@ def kakao_login(
 def read_users(db: DBSession) -> list[models.User]:
     users = db.query(models.User).all()
     return users
+
+
+@router.get(
+    "/users/pending",
+    response_model=list[schemas.User],
+    dependencies=[Depends(get_current_admin_user)],
+)
+def read_pending_users(db: DBSession) -> list[models.User]:
+    """승인 대기 중인 단체 자율 회원가입 계정 목록."""
+    return (
+        db.query(models.User)
+        .filter(models.User.role == "org", models.User.is_approved.is_(False))
+        .order_by(models.User.created_at.desc())
+        .all()
+    )
+
+
+@router.post("/users/{user_id}/approve", response_model=schemas.User)
+def approve_user(user_id: str, db: DBSession, admin_user: AdminUser) -> models.User:
+    """대기 중인 단체 계정을 승인한다. 소속 단체도 함께 활성화한다."""
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="회원을 찾을 수 없습니다.")
+    if user.role != "org":
+        raise HTTPException(status_code=400, detail="단체 계정만 승인할 수 있습니다.")
+
+    user.is_approved = True
+    if user.organization_id:
+        organization = (
+            db.query(models.Organization)
+            .filter(models.Organization.id == user.organization_id)
+            .first()
+        )
+        if organization:
+            organization.is_active = True
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+@router.post("/users/{user_id}/reject", status_code=status.HTTP_204_NO_CONTENT)
+def reject_user(user_id: str, db: DBSession, admin_user: AdminUser) -> None:
+    """대기 중인 단체 계정을 거부(삭제)한다.
+
+    자율 가입으로 만들어진 단체에 다른 계정이 없으면 그 단체도 함께 지운다.
+    승인된 계정은 실수 삭제를 막으려고 이 경로로 지우지 못하게 한다.
+    """
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="회원을 찾을 수 없습니다.")
+    if user.role != "org" or user.is_approved:
+        raise HTTPException(
+            status_code=400, detail="승인 대기 중인 단체 계정만 거부할 수 있습니다."
+        )
+
+    organization_id = user.organization_id
+    db.delete(user)
+    db.flush()
+
+    if organization_id:
+        remaining = (
+            db.query(models.User)
+            .filter(models.User.organization_id == organization_id)
+            .count()
+        )
+        if remaining == 0:
+            organization = (
+                db.query(models.Organization)
+                .filter(models.Organization.id == organization_id)
+                .first()
+            )
+            # 자율 가입이 만든 단체만(비활성) 정리한다. 관리자가 만든 활성 단체는 남긴다.
+            if organization and not organization.is_active:
+                db.delete(organization)
+    db.commit()
 
 
 @router.post("/users", response_model=schemas.User, status_code=status.HTTP_201_CREATED)

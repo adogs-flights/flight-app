@@ -24,8 +24,14 @@ export default function LoginScreen() {
         setError('');
         try {
             await login(email, password);
-        } catch {
-            setError('이메일 또는 비밀번호가 올바르지 않습니다.');
+        } catch (err) {
+            // 승인 대기(403) 등 서버가 준 안내 문구가 있으면 그대로 보여준다.
+            const detail = err.response?.data?.detail;
+            setError(
+                err.response?.status === 403 && detail
+                    ? detail
+                    : '이메일 또는 비밀번호가 올바르지 않습니다.'
+            );
         }
     };
 
@@ -99,8 +105,8 @@ export default function LoginScreen() {
 
                     <div className="text-center space-y-3 pt-4">
                         <p className="text-xs text-muted-foreground leading-relaxed">
-                            계정이 없으신가요? 관리자에게 문의하세요.<br />
-                            <span className="font-medium">계정은 관리자만 발급할 수 있습니다.</span>
+                            계정이 없으신가요?{' '}
+                            <Link to="/signup" className="font-bold text-primary hover:underline">회원가입</Link>
                         </p>
                         <Link to="/apply" className="inline-block text-xs font-bold text-primary hover:underline">
                             🎁 봉사 티켓을 제출하고 싶으신가요? →

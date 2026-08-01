@@ -96,12 +96,42 @@ class User(BaseModel):
     name: str
     email: EmailStr | None = None
     role: str
+    is_approved: bool = True
     organization_id: int | None = None
     organization: Organization | None = None
     created_at: datetime
 
     class Config:
         from_attributes = True
+
+
+class OrgRegisterRequest(BaseModel):
+    """단체 자율 회원가입 요청. 새 단체를 만들고, 관리자 승인 전까지 비활성 상태로 둔다."""
+
+    name: str
+    email: EmailStr
+    password: str
+    organization_name: str
+
+    @field_validator("password")
+    @classmethod
+    def password_complexity(cls, v: str) -> str:
+        if len(v) < 8:
+            raise ValueError("비밀번호는 8자 이상이어야 합니다.")
+        if not re.search(r"[A-Za-z]", v):
+            raise ValueError("비밀번호에 영문을 포함해야 합니다.")
+        if not re.search(r"[0-9]", v):
+            raise ValueError("비밀번호에 숫자를 포함해야 합니다.")
+        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", v):
+            raise ValueError("비밀번호에 특수문자를 포함해야 합니다.")
+        return v
+
+    @field_validator("organization_name", "name")
+    @classmethod
+    def not_blank(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("필수 입력값입니다.")
+        return v.strip()
 
 
 # ======================================================================================

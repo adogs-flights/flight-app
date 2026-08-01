@@ -14,6 +14,9 @@ import GuestTicketSubmitView from './pages/GuestTicketSubmitView';
 import VolunteerGuideView from './pages/VolunteerGuideView';
 import KakaoCallback from './pages/KakaoCallback';
 import GeneralHome from './pages/GeneralHome';
+import SignupChoice from './pages/SignupChoice';
+import GeneralSignup from './pages/GeneralSignup';
+import OrgSignup from './pages/OrgSignup';
 
 function App() {
   return (
@@ -42,6 +45,9 @@ function AppContent() {
         <>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginScreen />} />
+          <Route path="/signup" element={<SignupChoice />} />
+          <Route path="/signup/general" element={<GeneralSignup />} />
+          <Route path="/signup/org" element={<OrgSignup />} />
           <Route path="*" element={<Navigate to="/" />} />
         </>
       ) : user.role === 'general' ? (
