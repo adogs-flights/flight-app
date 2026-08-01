@@ -7,6 +7,18 @@ import AirlineModal from '../components/modals/AirlineModal';
 import OrganizationModal from '../components/modals/OrganizationModal';
 import GuestSubmissionReviewModal from '../components/modals/GuestSubmissionReviewModal';
 
+const ROLE_LABEL = {
+    admin: '관리자',
+    org: '단체',
+    general: '일반'
+};
+
+const ROLE_BADGE = {
+    admin: 'bg-sky/10 text-sky border-sky/20',
+    org: 'bg-earth/10 text-earth-foreground border-earth/20',
+    general: 'bg-muted text-muted-foreground border-border'
+};
+
 export default function AdminView() {
     const { apiClient, fetchStaticData } = useAuth();
     const [activeTab, setActiveTab] = useState('users');
@@ -107,6 +119,7 @@ export default function AdminView() {
                             <th className="px-6 py-4">이름</th>
                             <th className="px-6 py-4">이메일</th>
                             <th className="px-6 py-4">권한</th>
+                            <th className="px-6 py-4">단체</th>
                             <th className="px-6 py-4 text-right">가입일</th>
                         </tr>
                     </thead>
@@ -116,10 +129,11 @@ export default function AdminView() {
                                 <td className="px-6 py-4 font-semibold text-foreground">{u.name}</td>
                                 <td className="px-6 py-4 text-muted-foreground">{u.email}</td>
                                 <td className="px-6 py-4">
-                                    {u.admin_info?.approved && (
-                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky/10 text-sky border border-sky/20 whitespace-nowrap">관리자</span>
-                                    )}
+                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border whitespace-nowrap ${ROLE_BADGE[u.role] || ROLE_BADGE.general}`}>
+                                        {ROLE_LABEL[u.role] || u.role}
+                                    </span>
                                 </td>
+                                <td className="px-6 py-4 text-muted-foreground">{u.organization?.name || '-'}</td>
                                 <td className="px-6 py-4 text-muted-foreground text-xs text-right">{new Date(u.created_at).toLocaleDateString()}</td>
                             </tr>
                         ))}
@@ -132,11 +146,14 @@ export default function AdminView() {
                     <div key={u.id} className="p-4 space-y-2">
                         <div className="flex items-center justify-between">
                             <span className="font-bold text-foreground">{u.name}</span>
-                            {u.admin_info?.approved && (
-                                <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-sky/10 text-sky border border-sky/20">관리자</span>
-                            )}
+                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${ROLE_BADGE[u.role] || ROLE_BADGE.general}`}>
+                                {ROLE_LABEL[u.role] || u.role}
+                            </span>
                         </div>
                         <div className="text-xs text-muted-foreground">{u.email}</div>
+                        {u.organization?.name && (
+                            <div className="text-xs text-muted-foreground">{u.organization.name}</div>
+                        )}
                         <div className="text-[10px] text-muted-foreground/60 italic">{new Date(u.created_at).toLocaleDateString()} 가입</div>
                     </div>
                 ))}

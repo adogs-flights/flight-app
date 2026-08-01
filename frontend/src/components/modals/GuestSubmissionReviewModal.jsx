@@ -356,7 +356,7 @@ export default function GuestSubmissionReviewModal({ isOpen, onClose, submission
                             >
                                 <option value="">지정 안 함 (관리자 관리)</option>
                                 {users.map(u => (
-                                    <option key={u.id} value={u.id}>{u.name} ({u.email}){u.organization ? ` - ${u.organization}` : ''}</option>
+                                    <option key={u.id} value={u.id}>{u.name} ({u.email}){u.organization?.name ? ` - ${u.organization.name}` : ''}</option>
                                 ))}
                             </select>
                         </div>

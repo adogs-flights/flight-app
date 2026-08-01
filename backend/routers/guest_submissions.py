@@ -1,4 +1,5 @@
 import os
+import secrets
 import uuid
 from datetime import datetime, timezone
 from typing import Annotated
@@ -19,7 +20,8 @@ from sqlalchemy.orm import Session, joinedload
 import models
 import schemas
 from database import get_db
-from routers.auth import AdminUser
+from permissions import scope_to_org
+from routers.auth import AdminUser, CurrentUser, OrgUser
 from services import gdrive_service, storage_service
 
 router = APIRouter(prefix="/api/guest-submissions", tags=["Guest Ticket Submissions"])
@@ -31,7 +33,11 @@ ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp", "application/p
 MAX_UPLOAD_SIZE = 10 * 1024 * 1024  # 10MB
 
 
-@router.post("", response_model=schemas.GuestTicketSubmission, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    response_model=schemas.GuestTicketSubmissionCreated,
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_guest_submission(
     db: DBSession,
     background_tasks: BackgroundTasks,
@@ -115,6 +121,7 @@ async def create_guest_submission(
         passenger_last_name_en=passenger_last_name_en if is_reservation_method else None,
         passenger_first_name_en=passenger_first_name_en if is_reservation_method else None,
         organization_id=organization_id,
+        lookup_token=secrets.token_urlsafe(24),
     )
     db.add(db_submission)
     db.commit()
@@ -135,12 +142,13 @@ async def create_guest_submission(
 @router.get("", response_model=list[schemas.GuestTicketSubmission])
 def list_guest_submissions(
     db: DBSession,
-    current_admin: AdminUser,
+    current_user: OrgUser,
     submission_status: schemas.GuestSubmissionStatus | None = None,
 ) -> list[models.GuestTicketSubmission]:
     query = db.query(models.GuestTicketSubmission).options(
         joinedload(models.GuestTicketSubmission.organization)
     )
+    query = scope_to_org(query, current_user, models.GuestTicketSubmission)
     if submission_status:
         query = query.filter(models.GuestTicketSubmission.status == submission_status.value)
     return query.order_by(models.GuestTicketSubmission.submitted_at.desc()).all()
@@ -148,13 +156,14 @@ def list_guest_submissions(
 
 @router.get("/{submission_id}/image")
 def get_guest_submission_image(
-    submission_id: str, db: DBSession, current_admin: AdminUser
+    submission_id: str, db: DBSession, current_user: OrgUser
 ) -> Response:
-    submission = (
-        db.query(models.GuestTicketSubmission)
-        .filter(models.GuestTicketSubmission.id == submission_id)
-        .first()
+    query = db.query(models.GuestTicketSubmission).filter(
+        models.GuestTicketSubmission.id == submission_id
     )
+    submission = scope_to_org(
+        query, current_user, models.GuestTicketSubmission
+    ).first()
     if not submission or not submission.eticket_object_key:
         raise HTTPException(status_code=404, detail="이미지를 찾을 수 없습니다.")
 
@@ -234,6 +243,51 @@ def reject_guest_submission(
     submission.status = "rejected"
     submission.admin_note = reject_in.admin_note
     submission.reviewed_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(submission)
+    return submission
+
+
+@router.post(
+    "/{submission_id}/claim", response_model=schemas.GuestTicketSubmission
+)
+def claim_guest_submission(
+    submission_id: str,
+    claim_in: schemas.GuestSubmissionClaim,
+    db: DBSession,
+    current_user: CurrentUser,
+) -> models.GuestTicketSubmission:
+    """조회링크에서 본인이 눌러 자기 계정에 담는다.
+
+    lookup_token 불일치는 404로 답한다. 제출이 존재하는지조차 알려주지 않는다.
+    """
+    # unclaim 엔드포인트가 없어서 한 번 잘못 담기면 진짜 제출자는 영영 409를 받는다.
+    # 토큰이 다른 경로로 새더라도 업무 계정이 남의 제출을 가져가지 못하게 막는다
+    if current_user.role != "general":
+        raise HTTPException(
+            status_code=403,
+            detail="단체·관리자 계정으로는 제출 내역을 담을 수 없습니다.",
+        )
+
+    submission = (
+        db.query(models.GuestTicketSubmission)
+        .filter(
+            models.GuestTicketSubmission.id == submission_id,
+            models.GuestTicketSubmission.lookup_token == claim_in.lookup_token,
+        )
+        .first()
+    )
+    if not submission:
+        raise HTTPException(status_code=404, detail="제출 내역을 찾을 수 없습니다.")
+
+    if submission.user_id is not None:
+        if submission.user_id == current_user.id:
+            return submission
+        raise HTTPException(
+            status_code=409, detail="이미 다른 계정에 등록된 제출 내역입니다."
+        )
+
+    submission.user_id = current_user.id
     db.commit()
     db.refresh(submission)
     return submission

@@ -2,6 +2,7 @@ import uuid
 
 from sqlalchemy import (
     Boolean,
+    CheckConstraint,
     Column,
     Date,
     DateTime,
@@ -23,20 +24,34 @@ def generate_uuid() -> str:
 
 class User(Base):
     __tablename__ = "users"
+    __table_args__ = (
+        CheckConstraint(
+            "role <> 'general' OR kakao_user_id IS NOT NULL",
+            name="ck_users_general_requires_kakao",
+        ),
+        CheckConstraint(
+            "role <> 'org' OR (email IS NOT NULL AND hashed_password IS NOT NULL "
+            "AND organization_id IS NOT NULL)",
+            name="ck_users_org_requires_credentials_and_org",
+        ),
+        CheckConstraint(
+            "role <> 'admin' OR (email IS NOT NULL AND hashed_password IS NOT NULL)",
+            name="ck_users_admin_requires_credentials",
+        ),
+    )
 
     id = Column(String, primary_key=True, default=generate_uuid)
     name = Column(String, nullable=False)
-    email = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
-    organization = Column(String, nullable=True)  # 단체명 추가
+    email = Column(String, unique=True, index=True, nullable=True)
+    hashed_password = Column(String, nullable=True)
+    role = Column(String, nullable=False, default="org", index=True)
+    organization_id = Column(
+        Integer, ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    kakao_user_id = Column(String, unique=True, index=True, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    admin_info = relationship(
-        "AdminUser",
-        back_populates="user",
-        uselist=False,
-        cascade="all, delete-orphan",
-    )
+    organization = relationship("Organization")
     tickets_created = relationship(
         "Ticket",
         back_populates="creator",
@@ -80,18 +95,6 @@ class RefreshToken(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     user = relationship("User", back_populates="refresh_tokens")
-
-
-class AdminUser(Base):
-    __tablename__ = "admin_users"
-
-    user_id = Column(
-        String, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
-    )
-    approved = Column(Boolean, default=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-
-    user = relationship("User", back_populates="admin_info")
 
 
 class Ticket(Base):
@@ -242,6 +245,10 @@ class GuestTicketSubmission(Base):
     organization_id = Column(
         Integer, ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True, index=True
     )
+    user_id = Column(
+        String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    lookup_token = Column(String, unique=True, index=True, nullable=False)
     status = Column(
         String, nullable=False, default="pending", index=True
     )  # 'pending', 'approved', 'rejected'
@@ -254,6 +261,7 @@ class GuestTicketSubmission(Base):
     reviewed_at = Column(DateTime(timezone=True), nullable=True)
 
     organization = relationship("Organization")
+    user = relationship("User")
     created_ticket = relationship("Ticket")
 
 

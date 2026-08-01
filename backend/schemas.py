@@ -21,15 +21,44 @@ class TicketApplicationStatus(str, Enum):
 
 
 # ======================================================================================
-# AdminUser Schemas (User에서 참조하기 위해 위로 이동)
+# Organization Schemas (User에서 참조하기 위해 위로 이동)
 # ======================================================================================
-class AdminUserBase(BaseModel):
-    user_id: str
-    approved: bool
+class OrganizationBase(BaseModel):
+    name: str
+    slug: str | None = None
+    is_active: bool | None = True
+
+    @field_validator("slug")
+    @classmethod
+    def slug_format(cls, v: str | None) -> str | None:
+        if v is None or v == "":
+            return None
+        if not re.fullmatch(r"[a-z0-9-]+", v):
+            raise ValueError("슬러그는 영문 소문자, 숫자, 하이픈(-)만 사용할 수 있습니다.")
+        return v
 
 
-class AdminUser(AdminUserBase):
-    created_at: datetime
+class OrganizationCreate(OrganizationBase):
+    pass
+
+
+class OrganizationUpdate(BaseModel):
+    name: str | None = None
+    slug: str | None = None
+    is_active: bool | None = None
+
+    @field_validator("slug")
+    @classmethod
+    def slug_format(cls, v: str | None) -> str | None:
+        if v is None or v == "":
+            return None
+        if not re.fullmatch(r"[a-z0-9-]+", v):
+            raise ValueError("슬러그는 영문 소문자, 숫자, 하이픈(-)만 사용할 수 있습니다.")
+        return v
+
+
+class Organization(OrganizationBase):
+    id: int
 
     class Config:
         from_attributes = True
@@ -41,11 +70,12 @@ class AdminUser(AdminUserBase):
 class UserBase(BaseModel):
     email: EmailStr
     name: str
-    organization: str | None = None # 단체명 추가
 
 
 class UserCreate(UserBase):
     password: str
+    organization_id: int
+    role: str = "org"
 
     @field_validator("password")
     @classmethod
@@ -61,10 +91,14 @@ class UserCreate(UserBase):
         return v
 
 
-class User(UserBase):
+class User(BaseModel):
     id: str
+    name: str
+    email: EmailStr | None = None
+    role: str
+    organization_id: int | None = None
+    organization: Organization | None = None
     created_at: datetime
-    admin_info: AdminUser | None = None
 
     class Config:
         from_attributes = True
@@ -242,6 +276,11 @@ class TokenRefresh(BaseModel):
     refresh_token: str
 
 
+class KakaoLoginRequest(BaseModel):
+    code: str
+    state: str
+
+
 class TokenData(BaseModel):
     email: EmailStr | None = None
 
@@ -325,50 +364,6 @@ class Airline(AirlineBase):
 
 
 # ======================================================================================
-# Organization Schemas
-# ======================================================================================
-class OrganizationBase(BaseModel):
-    name: str
-    slug: str | None = None
-    is_active: bool | None = True
-
-    @field_validator("slug")
-    @classmethod
-    def slug_format(cls, v: str | None) -> str | None:
-        if v is None or v == "":
-            return None
-        if not re.fullmatch(r"[a-z0-9-]+", v):
-            raise ValueError("슬러그는 영문 소문자, 숫자, 하이픈(-)만 사용할 수 있습니다.")
-        return v
-
-
-class OrganizationCreate(OrganizationBase):
-    pass
-
-
-class OrganizationUpdate(BaseModel):
-    name: str | None = None
-    slug: str | None = None
-    is_active: bool | None = None
-
-    @field_validator("slug")
-    @classmethod
-    def slug_format(cls, v: str | None) -> str | None:
-        if v is None or v == "":
-            return None
-        if not re.fullmatch(r"[a-z0-9-]+", v):
-            raise ValueError("슬러그는 영문 소문자, 숫자, 하이픈(-)만 사용할 수 있습니다.")
-        return v
-
-
-class Organization(OrganizationBase):
-    id: int
-
-    class Config:
-        from_attributes = True
-
-
-# ======================================================================================
 # Guest Ticket Submission Schemas
 # ======================================================================================
 class GuestSubmissionVerificationMethod(str, Enum):
@@ -393,6 +388,7 @@ class GuestTicketSubmission(BaseModel):
     passenger_first_name_en: str | None = None
     organization_id: int | None = None
     organization: Organization | None = None
+    user_id: str | None = None
     eticket_drive_url: str | None = None
     status: GuestSubmissionStatus
     admin_note: str | None = None
@@ -404,9 +400,24 @@ class GuestTicketSubmission(BaseModel):
         from_attributes = True
 
 
+class GuestTicketSubmissionCreated(GuestTicketSubmission):
+    """제출 직후 본인에게만 돌려주는 응답.
+
+    lookup_token은 남의 개인정보(전화번호·e티켓)를 지키는 유일한 비밀이다.
+    자기 조회 링크를 만들어야 하는 제출자 본인 외에는 아무도 볼 필요가 없으므로
+    공용 응답 모델에서 빼고 이 생성 응답에만 싣는다.
+    """
+
+    lookup_token: str
+
+
 class GuestSubmissionReject(BaseModel):
     admin_note: str | None = None
 
 
 class GuestSubmissionApprove(TicketBase):
     owner_user_id: str | None = None
+
+
+class GuestSubmissionClaim(BaseModel):
+    lookup_token: str

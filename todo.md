@@ -24,5 +24,16 @@
   - [x] ruff check를 통해 코드 품질 관리.
 
 ---
-[참조 하네스]: docs/backend.md, issue.md (v1.6-v1.7)
+---
+
+## [v1.8] frontend/src/App.jsx Conflict 해결 (Completed)
+- [x] `frontend/src/App.jsx` 충돌 마커 제거 및 양쪽 라우트/컴포넌트 통합
+  - [x] `VolunteerGuideView`, `KakaoCallback`, `GeneralHome` import 통합
+  - [x] 공개 라우트 (`/apply`, `/guide`, `/auth/kakao/callback`) 배치
+  - [x] `!user` (비로그인) 시 LandingPage/LoginScreen 라우팅 및 `user.role === 'general'` 사용자 GeneralHome 라우팅 적용
+- [x] 프론트엔드 린트 검사 (`npm run lint`) 수행
+
+---
+[참조 하네스]: docs/frontend.md, docs/security.md, docs/superpowers/specs/2026-07-26-role-model-and-kakao-auth-design.md
 [린트 검사 결과]: Pass
+
