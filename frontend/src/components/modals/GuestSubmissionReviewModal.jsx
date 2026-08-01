@@ -169,6 +169,9 @@ export default function GuestSubmissionReviewModal({ isOpen, onClose, submission
                     {submission.organization && (
                         <div className="text-sm"><span className="font-bold">지정 단체:</span> {submission.organization.name}</div>
                     )}
+                    {submission.need_post && (
+                        <div className="text-sm"><span className="font-bold">응답한 게시글:</span> 🐶 {submission.need_post.title}</div>
+                    )}
                     {submission.verification_method === 'eticket_image' ? (
                         <>
                             {imageUrl ? (

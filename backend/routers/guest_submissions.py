@@ -49,6 +49,7 @@ async def create_guest_submission(
     passenger_last_name_en: Annotated[str | None, Form()] = None,
     passenger_first_name_en: Annotated[str | None, Form()] = None,
     organization_id: Annotated[int | None, Form()] = None,
+    need_post_id: Annotated[str | None, Form()] = None,
     eticket_image: Annotated[UploadFile | None, File()] = None,
 ) -> models.GuestTicketSubmission:
     """
@@ -86,6 +87,18 @@ async def create_guest_submission(
         if not organization:
             raise HTTPException(status_code=404, detail="단체를 찾을 수 없습니다.")
 
+    if need_post_id is not None:
+        need_post = (
+            db.query(models.NeedPost)
+            .filter(models.NeedPost.id == need_post_id)
+            .first()
+        )
+        if not need_post:
+            raise HTTPException(status_code=404, detail="게시글을 찾을 수 없습니다.")
+        # 게시글에 소속 단체가 있으면 그 단체로 제출을 귀속시킨다(폼에서 안 골라도).
+        if organization_id is None and need_post.author and need_post.author.organization_id:
+            organization_id = need_post.author.organization_id
+
     eticket_object_key = None
     if eticket_image:
         if eticket_image.content_type not in ALLOWED_CONTENT_TYPES:
@@ -121,6 +134,7 @@ async def create_guest_submission(
         passenger_last_name_en=passenger_last_name_en if is_reservation_method else None,
         passenger_first_name_en=passenger_first_name_en if is_reservation_method else None,
         organization_id=organization_id,
+        need_post_id=need_post_id,
         lookup_token=secrets.token_urlsafe(24),
     )
     db.add(db_submission)
@@ -146,7 +160,8 @@ def list_guest_submissions(
     submission_status: schemas.GuestSubmissionStatus | None = None,
 ) -> list[models.GuestTicketSubmission]:
     query = db.query(models.GuestTicketSubmission).options(
-        joinedload(models.GuestTicketSubmission.organization)
+        joinedload(models.GuestTicketSubmission.organization),
+        joinedload(models.GuestTicketSubmission.need_post),
     )
     query = scope_to_org(query, current_user, models.GuestTicketSubmission)
     if submission_status:

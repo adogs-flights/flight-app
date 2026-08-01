@@ -288,6 +288,52 @@ class NeedPost(NeedPostBase):
     created_at: datetime
     updated_at: datetime
     author: User | None = None
+    has_image: bool = False
+
+    class Config:
+        from_attributes = True
+
+
+class NeedPostAuthorPublic(BaseModel):
+    """공개 게시판에 노출되는 작성자 정보. 이메일 등 연락처는 절대 담지 않는다."""
+
+    name: str
+
+    class Config:
+        from_attributes = True
+
+
+class NeedPostPublic(BaseModel):
+    """비로그인·일반 사용자용 읽기 전용 뷰. contact와 작성자 이메일을 제외한다.
+
+    contact(작성자 전화)와 author.email은 로그인한 단체·관리자만 볼 수 있다.
+    공개 게시판에서 이 값들이 새면 이메일·전화번호 스크래핑에 그대로 노출된다.
+    """
+
+    id: str
+    title: str
+    airport_code: str
+    desired_date: date | None = None
+    flight_route: str | None = ""
+    seats_needed: int
+    detail: str | None = None
+    is_urgent: bool
+    is_resolved: bool
+    author: NeedPostAuthorPublic | None = None
+    organization: Organization | None = None
+    has_image: bool = False
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class NeedPostRef(BaseModel):
+    """제출이 응답한 '구해요' 게시글의 최소 참조."""
+
+    id: str
+    title: str
 
     class Config:
         from_attributes = True
@@ -418,6 +464,8 @@ class GuestTicketSubmission(BaseModel):
     passenger_first_name_en: str | None = None
     organization_id: int | None = None
     organization: Organization | None = None
+    need_post_id: str | None = None
+    need_post: NeedPostRef | None = None
     user_id: str | None = None
     eticket_drive_url: str | None = None
     status: GuestSubmissionStatus
