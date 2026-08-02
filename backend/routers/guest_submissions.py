@@ -117,11 +117,11 @@ def _serve_document(
     )
     submission = scope_to_org(query, current_user, models.GuestTicketSubmission).first()
     object_key = None
-    if submission:
+    if submission and submission.created_ticket:
         object_key = (
-            submission.passport_object_key
+            submission.created_ticket.passport_object_key
             if kind == "passport"
-            else submission.seat_confirm_object_key
+            else submission.created_ticket.seat_confirm_object_key
         )
     if not submission or not object_key:
         raise HTTPException(status_code=404, detail="파일을 찾을 수 없습니다.")
@@ -493,22 +493,26 @@ async def submit_departure_info(
             status_code=400,
             detail="자리 예약이 완료된 뒤에만 출국 준비 서류를 제출할 수 있습니다.",
         )
+    ticket = submission.created_ticket
+    if not ticket:
+        raise HTTPException(status_code=400, detail="연결된 티켓을 찾을 수 없습니다.")
 
+    # 출국 준비 정보는 티켓에 저장한다(단체 등록 티켓과 동일한 자리).
     if passport:
-        submission.passport_object_key = await _store_document(passport, "passport")
+        ticket.passport_object_key = await _store_document(passport, "passport")
     if seat_confirm:
-        submission.seat_confirm_object_key = await _store_document(
+        ticket.seat_confirm_object_key = await _store_document(
             seat_confirm, "seatconfirm"
         )
 
-    submission.dep_address = dep_address.strip()
-    submission.departure_submitted_at = datetime.now(timezone.utc)
+    ticket.dep_address = dep_address.strip()
+    ticket.departure_submitted_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(submission)
 
     # 소유자가 드라이브를 연동해 티켓 폴더가 있으면, 출국 서류를 그 폴더에도 올린다.
     background_tasks.add_task(
-        gdrive_service.upload_departure_docs_to_ticket_folder, db, submission.id
+        gdrive_service.upload_departure_docs_to_ticket_folder, db, ticket.id
     )
 
     recipient_emails = _submission_recipients(db, submission)
@@ -562,18 +566,19 @@ def delete_departure_info(
     if not submission:
         raise HTTPException(status_code=404, detail="제출 내역을 찾을 수 없습니다.")
 
-    for key in (submission.passport_object_key, submission.seat_confirm_object_key):
-        if key:
-            try:
-                storage_service.delete_object(key)
-            except Exception as e:  # noqa: BLE001
-                print(f"[purge] 파일 삭제 실패 ({key}): {e}")
-
-    submission.passport_object_key = None
-    submission.seat_confirm_object_key = None
-    submission.dep_address = None
-    db.commit()
-    db.refresh(submission)
+    ticket = submission.created_ticket
+    if ticket:
+        for key in (ticket.passport_object_key, ticket.seat_confirm_object_key):
+            if key:
+                try:
+                    storage_service.delete_object(key)
+                except Exception as e:  # noqa: BLE001
+                    print(f"[purge] 파일 삭제 실패 ({key}): {e}")
+        ticket.passport_object_key = None
+        ticket.seat_confirm_object_key = None
+        ticket.dep_address = None
+        db.commit()
+        db.refresh(submission)
     return submission
 
 

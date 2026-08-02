@@ -1,6 +1,19 @@
+import os
+import uuid
+from datetime import datetime, timezone
 from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    UploadFile,
+    status,
+)
+from fastapi.responses import Response
 from sqlalchemy import or_
 from sqlalchemy.orm import Session, joinedload
 
@@ -8,7 +21,10 @@ import models
 import schemas
 from database import get_db
 from routers.auth import OrgUser
-from services import gdrive_service
+from services import gdrive_service, storage_service
+
+DEPARTURE_ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "application/pdf"}
+DEPARTURE_MAX_SIZE = 10 * 1024 * 1024  # 10MB
 
 router = APIRouter(prefix="/api/tickets", tags=["Tickets"])
 
@@ -251,3 +267,126 @@ def delete_ticket(
 
     db.delete(ticket)
     db.commit()
+
+
+# ======================================================================================
+# 출국 준비 추가정보 (티켓 소유자/관리자)
+# ======================================================================================
+async def _store_departure_doc(upload: UploadFile, prefix: str) -> str:
+    if upload.content_type not in DEPARTURE_ALLOWED_TYPES:
+        raise HTTPException(
+            status_code=400, detail="이미지 또는 PDF 파일만 업로드할 수 있습니다."
+        )
+    contents = await upload.read()
+    if len(contents) > DEPARTURE_MAX_SIZE:
+        raise HTTPException(
+            status_code=400, detail="파일 크기는 10MB를 초과할 수 없습니다."
+        )
+    ext = os.path.splitext(upload.filename or "")[1]
+    object_key = f"{prefix}-{uuid.uuid4()}{ext}"
+    try:
+        storage_service.upload_bytes(object_key, contents, upload.content_type)
+    except Exception as e:
+        raise HTTPException(
+            status_code=502, detail="파일 저장소 연결에 실패했습니다."
+        ) from e
+    return object_key
+
+
+def _get_ticket_for_departure(
+    db: Session, ticket_id: str, current_user: models.User
+) -> models.Ticket:
+    """티켓을 찾고 소유자/관리자만 통과시킨다. 민감 서류라 접근을 좁힌다."""
+    ticket = db.query(models.Ticket).filter(models.Ticket.id == ticket_id).first()
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    if ticket.owner_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(
+            status_code=403, detail="이 티켓의 추가정보를 관리할 권한이 없습니다."
+        )
+    return ticket
+
+
+@router.post("/{ticket_id}/departure-info", response_model=schemas.Ticket)
+async def submit_ticket_departure_info(
+    ticket_id: str,
+    db: DBSession,
+    current_user: OrgUser,
+    background_tasks: BackgroundTasks,
+    dep_address: Annotated[str, Form()],
+    passport: Annotated[UploadFile | None, File()] = None,
+    seat_confirm: Annotated[UploadFile | None, File()] = None,
+) -> models.Ticket:
+    """단체 담당자가 티켓에 출국 준비 추가정보를 입력한다(봉사자 2차 입력과 동일 항목).
+
+    소유자·관리자만. 연동돼 있으면 티켓 드라이브 폴더에도 업로드한다.
+    """
+    ticket = _get_ticket_for_departure(db, ticket_id, current_user)
+    if passport:
+        ticket.passport_object_key = await _store_departure_doc(passport, "passport")
+    if seat_confirm:
+        ticket.seat_confirm_object_key = await _store_departure_doc(
+            seat_confirm, "seatconfirm"
+        )
+    ticket.dep_address = dep_address.strip()
+    ticket.departure_submitted_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(ticket)
+
+    background_tasks.add_task(
+        gdrive_service.upload_departure_docs_to_ticket_folder, db, ticket.id
+    )
+    return ticket
+
+
+def _serve_ticket_document(ticket: models.Ticket, kind: str) -> Response:
+    object_key = (
+        ticket.passport_object_key
+        if kind == "passport"
+        else ticket.seat_confirm_object_key
+    )
+    if not object_key:
+        raise HTTPException(status_code=404, detail="파일을 찾을 수 없습니다.")
+    try:
+        content, content_type = storage_service.get_object(object_key)
+    except Exception as e:
+        raise HTTPException(status_code=404, detail="파일을 찾을 수 없습니다.") from e
+    return Response(content=content, media_type=content_type)
+
+
+@router.get("/{ticket_id}/passport")
+def get_ticket_passport(
+    ticket_id: str, db: DBSession, current_user: OrgUser
+) -> Response:
+    """여권 사본 스트리밍(소유자/관리자만)."""
+    ticket = _get_ticket_for_departure(db, ticket_id, current_user)
+    return _serve_ticket_document(ticket, "passport")
+
+
+@router.get("/{ticket_id}/seat-confirm")
+def get_ticket_seat_confirm(
+    ticket_id: str, db: DBSession, current_user: OrgUser
+) -> Response:
+    """자리 확약 캡쳐 스트리밍(소유자/관리자만)."""
+    ticket = _get_ticket_for_departure(db, ticket_id, current_user)
+    return _serve_ticket_document(ticket, "seat_confirm")
+
+
+@router.delete("/{ticket_id}/departure-info", response_model=schemas.Ticket)
+def delete_ticket_departure_info(
+    ticket_id: str, db: DBSession, current_user: OrgUser
+) -> models.Ticket:
+    """티켓의 출국 준비 개인정보를 영구 삭제한다(소유자/관리자만)."""
+    ticket = _get_ticket_for_departure(db, ticket_id, current_user)
+    for key in (ticket.passport_object_key, ticket.seat_confirm_object_key):
+        if key:
+            try:
+                storage_service.delete_object(key)
+            except Exception as e:  # noqa: BLE001
+                print(f"[purge] 파일 삭제 실패 ({key}): {e}")
+    ticket.passport_object_key = None
+    ticket.seat_confirm_object_key = None
+    ticket.dep_address = None
+    db.commit()
+    db.refresh(ticket)
+    return ticket
