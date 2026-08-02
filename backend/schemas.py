@@ -499,3 +499,20 @@ class GuestSubmissionApprove(TicketBase):
 
 class GuestSubmissionClaim(BaseModel):
     lookup_token: str
+
+
+class GuestSubmissionStatusPublic(BaseModel):
+    """제출자가 lookup_token으로 조회하는 공개 상태 뷰.
+
+    전화번호·e티켓·예약정보 등은 담지 않고 진행 상태만 노출한다.
+    """
+
+    status: GuestSubmissionStatus
+    submitted_at: datetime
+    reviewed_at: datetime | None = None
+    admin_note: str | None = None
+    need_post: NeedPostRef | None = None
+    organization: Organization | None = None
+
+    class Config:
+        from_attributes = True

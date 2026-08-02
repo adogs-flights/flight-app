@@ -72,6 +72,7 @@ export default function Sidebar({ isOpen, onClose, onPwChangeClick }) {
                                 <NavItem to="/give" icon="" count={giveCount}>나눔해요</NavItem>
                                 <NavItem to="/mytickets" icon="">내 티켓</NavItem>
                                 <NavItem to="/myapplications" icon="">내 신청 현황</NavItem>
+                                <NavItem to="/submissions" icon="">제출 검토</NavItem>
                                 {isAdmin && <NavItem to="/admin" icon="">관리자 페이지</NavItem>}
 
                                 <hr></hr>

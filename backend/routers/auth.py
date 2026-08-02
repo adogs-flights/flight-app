@@ -13,6 +13,7 @@ import models
 import schemas
 from database import get_db
 from email_utils import send_email
+from permissions import scope_to_org
 from services import kakao_service
 
 # ======================================================================================
@@ -531,14 +532,14 @@ def register_org(reg_in: schemas.OrgRegisterRequest, db: DBSession) -> models.Us
 # ======================================================================================
 # User Management Endpoints
 # ======================================================================================
-@router.get(
-    "/users",
-    response_model=list[schemas.User],
-    dependencies=[Depends(get_current_admin_user)],
-)
-def read_users(db: DBSession) -> list[models.User]:
-    users = db.query(models.User).all()
-    return users
+@router.get("/users", response_model=list[schemas.User])
+def read_users(db: DBSession, current_user: OrgUser) -> list[models.User]:
+    """회원 목록. 관리자는 전체, 단체 담당자는 자기 단체 회원만 본다.
+
+    제출 승인 시 '소유 회원 지정' 드롭다운이 단체 담당자에게도 필요하므로
+    관리자 전용에서 OrgUser로 열되, scope_to_org로 자기 단체로 범위를 좁힌다.
+    """
+    return scope_to_org(db.query(models.User), current_user, models.User).all()
 
 
 @router.get(
