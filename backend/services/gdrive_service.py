@@ -492,34 +492,29 @@ def backup_guest_submission_to_drive(
 
 
 def _ticket_folder_target(
-    db: Session, submission: models.GuestTicketSubmission | None
-) -> tuple[models.UserGoogleToken | None, str | None, models.Ticket | None]:
-    """제출과 연결된 티켓의 드라이브 업로드 대상(소유자 토큰, 폴더 id, 티켓)을 찾는다.
+    db: Session, ticket: models.Ticket | None
+) -> tuple[models.UserGoogleToken | None, str | None]:
+    """티켓의 드라이브 업로드 대상(소유자 토큰, 폴더 id)을 찾는다.
 
-    티켓 폴더(GoogleDriveSync)나 소유자 토큰이 없으면 (None, None, None).
+    티켓 폴더(GoogleDriveSync)나 소유자 토큰이 없으면 (None, None).
     """
-    if not submission or not submission.created_ticket_id:
-        return None, None, None
+    if not ticket or not ticket.owner_id:
+        return None, None
     sync = (
         db.query(models.GoogleDriveSync)
-        .filter(models.GoogleDriveSync.ticket_id == submission.created_ticket_id)
+        .filter(models.GoogleDriveSync.ticket_id == ticket.id)
         .first()
     )
-    ticket = (
-        db.query(models.Ticket)
-        .filter(models.Ticket.id == submission.created_ticket_id)
-        .first()
-    )
-    if not sync or not ticket or not ticket.owner_id:
-        return None, None, None
+    if not sync:
+        return None, None
     user_token = (
         db.query(models.UserGoogleToken)
         .filter(models.UserGoogleToken.user_id == ticket.owner_id)
         .first()
     )
     if not user_token or not user_token.access_token:
-        return None, None, None
-    return user_token, sync.google_folder_id, ticket
+        return None, None
+    return user_token, sync.google_folder_id
 
 
 def _drive_name_suffix(ticket: models.Ticket) -> str:
@@ -531,7 +526,7 @@ def _drive_name_suffix(ticket: models.Ticket) -> str:
 
 
 def upload_eticket_to_ticket_folder(db: Session, submission_id: str) -> None:
-    """[백그라운드] 제출자의 e티켓 파일을 티켓의 드라이브 폴더에 올린다.
+    """[백그라운드] 제출자의 e티켓 파일을 연결된 티켓의 드라이브 폴더에 올린다.
 
     예약번호 방식 제출(e티켓 없음)이거나 폴더/토큰이 없으면 조용히 스킵한다.
     """
@@ -540,9 +535,10 @@ def upload_eticket_to_ticket_folder(db: Session, submission_id: str) -> None:
         .filter(models.GuestTicketSubmission.id == submission_id)
         .first()
     )
-    if not submission or not submission.eticket_object_key:
+    if not submission or not submission.eticket_object_key or not submission.created_ticket:
         return
-    user_token, folder_id, ticket = _ticket_folder_target(db, submission)
+    ticket = submission.created_ticket
+    user_token, folder_id = _ticket_folder_target(db, ticket)
     if not user_token:
         return
     suffix = _drive_name_suffix(ticket)
@@ -556,59 +552,60 @@ def upload_eticket_to_ticket_folder(db: Session, submission_id: str) -> None:
         print(f"Error uploading e-ticket to GDrive: {e}")
 
 
-def _build_submission_info_text(submission: models.GuestTicketSubmission) -> str:
-    """제출자 정보(카톡 아이디·주소 등)를 텍스트로 정리한다."""
-    passenger = " ".join(
-        part
-        for part in [
-            submission.passenger_last_name_en,
-            submission.passenger_first_name_en,
-        ]
-        if part
+def _build_ticket_info_text(db: Session, ticket: models.Ticket) -> str:
+    """티켓의 추가정보(주소 등)와, 봉사자 제출 티켓이면 카톡 아이디·전화 등을 텍스트로 정리한다."""
+    submission = (
+        db.query(models.GuestTicketSubmission)
+        .filter(models.GuestTicketSubmission.created_ticket_id == ticket.id)
+        .first()
     )
-    lines = [
-        "[이동봉사 제출 정보]",
-        f"카카오 아이디: {submission.kakao_id or '-'}",
-        f"전화번호: {submission.phone or '-'}",
-        f"주소: {submission.dep_address or '-'}",
-        f"항공사: {submission.airline or '-'}",
-    ]
-    if submission.reservation_number:
-        lines.append(f"예약번호: {submission.reservation_number}")
-    if passenger:
-        lines.append(f"탑승객(영문): {passenger}")
-    if submission.need_post:
-        lines.append(f"응답 게시글: {submission.need_post.title}")
-    if submission.organization:
-        lines.append(f"단체: {submission.organization.name}")
-    submitted = (
-        submission.submitted_at.strftime("%Y-%m-%d %H:%M")
-        if submission.submitted_at
-        else "-"
+    lines = ["[이동봉사 제출 정보]"]
+    if submission:
+        lines.append(f"카카오 아이디: {submission.kakao_id or '-'}")
+        lines.append(f"전화번호: {submission.phone or '-'}")
+    lines.append(f"담당자: {ticket.manager_name or '-'}")
+    lines.append(f"연락처: {ticket.contact or '-'}")
+    lines.append(f"주소: {ticket.dep_address or '-'}")
+    lines.append(f"항공사: {ticket.airline or '-'}")
+    lines.append(f"도착 공항: {ticket.arrival_airport or '-'}")
+    lines.append(
+        f"출발일: {ticket.departure_date.isoformat() if ticket.departure_date else '-'}"
     )
-    lines.append(f"제출일: {submitted}")
+    if submission:
+        if submission.reservation_number:
+            lines.append(f"예약번호: {submission.reservation_number}")
+        passenger = " ".join(
+            part
+            for part in [
+                submission.passenger_last_name_en,
+                submission.passenger_first_name_en,
+            ]
+            if part
+        )
+        if passenger:
+            lines.append(f"탑승객(영문): {passenger}")
+        if submission.need_post:
+            lines.append(f"응답 게시글: {submission.need_post.title}")
+    if ticket.owner and ticket.owner.organization:
+        lines.append(f"단체: {ticket.owner.organization.name}")
     return "\n".join(lines) + "\n"
 
 
-def upload_departure_docs_to_ticket_folder(db: Session, submission_id: str) -> None:
-    """[백그라운드] 출국 준비 서류(여권·자리확약)와 제출자 정보 텍스트 파일을,
-    승인으로 만들어진 티켓의 구글 드라이브 폴더에 업로드한다.
+def upload_departure_docs_to_ticket_folder(db: Session, ticket_id: str) -> None:
+    """[백그라운드] 티켓의 출국 준비 서류(여권·자리확약)와 정보 텍스트를 티켓 드라이브 폴더에 올린다.
 
+    봉사자 제출 티켓이든 단체 등록 티켓이든 동일하게 티켓 기준으로 처리한다.
     티켓 폴더나 소유자 토큰이 없으면 조용히 스킵한다.
     """
-    submission = (
-        db.query(models.GuestTicketSubmission)
-        .filter(models.GuestTicketSubmission.id == submission_id)
-        .first()
-    )
-    user_token, folder_id, ticket = _ticket_folder_target(db, submission)
+    ticket = db.query(models.Ticket).filter(models.Ticket.id == ticket_id).first()
+    user_token, folder_id = _ticket_folder_target(db, ticket)
     if not user_token:
         return
     suffix = _drive_name_suffix(ticket)
 
     docs = [
-        ("0 passport", submission.passport_object_key),
-        ("2 confirmation", submission.seat_confirm_object_key),
+        ("0 passport", ticket.passport_object_key),
+        ("2 confirmation", ticket.seat_confirm_object_key),
     ]
     for label, object_key in docs:
         if not object_key:
@@ -622,9 +619,9 @@ def upload_departure_docs_to_ticket_folder(db: Session, submission_id: str) -> N
         except Exception as e:
             print(f"Error uploading departure doc to GDrive: {e}")
 
-    # 카톡 아이디·주소 등 텍스트 정보를 파일로 만들어 함께 올린다.
+    # 주소·카톡 아이디 등 텍스트 정보를 파일로 만들어 함께 올린다.
     try:
-        info_text = _build_submission_info_text(submission)
+        info_text = _build_ticket_info_text(db, ticket)
         upload_file_to_drive(
             user_token,
             f"1 information{suffix}.txt",

@@ -222,6 +222,11 @@ class Ticket(TicketBase):
     updated_at: datetime
     owner: User | None = None
     google_sync: GoogleDriveSync | None = None
+    # 출국 준비 추가정보 (파일은 boolean으로만 노출, 실제 파일은 소유자/관리자만 서빙)
+    dep_address: str | None = None
+    has_passport: bool = False
+    has_seat_confirm: bool = False
+    departure_submitted: bool = False
 
     class Config:
         from_attributes = True
@@ -482,7 +487,6 @@ class GuestTicketSubmission(BaseModel):
     has_passport: bool = False
     has_seat_confirm: bool = False
     departure_submitted: bool = False
-    departure_submitted_at: datetime | None = None
     submitted_at: datetime
     reviewed_at: datetime | None = None
 
@@ -527,7 +531,6 @@ class GuestSubmissionStatusPublic(BaseModel):
     admin_note: str | None = None
     # 승인 후 출국 준비 서류 제출 여부 (상태 페이지에서 폼 노출 판단용)
     departure_submitted: bool = False
-    departure_submitted_at: datetime | None = None
     need_post: NeedPostRef | None = None
     organization: Organization | None = None
 

@@ -124,6 +124,13 @@ class Ticket(Base):
     contact = Column(Text, nullable=False)
     memo = Column(Text)
 
+    # 출국 준비 추가정보(2차). 봉사자 제출 티켓이든 단체 등록 티켓이든 여기에 모은다.
+    # 민감 파일은 스토리지 키만 저장하고 소유자/관리자만 열람한다.
+    dep_address = Column(String, nullable=True)  # 주소
+    passport_object_key = Column(String, nullable=True)  # 여권 사본
+    seat_confirm_object_key = Column(String, nullable=True)  # 자리 확약 캡쳐
+    departure_submitted_at = Column(DateTime(timezone=True), nullable=True)
+
     created_by_id = Column(
         String, ForeignKey("users.id", ondelete="SET NULL"), index=True
     )
@@ -146,6 +153,18 @@ class Ticket(Base):
     google_sync = relationship(
         "GoogleDriveSync", back_populates="ticket", uselist=False, cascade="all, delete-orphan"
     )
+
+    @property
+    def has_passport(self) -> bool:
+        return self.passport_object_key is not None
+
+    @property
+    def has_seat_confirm(self) -> bool:
+        return self.seat_confirm_object_key is not None
+
+    @property
+    def departure_submitted(self) -> bool:
+        return self.departure_submitted_at is not None
 
 
 class TicketApplication(Base):
@@ -272,14 +291,6 @@ class GuestTicketSubmission(Base):
         String, nullable=False, default="pending", index=True
     )  # 'pending', 'approved', 'rejected'
     admin_note = Column(Text, nullable=True)
-    # 승인(자리 완료) 후 제출자가 출국 준비를 위해 제출하는 정보. 민감 개인정보라
-    # 파일은 스토리지 키만 저장하고 단체 격리로만 열람한다.
-    # 성함·출국일·목적지는 승인 시 티켓(manager_name·departure_date·arrival_airport)에
-    # 이미 들어가므로 여기서 중복으로 받지 않는다.
-    dep_address = Column(String, nullable=True)  # 주소
-    passport_object_key = Column(String, nullable=True)  # 여권 사본 스토리지 키
-    seat_confirm_object_key = Column(String, nullable=True)  # 자리 확약 캡쳐 스토리지 키
-    departure_submitted_at = Column(DateTime(timezone=True), nullable=True)
     created_ticket_id = Column(
         String, ForeignKey("tickets.id", ondelete="SET NULL"), nullable=True
     )
@@ -292,17 +303,23 @@ class GuestTicketSubmission(Base):
     created_ticket = relationship("Ticket")
     need_post = relationship("NeedPost")
 
+    # 출국 준비 정보는 이제 연결된 티켓에 저장된다. 게스트 검토 UI가 제출 기준으로
+    # 조회하므로, 편의를 위해 연결 티켓의 값을 그대로 위임해 노출한다.
+    @property
+    def dep_address(self):
+        return self.created_ticket.dep_address if self.created_ticket else None
+
     @property
     def has_passport(self) -> bool:
-        return self.passport_object_key is not None
+        return bool(self.created_ticket and self.created_ticket.passport_object_key)
 
     @property
     def has_seat_confirm(self) -> bool:
-        return self.seat_confirm_object_key is not None
+        return bool(self.created_ticket and self.created_ticket.seat_confirm_object_key)
 
     @property
     def departure_submitted(self) -> bool:
-        return self.departure_submitted_at is not None
+        return bool(self.created_ticket and self.created_ticket.departure_submitted_at)
 
 
 class UserGoogleToken(Base):
