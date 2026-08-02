@@ -347,6 +347,7 @@ def approve_guest_submission(
     approve_in: schemas.GuestSubmissionApprove,
     db: DBSession,
     current_user: OrgUser,
+    background_tasks: BackgroundTasks,
 ) -> models.Ticket:
     # 단체 담당자는 자기 단체로 지정된 제출만 승인할 수 있다(관리자는 전체).
     # scope_to_org가 범위를 좁히므로, 범위 밖이면 존재조차 알리지 않고 404.
@@ -375,11 +376,16 @@ def approve_guest_submission(
                 status_code=403,
                 detail="소유자는 같은 단체 회원만 지정할 수 있습니다.",
             )
+    else:
+        # 소유자를 지정하지 않으면 승인한 담당자를 소유자로 둔다.
+        # 그래야 티켓이 반드시 누군가의 일정으로 들어가고, 그 담당자가 드라이브를
+        # 연동했다면 폴더도 생성된다.
+        owner_user_id = current_user.id
 
     ticket_data = approve_in.model_dump(exclude={"owner_user_id"})
     db_ticket = models.Ticket(
         **ticket_data,
-        status="sharing",
+        status="owned",  # 소유자의 일정으로 들어간다(웹에서 만든 티켓과 동일)
         created_by_id=owner_user_id,
         owner_id=owner_user_id,
     )
@@ -403,6 +409,18 @@ def approve_guest_submission(
             need_post.is_resolved = True
 
     db.commit()
+
+    # 소유자가 구글 드라이브를 연동해 두었으면 이 티켓의 폴더를 만든다(웹 생성과 동일).
+    if owner_user_id:
+        owner_token = (
+            db.query(models.UserGoogleToken)
+            .filter(models.UserGoogleToken.user_id == owner_user_id)
+            .first()
+        )
+        if owner_token:
+            background_tasks.add_task(
+                gdrive_service.create_gdrive_folder, db, db_ticket.id, owner_user_id
+            )
 
     return db_ticket
 
