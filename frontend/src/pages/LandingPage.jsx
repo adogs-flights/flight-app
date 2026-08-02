@@ -33,18 +33,6 @@ export default function LandingPage() {
                     </div>
                     <div className="flex items-center gap-1">
                         <Link
-                            to="/board"
-                            className="inline-flex items-center justify-center h-9 px-4 text-sm font-bold rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
-                        >
-                            구해요 게시판
-                        </Link>
-                        <Link
-                            to="/guide"
-                            className="inline-flex items-center justify-center h-9 px-4 text-sm font-bold rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
-                        >
-                            이동봉사 안내
-                        </Link>
-                        <Link
                             to="/login"
                             className="inline-flex items-center justify-center h-9 px-4 text-sm font-bold rounded-lg text-foreground hover:bg-secondary transition-colors"
                         >
