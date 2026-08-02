@@ -491,6 +491,59 @@ def backup_guest_submission_to_drive(
         db.rollback()
 
 
+def upload_departure_docs_to_ticket_folder(db: Session, submission_id: str) -> None:
+    """[백그라운드] 제출자가 낸 출국 준비 서류(여권 사본·자리 확약 캡쳐)를,
+    승인으로 만들어진 티켓의 구글 드라이브 폴더에 업로드한다.
+
+    티켓 폴더(GoogleDriveSync)나 소유자 토큰이 없으면 조용히 스킵한다.
+    스토리지 원본은 그대로 두고, 드라이브에는 복사본을 올린다.
+    """
+    submission = (
+        db.query(models.GuestTicketSubmission)
+        .filter(models.GuestTicketSubmission.id == submission_id)
+        .first()
+    )
+    if not submission or not submission.created_ticket_id:
+        return
+
+    sync = (
+        db.query(models.GoogleDriveSync)
+        .filter(models.GoogleDriveSync.ticket_id == submission.created_ticket_id)
+        .first()
+    )
+    ticket = (
+        db.query(models.Ticket)
+        .filter(models.Ticket.id == submission.created_ticket_id)
+        .first()
+    )
+    if not sync or not ticket or not ticket.owner_id:
+        return
+
+    user_token = (
+        db.query(models.UserGoogleToken)
+        .filter(models.UserGoogleToken.user_id == ticket.owner_id)
+        .first()
+    )
+    if not user_token or not user_token.access_token:
+        return
+
+    docs = [
+        ("여권사본", submission.passport_object_key),
+        ("자리확약", submission.seat_confirm_object_key),
+    ]
+    for label, object_key in docs:
+        if not object_key:
+            continue
+        try:
+            content, content_type = storage_service.get_object(object_key)
+            ext = os.path.splitext(object_key)[1]
+            upload_file_to_drive(
+                user_token, f"{label}{ext}", content, content_type, sync.google_folder_id
+            )
+        except Exception as e:
+            print(f"Error uploading departure doc to GDrive: {e}")
+
+
 def create_root_sync_folder(
     user_token: models.UserGoogleToken, folder_name: str = "해봉티켓_동기화"
 ) -> str:

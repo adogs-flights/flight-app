@@ -274,9 +274,8 @@ class GuestTicketSubmission(Base):
     admin_note = Column(Text, nullable=True)
     # 승인(자리 완료) 후 제출자가 출국 준비를 위해 제출하는 정보. 민감 개인정보라
     # 파일은 스토리지 키만 저장하고 단체 격리로만 열람한다.
-    dep_name = Column(String, nullable=True)  # 성함
-    dep_departure_date = Column(String, nullable=True)  # 출국일
-    dep_destination = Column(String, nullable=True)  # 목적지
+    # 성함·출국일·목적지는 승인 시 티켓(manager_name·departure_date·arrival_airport)에
+    # 이미 들어가므로 여기서 중복으로 받지 않는다.
     dep_address = Column(String, nullable=True)  # 주소
     passport_object_key = Column(String, nullable=True)  # 여권 사본 스토리지 키
     seat_confirm_object_key = Column(String, nullable=True)  # 자리 확약 캡쳐 스토리지 키

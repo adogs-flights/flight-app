@@ -115,7 +115,7 @@ export default function GuestSubmissionReviewModal({ isOpen, onClose, submission
         }
 
         const payload = {
-            title: form.title.trim() || '티켓 나눔 (상세 확인)',
+            title: form.title.trim() || `${form.arrivalAirport} ${form.departureDate} 이동봉사`.trim(),
             arrival_airport: form.arrivalAirport,
             departure_date: form.departureDate,
             departure_time: form.departureTime,
@@ -206,14 +206,11 @@ export default function GuestSubmissionReviewModal({ isOpen, onClose, submission
                     {submission.status === 'approved' && (
                         !submission.departure_submitted ? (
                             <div className="mt-2 pt-2 border-t border-border/50 text-xs font-bold text-amber-600">⏳ 출국 준비 서류 제출 대기 중</div>
-                        ) : (!submission.has_passport && !submission.has_seat_confirm && !submission.dep_name) ? (
+                        ) : (!submission.has_passport && !submission.has_seat_confirm && !submission.dep_address) ? (
                             <div className="mt-2 pt-2 border-t border-border/50 text-xs font-bold text-muted-foreground">🗑️ 출국 준비 개인정보가 삭제되었습니다</div>
                         ) : (
                             <div className="mt-2 pt-2 border-t border-border/50 space-y-1">
                                 <div className="text-xs font-bold text-green">🛫 출국 준비 서류 제출됨</div>
-                                {submission.dep_name && <div className="text-sm"><span className="font-bold">성함:</span> {submission.dep_name}</div>}
-                                {submission.dep_departure_date && <div className="text-sm"><span className="font-bold">출국일:</span> {submission.dep_departure_date}</div>}
-                                {submission.dep_destination && <div className="text-sm"><span className="font-bold">목적지:</span> {submission.dep_destination}</div>}
                                 {submission.dep_address && <div className="text-sm"><span className="font-bold">주소:</span> {submission.dep_address}</div>}
                                 <div className="flex flex-wrap gap-3 pt-1">
                                     {passportUrl && <a href={passportUrl} target="_blank" rel="noreferrer" className="text-xs font-bold text-primary hover:underline">📄 여권 사본 보기</a>}
@@ -283,7 +280,7 @@ export default function GuestSubmissionReviewModal({ isOpen, onClose, submission
                                 className="h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none"
                                 value={form.title}
                                 onChange={e => handleChange('title', e.target.value)}
-                                placeholder="예: 4월 뉴욕행 티켓 나눔합니다"
+                                placeholder="예: JFK 4월 뉴욕행 이동봉사 (미입력 시 자동 생성)"
                             />
                         </div>
 

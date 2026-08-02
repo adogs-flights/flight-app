@@ -14,21 +14,20 @@ const inputClass = "flex h-11 w-full rounded-lg border-2 border-border bg-backgr
 const labelClass = "text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1";
 const fileClass = "flex w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-bold file:bg-primary file:text-primary-foreground";
 
-// 승인(자리 완료) 후 제출자가 채우는 출국 준비 폼
+// 승인(자리 완료) 후 제출자가 채우는 출국 준비 폼.
+// 성함·출국일·목적지는 승인 시 단체가 티켓에 이미 입력하므로 중복해서 받지 않는다.
 function DepartureForm({ id, token, onDone }) {
-    const [form, setForm] = useState({ name: '', departureDate: '', destination: '', address: '' });
+    const [address, setAddress] = useState('');
     const [passport, setPassport] = useState(null);
     const [seatConfirm, setSeatConfirm] = useState(null);
     const [error, setError] = useState('');
     const [submitting, setSubmitting] = useState(false);
 
-    const set = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
-
     const submit = async (e) => {
         e.preventDefault();
         setError('');
-        if (!form.name.trim() || !form.departureDate.trim() || !form.destination.trim() || !form.address.trim()) {
-            setError('모든 항목을 입력해주세요.');
+        if (!address.trim()) {
+            setError('주소를 입력해주세요.');
             return;
         }
         if (!passport || !seatConfirm) {
@@ -37,10 +36,7 @@ function DepartureForm({ id, token, onDone }) {
         }
         const fd = new FormData();
         fd.append('lookup_token', token);
-        fd.append('dep_name', form.name);
-        fd.append('dep_departure_date', form.departureDate);
-        fd.append('dep_destination', form.destination);
-        fd.append('dep_address', form.address);
+        fd.append('dep_address', address);
         fd.append('passport', passport);
         fd.append('seat_confirm', seatConfirm);
         setSubmitting(true);
@@ -57,22 +53,8 @@ function DepartureForm({ id, token, onDone }) {
     return (
         <form className="space-y-4 text-left" onSubmit={submit}>
             <div className="space-y-2">
-                <label className={labelClass}>성함</label>
-                <input className={inputClass} value={form.name} onChange={e => set('name', e.target.value)} placeholder="홍길동" />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-2">
-                    <label className={labelClass}>출국일</label>
-                    <input className={inputClass} value={form.departureDate} onChange={e => set('departureDate', e.target.value)} placeholder="예: 2026-09-20" />
-                </div>
-                <div className="space-y-2">
-                    <label className={labelClass}>목적지</label>
-                    <input className={inputClass} value={form.destination} onChange={e => set('destination', e.target.value)} placeholder="예: 뉴욕 JFK" />
-                </div>
-            </div>
-            <div className="space-y-2">
                 <label className={labelClass}>주소</label>
-                <input className={inputClass} value={form.address} onChange={e => set('address', e.target.value)} placeholder="서류 발송/수령에 쓰일 주소" />
+                <input className={inputClass} value={address} onChange={e => setAddress(e.target.value)} placeholder="출국 준비 서류에 기재될 주소" />
             </div>
             <div className="space-y-2">
                 <label className={labelClass}>여권 사본</label>
