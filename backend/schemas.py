@@ -471,6 +471,15 @@ class GuestTicketSubmission(BaseModel):
     status: GuestSubmissionStatus
     admin_note: str | None = None
     created_ticket_id: str | None = None
+    # 승인 후 출국 준비 정보 (파일은 boolean으로만 노출, 실제 파일은 격리 서빙)
+    dep_name: str | None = None
+    dep_departure_date: str | None = None
+    dep_destination: str | None = None
+    dep_address: str | None = None
+    has_passport: bool = False
+    has_seat_confirm: bool = False
+    departure_submitted: bool = False
+    departure_submitted_at: datetime | None = None
     submitted_at: datetime
     reviewed_at: datetime | None = None
 
@@ -505,12 +514,17 @@ class GuestSubmissionStatusPublic(BaseModel):
     """제출자가 lookup_token으로 조회하는 공개 상태 뷰.
 
     전화번호·e티켓·예약정보 등은 담지 않고 진행 상태만 노출한다.
+    승인 후 출국 준비 서류 제출 여부(departure_submitted)를 함께 내려
+    상태 페이지가 서류 제출 폼을 띄울지 판단한다.
     """
 
     status: GuestSubmissionStatus
     submitted_at: datetime
     reviewed_at: datetime | None = None
     admin_note: str | None = None
+    # 승인 후 출국 준비 서류 제출 여부 (상태 페이지에서 폼 노출 판단용)
+    departure_submitted: bool = False
+    departure_submitted_at: datetime | None = None
     need_post: NeedPostRef | None = None
     organization: Organization | None = None
 
