@@ -376,6 +376,11 @@ def approve_guest_submission(
                 status_code=403,
                 detail="소유자는 같은 단체 회원만 지정할 수 있습니다.",
             )
+    else:
+        # 소유자를 지정하지 않으면 승인한 담당자를 소유자로 둔다.
+        # 그래야 티켓이 반드시 누군가의 일정으로 들어가고, 그 담당자가 드라이브를
+        # 연동했다면 폴더도 생성된다.
+        owner_user_id = current_user.id
 
     ticket_data = approve_in.model_dump(exclude={"owner_user_id"})
     db_ticket = models.Ticket(
