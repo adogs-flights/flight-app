@@ -10,6 +10,7 @@ import GiveView from './pages/GiveView';
 import MyTicketsView from './pages/MyTicketsView';
 import MyApplicationsView from './pages/MyApplicationsView';
 import AdminView from './pages/AdminView';
+import SubmissionReviewView from './pages/SubmissionReviewView';
 import GuestTicketSubmitView from './pages/GuestTicketSubmitView';
 import VolunteerGuideView from './pages/VolunteerGuideView';
 import KakaoCallback from './pages/KakaoCallback';
@@ -65,6 +66,7 @@ function AppContent() {
           <Route path="give" element={<GiveView />} />
           <Route path="mytickets" element={<MyTicketsView />} />
           <Route path="myapplications" element={<MyApplicationsView />} />
+          <Route path="submissions" element={<SubmissionReviewView />} />
           {user.role === 'admin' && <Route path="admin" element={<AdminView />} />}
           <Route path="*" element={<Navigate to="/" />} />
         </Route>

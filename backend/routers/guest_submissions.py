@@ -21,7 +21,7 @@ import models
 import schemas
 from database import get_db
 from permissions import scope_to_org
-from routers.auth import AdminUser, CurrentUser, OrgUser
+from routers.auth import CurrentUser, OrgUser
 from services import gdrive_service, storage_service
 
 router = APIRouter(prefix="/api/guest-submissions", tags=["Guest Ticket Submissions"])
@@ -197,13 +197,14 @@ def approve_guest_submission(
     submission_id: str,
     approve_in: schemas.GuestSubmissionApprove,
     db: DBSession,
-    current_admin: AdminUser,
+    current_user: OrgUser,
 ) -> models.Ticket:
-    submission = (
-        db.query(models.GuestTicketSubmission)
-        .filter(models.GuestTicketSubmission.id == submission_id)
-        .first()
+    # 단체 담당자는 자기 단체로 지정된 제출만 승인할 수 있다(관리자는 전체).
+    # scope_to_org가 범위를 좁히므로, 범위 밖이면 존재조차 알리지 않고 404.
+    query = db.query(models.GuestTicketSubmission).filter(
+        models.GuestTicketSubmission.id == submission_id
     )
+    submission = scope_to_org(query, current_user, models.GuestTicketSubmission).first()
     if not submission:
         raise HTTPException(status_code=404, detail="제출 내역을 찾을 수 없습니다.")
     if submission.status != "pending":
@@ -216,6 +217,15 @@ def approve_guest_submission(
         owner = db.query(models.User).filter(models.User.id == owner_user_id).first()
         if not owner:
             raise HTTPException(status_code=404, detail="선택한 회원을 찾을 수 없습니다.")
+        # 단체 담당자는 같은 단체 회원만 소유자로 지정할 수 있다.
+        if (
+            current_user.role != "admin"
+            and owner.organization_id != current_user.organization_id
+        ):
+            raise HTTPException(
+                status_code=403,
+                detail="소유자는 같은 단체 회원만 지정할 수 있습니다.",
+            )
 
     ticket_data = approve_in.model_dump(exclude={"owner_user_id"})
     db_ticket = models.Ticket(
@@ -241,13 +251,13 @@ def reject_guest_submission(
     submission_id: str,
     reject_in: schemas.GuestSubmissionReject,
     db: DBSession,
-    current_admin: AdminUser,
+    current_user: OrgUser,
 ) -> models.GuestTicketSubmission:
-    submission = (
-        db.query(models.GuestTicketSubmission)
-        .filter(models.GuestTicketSubmission.id == submission_id)
-        .first()
+    # 자기 단체 제출만 반려 가능(관리자는 전체).
+    query = db.query(models.GuestTicketSubmission).filter(
+        models.GuestTicketSubmission.id == submission_id
     )
+    submission = scope_to_org(query, current_user, models.GuestTicketSubmission).first()
     if not submission:
         raise HTTPException(status_code=404, detail="제출 내역을 찾을 수 없습니다.")
     if submission.status != "pending":
