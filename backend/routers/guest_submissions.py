@@ -461,9 +461,6 @@ async def submit_departure_info(
     db: DBSession,
     background_tasks: BackgroundTasks,
     lookup_token: Annotated[str, Form()],
-    dep_name: Annotated[str, Form()],
-    dep_departure_date: Annotated[str, Form()],
-    dep_destination: Annotated[str, Form()],
     dep_address: Annotated[str, Form()],
     passport: Annotated[UploadFile | None, File()] = None,
     seat_confirm: Annotated[UploadFile | None, File()] = None,
@@ -497,13 +494,15 @@ async def submit_departure_info(
             seat_confirm, "seatconfirm"
         )
 
-    submission.dep_name = dep_name.strip()
-    submission.dep_departure_date = dep_departure_date.strip()
-    submission.dep_destination = dep_destination.strip()
     submission.dep_address = dep_address.strip()
     submission.departure_submitted_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(submission)
+
+    # 소유자가 드라이브를 연동해 티켓 폴더가 있으면, 출국 서류를 그 폴더에도 올린다.
+    background_tasks.add_task(
+        gdrive_service.upload_departure_docs_to_ticket_folder, db, submission.id
+    )
 
     recipient_emails = _submission_recipients(db, submission)
     if recipient_emails:
@@ -565,9 +564,6 @@ def delete_departure_info(
 
     submission.passport_object_key = None
     submission.seat_confirm_object_key = None
-    submission.dep_name = None
-    submission.dep_departure_date = None
-    submission.dep_destination = None
     submission.dep_address = None
     db.commit()
     db.refresh(submission)

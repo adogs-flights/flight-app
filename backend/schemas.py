@@ -472,9 +472,6 @@ class GuestTicketSubmission(BaseModel):
     admin_note: str | None = None
     created_ticket_id: str | None = None
     # 승인 후 출국 준비 정보 (파일은 boolean으로만 노출, 실제 파일은 격리 서빙)
-    dep_name: str | None = None
-    dep_departure_date: str | None = None
-    dep_destination: str | None = None
     dep_address: str | None = None
     has_passport: bool = False
     has_seat_confirm: bool = False
