@@ -272,6 +272,15 @@ class GuestTicketSubmission(Base):
         String, nullable=False, default="pending", index=True
     )  # 'pending', 'approved', 'rejected'
     admin_note = Column(Text, nullable=True)
+    # 승인(자리 완료) 후 제출자가 출국 준비를 위해 제출하는 정보. 민감 개인정보라
+    # 파일은 스토리지 키만 저장하고 단체 격리로만 열람한다.
+    dep_name = Column(String, nullable=True)  # 성함
+    dep_departure_date = Column(String, nullable=True)  # 출국일
+    dep_destination = Column(String, nullable=True)  # 목적지
+    dep_address = Column(String, nullable=True)  # 주소
+    passport_object_key = Column(String, nullable=True)  # 여권 사본 스토리지 키
+    seat_confirm_object_key = Column(String, nullable=True)  # 자리 확약 캡쳐 스토리지 키
+    departure_submitted_at = Column(DateTime(timezone=True), nullable=True)
     created_ticket_id = Column(
         String, ForeignKey("tickets.id", ondelete="SET NULL"), nullable=True
     )
@@ -283,6 +292,18 @@ class GuestTicketSubmission(Base):
     user = relationship("User")
     created_ticket = relationship("Ticket")
     need_post = relationship("NeedPost")
+
+    @property
+    def has_passport(self) -> bool:
+        return self.passport_object_key is not None
+
+    @property
+    def has_seat_confirm(self) -> bool:
+        return self.seat_confirm_object_key is not None
+
+    @property
+    def departure_submitted(self) -> bool:
+        return self.departure_submitted_at is not None
 
 
 class UserGoogleToken(Base):

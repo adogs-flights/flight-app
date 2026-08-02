@@ -1,20 +1,106 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import apiClient from '../utils/api';
 import logo from '../assets/flight-app.PNG';
 import Footer from '../components/layout/Footer';
-
-const STATUS_META = {
-    pending: { icon: '⏳', label: '검토 대기 중', color: 'text-amber-600', desc: '담당자가 제출하신 티켓을 확인하고 있습니다. 조금만 기다려 주세요.' },
-    approved: { icon: '✅', label: '승인되었습니다', color: 'text-green', desc: '티켓이 승인되어 이동봉사 일정에 등록되었습니다. 담당자가 곧 연락드립니다.' },
-    rejected: { icon: '❌', label: '반려되었습니다', color: 'text-destructive', desc: '아쉽게도 이번 제출은 반려되었습니다.' },
-};
 
 const formatDate = (s) => {
     if (!s) return '-';
     const d = new Date(s);
     return `${d.getFullYear()}. ${String(d.getMonth() + 1).padStart(2, '0')}. ${String(d.getDate()).padStart(2, '0')}`;
 };
+
+const inputClass = "flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none";
+const labelClass = "text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1";
+const fileClass = "flex w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-bold file:bg-primary file:text-primary-foreground";
+
+// 승인(자리 완료) 후 제출자가 채우는 출국 준비 폼
+function DepartureForm({ id, token, onDone }) {
+    const [form, setForm] = useState({ name: '', departureDate: '', destination: '', address: '' });
+    const [passport, setPassport] = useState(null);
+    const [seatConfirm, setSeatConfirm] = useState(null);
+    const [error, setError] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+
+    const set = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
+
+    const submit = async (e) => {
+        e.preventDefault();
+        setError('');
+        if (!form.name.trim() || !form.departureDate.trim() || !form.destination.trim() || !form.address.trim()) {
+            setError('모든 항목을 입력해주세요.');
+            return;
+        }
+        if (!passport || !seatConfirm) {
+            setError('여권 사본과 자리 확약 캡쳐를 모두 첨부해주세요.');
+            return;
+        }
+        const fd = new FormData();
+        fd.append('lookup_token', token);
+        fd.append('dep_name', form.name);
+        fd.append('dep_departure_date', form.departureDate);
+        fd.append('dep_destination', form.destination);
+        fd.append('dep_address', form.address);
+        fd.append('passport', passport);
+        fd.append('seat_confirm', seatConfirm);
+        setSubmitting(true);
+        try {
+            await apiClient.post(`/guest-submissions/${id}/departure-info`, fd);
+            onDone();
+        } catch (err) {
+            setError(err.response?.data?.detail || '제출에 실패했습니다.');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    return (
+        <form className="space-y-4 text-left" onSubmit={submit}>
+            <div className="space-y-2">
+                <label className={labelClass}>성함</label>
+                <input className={inputClass} value={form.name} onChange={e => set('name', e.target.value)} placeholder="홍길동" />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-2">
+                    <label className={labelClass}>출국일</label>
+                    <input className={inputClass} value={form.departureDate} onChange={e => set('departureDate', e.target.value)} placeholder="예: 2026-09-20" />
+                </div>
+                <div className="space-y-2">
+                    <label className={labelClass}>목적지</label>
+                    <input className={inputClass} value={form.destination} onChange={e => set('destination', e.target.value)} placeholder="예: 뉴욕 JFK" />
+                </div>
+            </div>
+            <div className="space-y-2">
+                <label className={labelClass}>주소</label>
+                <input className={inputClass} value={form.address} onChange={e => set('address', e.target.value)} placeholder="서류 발송/수령에 쓰일 주소" />
+            </div>
+            <div className="space-y-2">
+                <label className={labelClass}>여권 사본</label>
+                <input className={fileClass} type="file" accept="image/*,application/pdf" onChange={e => setPassport(e.target.files?.[0] || null)} />
+            </div>
+            <div className="space-y-2">
+                <label className={labelClass}>반려동물 자리 확약 캡쳐</label>
+                <input className={fileClass} type="file" accept="image/*,application/pdf" onChange={e => setSeatConfirm(e.target.files?.[0] || null)} />
+            </div>
+
+            <div className="px-3 py-2 text-[11px] font-medium text-muted-foreground bg-muted/50 border border-border rounded-lg leading-relaxed">
+                🔒 제공하신 정보는 출국 준비 서류에만 사용되며, 다른 용도로 쓰지 않습니다. 해외이동봉사 종료 시 삭제됩니다.
+            </div>
+
+            {error && (
+                <div className="px-3 py-2 text-xs font-medium text-destructive bg-destructive/10 border border-destructive/20 rounded-lg">{error}</div>
+            )}
+
+            <button
+                type="submit"
+                disabled={submitting}
+                className="w-full inline-flex items-center justify-center h-11 px-4 text-sm font-bold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all disabled:opacity-50"
+            >
+                {submitting ? '제출 중…' : '출국 준비 서류 제출하기'}
+            </button>
+        </form>
+    );
+}
 
 export default function SubmissionStatusView() {
     const [searchParams] = useSearchParams();
@@ -25,78 +111,96 @@ export default function SubmissionStatusView() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
-    useEffect(() => {
+    const fetchStatus = useCallback(() => {
         if (!id || !token) {
             setError('잘못된 조회 링크입니다.');
             setLoading(false);
             return;
         }
+        setLoading(true);
         apiClient.get(`/guest-submissions/${id}/status`, { params: { token } })
-            .then(res => setData(res.data))
+            .then(res => { setData(res.data); setError(''); })
             .catch(() => setError('제출 내역을 찾을 수 없습니다. 링크를 다시 확인해주세요.'))
             .finally(() => setLoading(false));
     }, [id, token]);
 
-    const meta = data ? (STATUS_META[data.status] || STATUS_META.pending) : null;
+    useEffect(() => { fetchStatus(); }, [fetchStatus]);
+
+    const renderBody = () => {
+        if (loading) return <p className="text-center text-sm text-muted-foreground py-8">불러오는 중...</p>;
+        if (error) return <div className="px-4 py-3 text-sm font-medium text-destructive bg-destructive/10 border border-destructive/20 rounded-xl text-center">{error}</div>;
+
+        if (data.status === 'pending') {
+            return (
+                <div className="flex flex-col items-center gap-2 py-6 text-center">
+                    <span className="text-5xl">⏳</span>
+                    <span className="text-lg font-black text-amber-600">검토 대기 중</span>
+                    <p className="text-sm text-muted-foreground leading-relaxed px-2">담당 단체가 항공사 자리 예약을 확인하고 있습니다. 조금만 기다려 주세요.</p>
+                </div>
+            );
+        }
+
+        if (data.status === 'rejected') {
+            return (
+                <div className="space-y-4">
+                    <div className="flex flex-col items-center gap-2 py-4 text-center">
+                        <span className="text-5xl">😢</span>
+                        <span className="text-lg font-black text-destructive">자리를 예약하지 못했습니다</span>
+                        <p className="text-sm text-muted-foreground leading-relaxed px-2">아쉽게도 해당 항공편에는 반려동물 자리가 없었습니다. 함께해 주셔서 감사합니다.</p>
+                    </div>
+                    {data.admin_note && (
+                        <div className="px-4 py-3 rounded-xl border-2 border-destructive/20 bg-destructive/5 text-left">
+                            <p className="text-[10px] font-bold text-destructive uppercase tracking-wider mb-1">안내</p>
+                            <p className="text-sm text-foreground whitespace-pre-wrap">{data.admin_note}</p>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        // approved (= 자리 완료)
+        return (
+            <div className="space-y-5">
+                <div className="flex flex-col items-center gap-2 py-2 text-center">
+                    <span className="text-5xl">🎉</span>
+                    <span className="text-lg font-black text-green">반려동물 예약 자리 완료!</span>
+                </div>
+                <div className="px-4 py-3 rounded-xl border-2 border-green/20 bg-green/5 text-sm text-foreground leading-relaxed">
+                    다시 한 번 아이들을 위해 도움 주셔서 감사드립니다 🙂<br />
+                    출국일로부터 <b>1~2주 전</b>, 출국 준비를 위한 카톡방에 초대해 드리겠습니다!
+                </div>
+
+                {data.departure_submitted ? (
+                    <div className="flex flex-col items-center gap-2 py-4 text-center">
+                        <span className="text-3xl">✅</span>
+                        <span className="text-sm font-bold text-green">출국 준비 서류가 제출되었습니다</span>
+                        <p className="text-xs text-muted-foreground">담당자가 확인 후 진행합니다. 감사합니다!</p>
+                    </div>
+                ) : (
+                    <div className="space-y-3">
+                        <p className="text-sm font-bold text-foreground">💙 출국 준비를 위해 아래 정보를 제출해 주세요.</p>
+                        <DepartureForm id={id} token={token} onDone={fetchStatus} />
+                    </div>
+                )}
+            </div>
+        );
+    };
 
     return (
         <div className="min-h-screen flex flex-col bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-sky/10 via-background to-earth/5">
             <div className="flex-1 flex items-center justify-center p-4">
-                <div className="w-full max-w-[440px] p-8 space-y-6 bg-card rounded-2xl border-2 border-border shadow-xl animate-in fade-in zoom-in-95 duration-500">
+                <div className="w-full max-w-[460px] p-8 space-y-6 bg-card rounded-2xl border-2 border-border shadow-xl animate-in fade-in zoom-in-95 duration-500">
                     <div className="flex flex-col items-center text-center space-y-2">
                         <Link to="/" className="flex items-center justify-center w-14 h-14 rounded-2xl mb-2">
                             <img src={logo} alt="" />
                         </Link>
                         <h1 className="text-2xl font-bold tracking-tight text-foreground">제출 진행 상태</h1>
+                        {!loading && !error && data?.need_post && (
+                            <p className="text-xs text-muted-foreground">🐶 {data.need_post.title}</p>
+                        )}
                     </div>
 
-                    {loading ? (
-                        <p className="text-center text-sm text-muted-foreground py-8">불러오는 중...</p>
-                    ) : error ? (
-                        <div className="px-4 py-3 text-sm font-medium text-destructive bg-destructive/10 border border-destructive/20 rounded-xl text-center">
-                            {error}
-                        </div>
-                    ) : (
-                        <div className="space-y-5 animate-in fade-in duration-300">
-                            <div className="flex flex-col items-center gap-2 py-4">
-                                <span className="text-5xl">{meta.icon}</span>
-                                <span className={`text-lg font-black ${meta.color}`}>{meta.label}</span>
-                                <p className="text-sm text-muted-foreground text-center leading-relaxed px-2">{meta.desc}</p>
-                            </div>
-
-                            {data.status === 'rejected' && data.admin_note && (
-                                <div className="px-4 py-3 rounded-xl border-2 border-destructive/20 bg-destructive/5 text-left">
-                                    <p className="text-[10px] font-bold text-destructive uppercase tracking-wider mb-1">반려 사유</p>
-                                    <p className="text-sm text-foreground whitespace-pre-wrap">{data.admin_note}</p>
-                                </div>
-                            )}
-
-                            <div className="rounded-xl border-2 border-border bg-muted/20 divide-y divide-border/50 text-sm">
-                                {data.need_post && (
-                                    <div className="flex items-center justify-between px-4 py-2.5">
-                                        <span className="text-muted-foreground">응답 게시글</span>
-                                        <span className="font-bold text-foreground text-right">🐶 {data.need_post.title}</span>
-                                    </div>
-                                )}
-                                {data.organization && (
-                                    <div className="flex items-center justify-between px-4 py-2.5">
-                                        <span className="text-muted-foreground">신청 단체</span>
-                                        <span className="font-bold text-foreground">{data.organization.name}</span>
-                                    </div>
-                                )}
-                                <div className="flex items-center justify-between px-4 py-2.5">
-                                    <span className="text-muted-foreground">제출일</span>
-                                    <span className="font-bold text-foreground">{formatDate(data.submitted_at)}</span>
-                                </div>
-                                {data.reviewed_at && (
-                                    <div className="flex items-center justify-between px-4 py-2.5">
-                                        <span className="text-muted-foreground">처리일</span>
-                                        <span className="font-bold text-foreground">{formatDate(data.reviewed_at)}</span>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
+                    {renderBody()}
 
                     <div className="text-center pt-2">
                         <Link to="/board" className="text-xs font-bold text-primary hover:underline">← 구해요 게시판으로</Link>

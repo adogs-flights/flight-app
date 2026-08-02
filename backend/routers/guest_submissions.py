@@ -34,23 +34,47 @@ ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp", "application/p
 MAX_UPLOAD_SIZE = 10 * 1024 * 1024  # 10MB
 
 
-def _notify_new_submission(
-    recipient_emails: list[str], kakao_id: str | None, need_post_title: str | None
-) -> None:
-    """[백그라운드] 새 제출이 들어오면 담당자에게 검토를 요청하는 이메일을 보낸다.
+def _submission_recipients(
+    db: Session, submission: models.GuestTicketSubmission
+) -> list[str]:
+    """제출 알림 수신자 이메일. 지정 단체가 있으면 그 단체 회원, 없으면 관리자."""
+    if submission.organization_id:
+        rows = (
+            db.query(models.User.email)
+            .filter(
+                models.User.organization_id == submission.organization_id,
+                models.User.email.isnot(None),
+            )
+            .all()
+        )
+    else:
+        rows = (
+            db.query(models.User.email)
+            .filter(models.User.role == "admin", models.User.email.isnot(None))
+            .all()
+        )
+    return [row[0] for row in rows if row[0]]
 
-    전화번호 같은 민감정보는 메일에 싣지 않고 카카오 아이디만 넣는다.
-    상세 정보는 제출 검토 화면에서 확인한다.
+
+def _notify_submission_event(
+    recipient_emails: list[str],
+    subject: str,
+    headline: str,
+    kakao_id: str | None,
+    need_post_title: str | None,
+) -> None:
+    """[백그라운드] 담당자에게 제출 관련 알림 메일을 보낸다.
+
+    전화번호 같은 민감정보는 싣지 않고 카카오 아이디만 넣는다. 상세는 검토 화면에서 본다.
     SMTP 미설정 시 email_utils가 콘솔로 출력한다. 개별 발송 실패는 삼켜서
     한 명 실패가 다른 수신자 발송을 막지 않게 한다.
     """
-    subject = "새 이동봉사 티켓 제출이 접수되었습니다."
     link = f"{BASE_URL}/submissions"
     post_line = (
         f"<p>응답 게시글: <b>{need_post_title}</b></p>" if need_post_title else ""
     )
     body = (
-        "<p>새로운 이동봉사 티켓 제출이 접수되었습니다. 검토가 필요합니다.</p>"
+        f"<p>{headline}</p>"
         f"<p>제출자 카카오 아이디: <b>{kakao_id or '미입력'}</b></p>"
         f"{post_line}"
         f'<p><a href="{link}">제출 검토하러 가기</a></p>'
@@ -60,6 +84,52 @@ def _notify_new_submission(
             send_email(receiver_email=email, subject=subject, body=body)
         except Exception as e:  # noqa: BLE001
             print(f"[notify] 제출 알림 이메일 실패 ({email}): {e}")
+
+
+async def _store_document(upload: UploadFile, prefix: str) -> str:
+    """출국 준비 파일(여권 사본/자리 확약 캡쳐)을 검증·저장하고 스토리지 키를 돌려준다."""
+    if upload.content_type not in ALLOWED_CONTENT_TYPES:
+        raise HTTPException(
+            status_code=400, detail="이미지 또는 PDF 파일만 업로드할 수 있습니다."
+        )
+    contents = await upload.read()
+    if len(contents) > MAX_UPLOAD_SIZE:
+        raise HTTPException(
+            status_code=400, detail="파일 크기는 10MB를 초과할 수 없습니다."
+        )
+    ext = os.path.splitext(upload.filename or "")[1]
+    object_key = f"{prefix}-{uuid.uuid4()}{ext}"
+    try:
+        storage_service.upload_bytes(object_key, contents, upload.content_type)
+    except Exception as e:
+        raise HTTPException(
+            status_code=502, detail="파일 저장소 연결에 실패했습니다."
+        ) from e
+    return object_key
+
+
+def _serve_document(
+    db: Session, submission_id: str, current_user: models.User, kind: str
+) -> Response:
+    """민감 출국 서류를 단체 격리로 스트리밍한다. 범위 밖/없음은 404."""
+    query = db.query(models.GuestTicketSubmission).filter(
+        models.GuestTicketSubmission.id == submission_id
+    )
+    submission = scope_to_org(query, current_user, models.GuestTicketSubmission).first()
+    object_key = None
+    if submission:
+        object_key = (
+            submission.passport_object_key
+            if kind == "passport"
+            else submission.seat_confirm_object_key
+        )
+    if not submission or not object_key:
+        raise HTTPException(status_code=404, detail="파일을 찾을 수 없습니다.")
+    try:
+        content, content_type = storage_service.get_object(object_key)
+    except Exception as e:
+        raise HTTPException(status_code=404, detail="파일을 찾을 수 없습니다.") from e
+    return Response(content=content, media_type=content_type)
 
 
 @router.post(
@@ -181,23 +251,7 @@ async def create_guest_submission(
 
     # 새 제출 알림: 지정 단체가 있으면 그 단체 회원에게, 없으면 관리자에게 보낸다.
     # 수신자 이메일은 요청 세션에서 미리 뽑고, 실제 발송만 백그라운드로 넘긴다.
-    if db_submission.organization_id:
-        recipient_rows = (
-            db.query(models.User.email)
-            .filter(
-                models.User.organization_id == db_submission.organization_id,
-                models.User.email.isnot(None),
-            )
-            .all()
-        )
-    else:
-        recipient_rows = (
-            db.query(models.User.email)
-            .filter(models.User.role == "admin", models.User.email.isnot(None))
-            .all()
-        )
-    recipient_emails = [row[0] for row in recipient_rows if row[0]]
-
+    recipient_emails = _submission_recipients(db, db_submission)
     need_post_title = None
     if db_submission.need_post_id:
         np = (
@@ -209,8 +263,10 @@ async def create_guest_submission(
 
     if recipient_emails:
         background_tasks.add_task(
-            _notify_new_submission,
+            _notify_submission_event,
             recipient_emails,
+            "새 이동봉사 티켓 제출이 접수되었습니다.",
+            "새로운 이동봉사 티켓 제출이 접수되었습니다. 검토가 필요합니다.",
             db_submission.kakao_id,
             need_post_title,
         )
@@ -373,6 +429,128 @@ def reject_guest_submission(
     submission.status = "rejected"
     submission.admin_note = reject_in.admin_note
     submission.reviewed_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(submission)
+    return submission
+
+
+@router.post(
+    "/{submission_id}/departure-info",
+    response_model=schemas.GuestSubmissionStatusPublic,
+)
+async def submit_departure_info(
+    submission_id: str,
+    db: DBSession,
+    background_tasks: BackgroundTasks,
+    lookup_token: Annotated[str, Form()],
+    dep_name: Annotated[str, Form()],
+    dep_departure_date: Annotated[str, Form()],
+    dep_destination: Annotated[str, Form()],
+    dep_address: Annotated[str, Form()],
+    passport: Annotated[UploadFile | None, File()] = None,
+    seat_confirm: Annotated[UploadFile | None, File()] = None,
+) -> models.GuestTicketSubmission:
+    """제출자가 상태 조회 페이지에서 출국 준비 서류를 제출한다. 공개(토큰 기반).
+
+    승인(자리 완료)된 건에서만 가능. 여권 사본·자리 확약 캡쳐는 민감정보라
+    스토리지에 올리고 키만 저장하며, 열람은 단체·관리자로 제한한다.
+    """
+    submission = (
+        db.query(models.GuestTicketSubmission)
+        .options(joinedload(models.GuestTicketSubmission.need_post))
+        .filter(
+            models.GuestTicketSubmission.id == submission_id,
+            models.GuestTicketSubmission.lookup_token == lookup_token,
+        )
+        .first()
+    )
+    if not submission:
+        raise HTTPException(status_code=404, detail="제출 내역을 찾을 수 없습니다.")
+    if submission.status != "approved":
+        raise HTTPException(
+            status_code=400,
+            detail="자리 예약이 완료된 뒤에만 출국 준비 서류를 제출할 수 있습니다.",
+        )
+
+    if passport:
+        submission.passport_object_key = await _store_document(passport, "passport")
+    if seat_confirm:
+        submission.seat_confirm_object_key = await _store_document(
+            seat_confirm, "seatconfirm"
+        )
+
+    submission.dep_name = dep_name.strip()
+    submission.dep_departure_date = dep_departure_date.strip()
+    submission.dep_destination = dep_destination.strip()
+    submission.dep_address = dep_address.strip()
+    submission.departure_submitted_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(submission)
+
+    recipient_emails = _submission_recipients(db, submission)
+    if recipient_emails:
+        need_post_title = submission.need_post.title if submission.need_post else None
+        background_tasks.add_task(
+            _notify_submission_event,
+            recipient_emails,
+            "제출자가 출국 준비 서류를 제출했습니다.",
+            "승인하신 건의 제출자가 출국 준비 서류(여권 사본 등)를 제출했습니다.",
+            submission.kakao_id,
+            need_post_title,
+        )
+
+    return submission
+
+
+@router.get("/{submission_id}/passport")
+def get_submission_passport(
+    submission_id: str, db: DBSession, current_user: OrgUser
+) -> Response:
+    """여권 사본 스트리밍. 단체·관리자만(자기 단체 제출만)."""
+    return _serve_document(db, submission_id, current_user, "passport")
+
+
+@router.get("/{submission_id}/seat-confirm")
+def get_submission_seat_confirm(
+    submission_id: str, db: DBSession, current_user: OrgUser
+) -> Response:
+    """자리 확약 캡쳐 스트리밍. 단체·관리자만(자기 단체 제출만)."""
+    return _serve_document(db, submission_id, current_user, "seat_confirm")
+
+
+@router.delete(
+    "/{submission_id}/departure-info",
+    response_model=schemas.GuestTicketSubmission,
+)
+def delete_departure_info(
+    submission_id: str, db: DBSession, current_user: OrgUser
+) -> models.GuestTicketSubmission:
+    """단체가 원할 때(예: 이동봉사 종료) 출국 준비 개인정보를 영구 삭제한다.
+
+    여권 사본·자리 확약 캡쳐 파일을 스토리지에서 지우고, 성함·주소 등 개인정보
+    필드를 비운다. 자기 단체 제출만(범위 밖 404). 제출 시각은 남겨 두어
+    제출자에게 다시 제출을 요구하지 않는다.
+    """
+    query = db.query(models.GuestTicketSubmission).filter(
+        models.GuestTicketSubmission.id == submission_id
+    )
+    submission = scope_to_org(query, current_user, models.GuestTicketSubmission).first()
+    if not submission:
+        raise HTTPException(status_code=404, detail="제출 내역을 찾을 수 없습니다.")
+
+    for key in (submission.passport_object_key, submission.seat_confirm_object_key):
+        if key:
+            try:
+                storage_service.delete_object(key)
+            except Exception as e:  # noqa: BLE001
+                print(f"[purge] 파일 삭제 실패 ({key}): {e}")
+
+    submission.passport_object_key = None
+    submission.seat_confirm_object_key = None
+    submission.dep_name = None
+    submission.dep_departure_date = None
+    submission.dep_destination = None
+    submission.dep_address = None
     db.commit()
     db.refresh(submission)
     return submission

@@ -29,6 +29,8 @@ export default function GuestSubmissionReviewModal({ isOpen, onClose, submission
     const [imageUrl, setImageUrl] = useState('');
     const [showReject, setShowReject] = useState(false);
     const [adminNote, setAdminNote] = useState('');
+    const [passportUrl, setPassportUrl] = useState('');
+    const [seatConfirmUrl, setSeatConfirmUrl] = useState('');
     const [error, setError] = useState('');
 
     useEffect(() => {
@@ -36,6 +38,8 @@ export default function GuestSubmissionReviewModal({ isOpen, onClose, submission
             setForm(emptyForm);
             setShowReject(false);
             setAdminNote('');
+            setPassportUrl('');
+            setSeatConfirmUrl('');
             setError('');
             return;
         }
@@ -57,13 +61,27 @@ export default function GuestSubmissionReviewModal({ isOpen, onClose, submission
         } else {
             setImageUrl('');
         }
+
+        // 출국 준비 파일(민감)은 제출된 경우에만 격리 서빙에서 blob으로 가져온다.
+        if (submission.has_passport) {
+            apiClient.get(`/guest-submissions/${submission.id}/passport`, { responseType: 'blob' })
+                .then(res => setPassportUrl(URL.createObjectURL(res.data)))
+                .catch(() => setPassportUrl(''));
+        } else {
+            setPassportUrl('');
+        }
+        if (submission.has_seat_confirm) {
+            apiClient.get(`/guest-submissions/${submission.id}/seat-confirm`, { responseType: 'blob' })
+                .then(res => setSeatConfirmUrl(URL.createObjectURL(res.data)))
+                .catch(() => setSeatConfirmUrl(''));
+        } else {
+            setSeatConfirmUrl('');
+        }
     }, [isOpen, submission, apiClient]);
 
-    useEffect(() => {
-        return () => {
-            if (imageUrl) URL.revokeObjectURL(imageUrl);
-        };
-    }, [imageUrl]);
+    useEffect(() => () => { if (imageUrl) URL.revokeObjectURL(imageUrl); }, [imageUrl]);
+    useEffect(() => () => { if (passportUrl) URL.revokeObjectURL(passportUrl); }, [passportUrl]);
+    useEffect(() => () => { if (seatConfirmUrl) URL.revokeObjectURL(seatConfirmUrl); }, [seatConfirmUrl]);
 
     if (!submission) return null;
 
@@ -133,8 +151,21 @@ export default function GuestSubmissionReviewModal({ isOpen, onClose, submission
         }
     };
 
+    const handleDeleteDeparture = async () => {
+        if (!window.confirm('제출자의 출국 준비 개인정보(여권 사본·자리확약 캡쳐 등)를 영구 삭제하시겠습니까? 되돌릴 수 없습니다.')) return;
+        setError('');
+        try {
+            await apiClient.delete(`/guest-submissions/${submission.id}/departure-info`);
+            onReviewed();
+            onClose();
+        } catch (err) {
+            setError(err.response?.data?.detail || '삭제에 실패했습니다.');
+        }
+    };
+
+
     const footer = (
-        <div className="flex items-center justify-end w-full gap-2">
+        <div className="flex items-center justify-end w-full gap-2 flex-wrap">
             <button
                 className="px-4 py-2 text-sm font-bold rounded-md bg-secondary text-secondary-foreground border border-border hover:bg-muted transition-colors"
                 onClick={onClose}
@@ -145,13 +176,13 @@ export default function GuestSubmissionReviewModal({ isOpen, onClose, submission
                 className="px-4 py-2 text-sm font-bold rounded-md bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20 transition-all"
                 onClick={() => setShowReject(v => !v)}
             >
-                반려
+                반려 (자리 없음)
             </button>
             <button
                 className="px-6 py-2 text-sm font-bold transition-all rounded-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
                 onClick={handleApprove}
             >
-                승인하기
+                승인 (예약 완료)
             </button>
         </div>
     );
@@ -171,6 +202,32 @@ export default function GuestSubmissionReviewModal({ isOpen, onClose, submission
                     )}
                     {submission.need_post && (
                         <div className="text-sm"><span className="font-bold">응답한 게시글:</span> 🐶 {submission.need_post.title}</div>
+                    )}
+                    {submission.status === 'approved' && (
+                        !submission.departure_submitted ? (
+                            <div className="mt-2 pt-2 border-t border-border/50 text-xs font-bold text-amber-600">⏳ 출국 준비 서류 제출 대기 중</div>
+                        ) : (!submission.has_passport && !submission.has_seat_confirm && !submission.dep_name) ? (
+                            <div className="mt-2 pt-2 border-t border-border/50 text-xs font-bold text-muted-foreground">🗑️ 출국 준비 개인정보가 삭제되었습니다</div>
+                        ) : (
+                            <div className="mt-2 pt-2 border-t border-border/50 space-y-1">
+                                <div className="text-xs font-bold text-green">🛫 출국 준비 서류 제출됨</div>
+                                {submission.dep_name && <div className="text-sm"><span className="font-bold">성함:</span> {submission.dep_name}</div>}
+                                {submission.dep_departure_date && <div className="text-sm"><span className="font-bold">출국일:</span> {submission.dep_departure_date}</div>}
+                                {submission.dep_destination && <div className="text-sm"><span className="font-bold">목적지:</span> {submission.dep_destination}</div>}
+                                {submission.dep_address && <div className="text-sm"><span className="font-bold">주소:</span> {submission.dep_address}</div>}
+                                <div className="flex flex-wrap gap-3 pt-1">
+                                    {passportUrl && <a href={passportUrl} target="_blank" rel="noreferrer" className="text-xs font-bold text-primary hover:underline">📄 여권 사본 보기</a>}
+                                    {seatConfirmUrl && <a href={seatConfirmUrl} target="_blank" rel="noreferrer" className="text-xs font-bold text-primary hover:underline">🎫 자리 확약 캡쳐 보기</a>}
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleDeleteDeparture}
+                                    className="text-[11px] font-medium text-slate-400 hover:text-destructive underline underline-offset-4 transition-colors pt-1"
+                                >
+                                    출국 준비 개인정보 삭제
+                                </button>
+                            </div>
+                        )
                     )}
                     {submission.verification_method === 'eticket_image' ? (
                         <>
@@ -207,7 +264,7 @@ export default function GuestSubmissionReviewModal({ isOpen, onClose, submission
                             className="flex min-h-[80px] w-full rounded-lg border-2 border-border bg-background px-4 py-3 text-sm transition-all focus:border-primary/50 focus-visible:outline-none"
                             value={adminNote}
                             onChange={e => setAdminNote(e.target.value)}
-                            placeholder="반려 사유를 입력해주세요..."
+                            placeholder="예: 해당 항공편에 반려동물 자리가 없습니다."
                         />
                         <button
                             className="w-full h-11 text-sm font-bold rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-all"
