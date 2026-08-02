@@ -151,6 +151,18 @@ export default function GuestSubmissionReviewModal({ isOpen, onClose, submission
         }
     };
 
+    const handleDeleteDeparture = async () => {
+        if (!window.confirm('제출자의 출국 준비 개인정보(여권 사본·자리확약 캡쳐 등)를 영구 삭제하시겠습니까? 되돌릴 수 없습니다.')) return;
+        setError('');
+        try {
+            await apiClient.delete(`/guest-submissions/${submission.id}/departure-info`);
+            onReviewed();
+            onClose();
+        } catch (err) {
+            setError(err.response?.data?.detail || '삭제에 실패했습니다.');
+        }
+    };
+
 
     const footer = (
         <div className="flex items-center justify-end w-full gap-2 flex-wrap">
@@ -192,7 +204,11 @@ export default function GuestSubmissionReviewModal({ isOpen, onClose, submission
                         <div className="text-sm"><span className="font-bold">응답한 게시글:</span> 🐶 {submission.need_post.title}</div>
                     )}
                     {submission.status === 'approved' && (
-                        submission.departure_submitted ? (
+                        !submission.departure_submitted ? (
+                            <div className="mt-2 pt-2 border-t border-border/50 text-xs font-bold text-amber-600">⏳ 출국 준비 서류 제출 대기 중</div>
+                        ) : (!submission.has_passport && !submission.has_seat_confirm && !submission.dep_name) ? (
+                            <div className="mt-2 pt-2 border-t border-border/50 text-xs font-bold text-muted-foreground">🗑️ 출국 준비 개인정보가 삭제되었습니다</div>
+                        ) : (
                             <div className="mt-2 pt-2 border-t border-border/50 space-y-1">
                                 <div className="text-xs font-bold text-green">🛫 출국 준비 서류 제출됨</div>
                                 {submission.dep_name && <div className="text-sm"><span className="font-bold">성함:</span> {submission.dep_name}</div>}
@@ -203,9 +219,14 @@ export default function GuestSubmissionReviewModal({ isOpen, onClose, submission
                                     {passportUrl && <a href={passportUrl} target="_blank" rel="noreferrer" className="text-xs font-bold text-primary hover:underline">📄 여권 사본 보기</a>}
                                     {seatConfirmUrl && <a href={seatConfirmUrl} target="_blank" rel="noreferrer" className="text-xs font-bold text-primary hover:underline">🎫 자리 확약 캡쳐 보기</a>}
                                 </div>
+                                <button
+                                    type="button"
+                                    onClick={handleDeleteDeparture}
+                                    className="text-[11px] font-medium text-slate-400 hover:text-destructive underline underline-offset-4 transition-colors pt-1"
+                                >
+                                    출국 준비 개인정보 삭제
+                                </button>
                             </div>
-                        ) : (
-                            <div className="mt-2 pt-2 border-t border-border/50 text-xs font-bold text-amber-600">⏳ 출국 준비 서류 제출 대기 중</div>
                         )
                     )}
                     {submission.verification_method === 'eticket_image' ? (

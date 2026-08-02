@@ -83,3 +83,17 @@ def get_object(object_key: str) -> tuple[bytes, str]:
         response.close()
         response.release_conn()
     return content, content_type
+
+
+def delete_object(object_key: str) -> None:
+    """오브젝트를 영구 삭제한다. 없는 키는 조용히 무시한다."""
+    if USE_LOCAL_STORAGE:
+        path = _local_path(object_key)
+        for p in (path, path + ".ct"):
+            try:
+                os.remove(p)
+            except FileNotFoundError:
+                pass
+        return
+
+    get_client().remove_object(MINIO_BUCKET, object_key)

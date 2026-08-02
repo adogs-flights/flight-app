@@ -518,6 +518,44 @@ def get_submission_seat_confirm(
     return _serve_document(db, submission_id, current_user, "seat_confirm")
 
 
+@router.delete(
+    "/{submission_id}/departure-info",
+    response_model=schemas.GuestTicketSubmission,
+)
+def delete_departure_info(
+    submission_id: str, db: DBSession, current_user: OrgUser
+) -> models.GuestTicketSubmission:
+    """단체가 원할 때(예: 이동봉사 종료) 출국 준비 개인정보를 영구 삭제한다.
+
+    여권 사본·자리 확약 캡쳐 파일을 스토리지에서 지우고, 성함·주소 등 개인정보
+    필드를 비운다. 자기 단체 제출만(범위 밖 404). 제출 시각은 남겨 두어
+    제출자에게 다시 제출을 요구하지 않는다.
+    """
+    query = db.query(models.GuestTicketSubmission).filter(
+        models.GuestTicketSubmission.id == submission_id
+    )
+    submission = scope_to_org(query, current_user, models.GuestTicketSubmission).first()
+    if not submission:
+        raise HTTPException(status_code=404, detail="제출 내역을 찾을 수 없습니다.")
+
+    for key in (submission.passport_object_key, submission.seat_confirm_object_key):
+        if key:
+            try:
+                storage_service.delete_object(key)
+            except Exception as e:  # noqa: BLE001
+                print(f"[purge] 파일 삭제 실패 ({key}): {e}")
+
+    submission.passport_object_key = None
+    submission.seat_confirm_object_key = None
+    submission.dep_name = None
+    submission.dep_departure_date = None
+    submission.dep_destination = None
+    submission.dep_address = None
+    db.commit()
+    db.refresh(submission)
+    return submission
+
+
 @router.post(
     "/{submission_id}/claim", response_model=schemas.GuestTicketSubmission
 )
