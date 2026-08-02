@@ -130,6 +130,8 @@ class Ticket(Base):
     passport_object_key = Column(String, nullable=True)  # 여권 사본
     seat_confirm_object_key = Column(String, nullable=True)  # 자리 확약 캡쳐
     departure_submitted_at = Column(DateTime(timezone=True), nullable=True)
+    # 봉사자 제출 티켓을 승인해 만든 일정이면, 제출 시 받은 e티켓 이미지 키를 여기로 이관한다.
+    eticket_object_key = Column(String, nullable=True)  # e티켓 이미지
 
     created_by_id = Column(
         String, ForeignKey("users.id", ondelete="SET NULL"), index=True
@@ -161,6 +163,10 @@ class Ticket(Base):
     @property
     def has_seat_confirm(self) -> bool:
         return self.seat_confirm_object_key is not None
+
+    @property
+    def has_eticket(self) -> bool:
+        return self.eticket_object_key is not None
 
     @property
     def departure_submitted(self) -> bool:

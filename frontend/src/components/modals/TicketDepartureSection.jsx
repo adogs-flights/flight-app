@@ -50,7 +50,7 @@ export default function TicketDepartureSection({ ticket, canManage, onDone }) {
     };
 
     const remove = async () => {
-        if (!window.confirm('출국 준비 개인정보(여권 사본 등)를 영구 삭제하시겠습니까?')) return;
+        if (!window.confirm('제출된 개인정보(e티켓·여권 사본·자리 확약 등)를 영구 삭제하시겠습니까?')) return;
         try {
             const res = await apiClient.delete(`/tickets/${ticket.id}/departure-info`);
             onDone?.(res.data);
@@ -59,7 +59,10 @@ export default function TicketDepartureSection({ ticket, canManage, onDone }) {
         }
     };
 
-    const purged = ticket.departure_submitted && !ticket.has_passport && !ticket.has_seat_confirm && !ticket.dep_address;
+    // 삭제(파기)는 e티켓까지 함께 지운다. 지울 게 하나도 없을 때만 '삭제됨'으로 본다.
+    const purged = ticket.departure_submitted && !ticket.has_passport && !ticket.has_seat_confirm && !ticket.dep_address && !ticket.has_eticket;
+    // e티켓만 있고 출국 정보는 아직 없는 티켓(승인 직후)에서도 파기할 수 있어야 한다.
+    const canPurge = canManage && !purged && (ticket.departure_submitted || ticket.has_eticket);
 
     return (
         <div className="mt-4 pt-4 border-t-2 border-border/50 px-1">
@@ -75,9 +78,6 @@ export default function TicketDepartureSection({ ticket, canManage, onDone }) {
                             {passportUrl && <a href={passportUrl} target="_blank" rel="noreferrer" className="text-xs font-bold text-primary hover:underline">📄 여권 사본</a>}
                             {seatUrl && <a href={seatUrl} target="_blank" rel="noreferrer" className="text-xs font-bold text-primary hover:underline">🎫 자리 확약 캡쳐</a>}
                         </div>
-                        {canManage && (
-                            <button onClick={remove} className="text-[11px] font-medium text-slate-400 hover:text-destructive underline underline-offset-4">개인정보 삭제</button>
-                        )}
                     </div>
                 )
             ) : canManage ? (
@@ -98,6 +98,12 @@ export default function TicketDepartureSection({ ticket, canManage, onDone }) {
                 </div>
             ) : (
                 <p className="mt-2 text-xs text-muted-foreground">아직 입력되지 않았습니다.</p>
+            )}
+
+            {canPurge && (
+                <button onClick={remove} className="mt-3 block text-[11px] font-medium text-slate-400 hover:text-destructive underline underline-offset-4">
+                    제출 개인정보 삭제 (e티켓·여권 등)
+                </button>
             )}
         </div>
     );

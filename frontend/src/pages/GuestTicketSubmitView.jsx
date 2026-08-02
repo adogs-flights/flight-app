@@ -51,10 +51,6 @@ export default function GuestTicketSubmitView() {
         phone: '',
         kakaoId: '',
         airline: '',
-        verificationMethod: 'eticket_image',
-        reservationNumber: '',
-        passengerLastNameEn: '',
-        passengerFirstNameEn: '',
         organizationId: ''
     });
     const [imageFile, setImageFile] = useState(null);
@@ -101,31 +97,17 @@ export default function GuestTicketSubmitView() {
             setError('카카오톡 아이디를 입력해주세요.');
             return;
         }
-        if (form.verificationMethod === 'eticket_image') {
-            if (!imageFile) {
-                setError('e티켓 이미지를 첨부해주세요.');
-                return;
-            }
-        } else {
-            if (!form.reservationNumber.trim() || !form.passengerLastNameEn.trim() || !form.passengerFirstNameEn.trim()) {
-                setError('예약번호와 탑승객 성/이름을 모두 입력해주세요.');
-                return;
-            }
+        if (!imageFile) {
+            setError('e티켓 이미지를 첨부해주세요.');
+            return;
         }
 
         const formData = new FormData();
         formData.append('phone', form.phone);
         formData.append('kakao_id', form.kakaoId);
         formData.append('airline', form.airline);
-        formData.append('verification_method', form.verificationMethod);
-        if (form.verificationMethod === 'eticket_image') {
-            const uploadFile = await compressImageFile(imageFile);
-            formData.append('eticket_image', uploadFile);
-        } else {
-            formData.append('reservation_number', form.reservationNumber);
-            formData.append('passenger_last_name_en', form.passengerLastNameEn);
-            formData.append('passenger_first_name_en', form.passengerFirstNameEn);
-        }
+        const uploadFile = await compressImageFile(imageFile);
+        formData.append('eticket_image', uploadFile);
         if (form.organizationId) {
             formData.append('organization_id', form.organizationId);
         }
@@ -221,24 +203,6 @@ export default function GuestTicketSubmitView() {
                         </div>
                     ) : (
                         <div className="space-y-5 sm:space-y-6">
-                            <div className="space-y-3">
-                                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">증빙 방법</label>
-                                <div className="flex gap-3">
-                                    <button
-                                        className={`flex-1 flex items-center justify-center gap-2 h-11 rounded-lg border-2 transition-all text-sm font-semibold ${form.verificationMethod === 'eticket_image' ? 'bg-primary/5 border-primary text-primary' : 'bg-background border-border text-muted-foreground hover:border-primary/30'}`}
-                                        onClick={() => handleChange('verificationMethod', 'eticket_image')}
-                                    >
-                                        e티켓 이미지
-                                    </button>
-                                    <button
-                                        className={`flex-1 flex items-center justify-center gap-2 h-11 rounded-lg border-2 transition-all text-sm font-semibold ${form.verificationMethod === 'reservation_number' ? 'bg-primary/5 border-primary text-primary' : 'bg-background border-border text-muted-foreground hover:border-primary/30'}`}
-                                        onClick={() => handleChange('verificationMethod', 'reservation_number')}
-                                    >
-                                        예약번호
-                                    </button>
-                                </div>
-                            </div>
-
                             <SelectField
                                 label={<>항공사<span className="text-destructive ml-0.5">*</span></>}
                                 options={airlines}
@@ -247,57 +211,18 @@ export default function GuestTicketSubmitView() {
                                 placeholder="항공사 선택 또는 직접 입력"
                             />
 
-                            {form.verificationMethod === 'eticket_image' ? (
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">
-                                        e티켓 이미지<span className="text-destructive ml-0.5">*</span>
-                                    </label>
-                                    <input
-                                        className="flex w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-bold file:bg-primary file:text-primary-foreground"
-                                        type="file"
-                                        accept="image/*,application/pdf"
-                                        onChange={e => setImageFile(e.target.files?.[0] || null)}
-                                    />
-                                </div>
-                            ) : (
-                                <div className="space-y-4">
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">
-                                            예약번호<span className="text-destructive ml-0.5">*</span>
-                                        </label>
-                                        <input
-                                            className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none"
-                                            value={form.reservationNumber}
-                                            onChange={e => handleChange('reservationNumber', e.target.value)}
-                                            placeholder="예: ABC123"
-                                        />
-                                    </div>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">
-                                                성 (Last Name)<span className="text-destructive ml-0.5">*</span>
-                                            </label>
-                                            <input
-                                                className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none"
-                                                value={form.passengerLastNameEn}
-                                                onChange={e => handleChange('passengerLastNameEn', e.target.value)}
-                                                placeholder="예: HONG"
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">
-                                                이름 (First Name)<span className="text-destructive ml-0.5">*</span>
-                                            </label>
-                                            <input
-                                                className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none"
-                                                value={form.passengerFirstNameEn}
-                                                onChange={e => handleChange('passengerFirstNameEn', e.target.value)}
-                                                placeholder="예: GILDONG"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">
+                                    e티켓 이미지<span className="text-destructive ml-0.5">*</span>
+                                </label>
+                                <input
+                                    className="flex w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-bold file:bg-primary file:text-primary-foreground"
+                                    type="file"
+                                    accept="image/*,application/pdf"
+                                    onChange={e => setImageFile(e.target.files?.[0] || null)}
+                                />
+                                <p className="text-[11px] text-muted-foreground ml-1">항공사 예약 조회를 위해 e티켓 이미지(또는 PDF)를 첨부해주세요.</p>
+                            </div>
 
                             <div className="space-y-2">
                                 <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">
