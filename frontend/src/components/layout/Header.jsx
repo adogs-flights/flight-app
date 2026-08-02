@@ -3,7 +3,16 @@ import { Link } from 'react-router-dom';
 import logo from '../../assets/flight-app.PNG'
 
 export default function Header({ onMenuClick, onPwChangeClick }) {
-    const { user, logout } = useAuth();
+    const { user, logout, deleteAccount } = useAuth();
+
+    const handleWithdraw = async () => {
+        if (!window.confirm('정말 회원 탈퇴하시겠습니까?\n계정과 내 신청·게시글이 삭제되며 되돌릴 수 없습니다.')) return;
+        try {
+            await deleteAccount();
+        } catch {
+            alert('탈퇴 처리에 실패했습니다.');
+        }
+    };
 
     return (
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -51,11 +60,17 @@ export default function Header({ onMenuClick, onPwChangeClick }) {
                                 >
                                     <span>🔑</span> 비밀번호 변경
                                 </button>
-                                <button 
-                                    className="px-3 py-1.5 text-xs font-medium rounded-md bg-secondary text-secondary-foreground hover:bg-muted transition-colors border border-border" 
+                                <button
+                                    className="px-3 py-1.5 text-xs font-medium rounded-md bg-secondary text-secondary-foreground hover:bg-muted transition-colors border border-border"
                                     onClick={logout}
                                 >
                                     로그아웃
+                                </button>
+                                <button
+                                    className="hidden sm:flex px-3 py-1.5 text-xs font-medium rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors items-center"
+                                    onClick={handleWithdraw}
+                                >
+                                    회원 탈퇴
                                 </button>
                             </div>
                         </>

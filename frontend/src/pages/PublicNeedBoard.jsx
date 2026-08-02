@@ -10,7 +10,16 @@ import Footer from '../components/layout/Footer';
 // 비로그인·일반 사용자가 보는 읽기 전용 "구해요" 게시판.
 // 공개 엔드포인트(/need-posts/public)를 쓰며 연락처는 노출하지 않는다.
 export default function PublicNeedBoard() {
-    const { user, logout, apiClient } = useAuth();
+    const { user, logout, deleteAccount, apiClient } = useAuth();
+
+    const handleWithdraw = async () => {
+        if (!window.confirm('정말 회원 탈퇴하시겠습니까?\n계정 정보가 삭제되며 되돌릴 수 없습니다.')) return;
+        try {
+            await deleteAccount();
+        } catch {
+            alert('탈퇴 처리에 실패했습니다.');
+        }
+    };
 
     const [postsState, setPostsState] = useState({ data: [], loading: true, error: '' });
     const [currentPost, setCurrentPost] = useState(null);
@@ -110,6 +119,9 @@ export default function PublicNeedBoard() {
                                 <span className="hidden sm:inline text-sm font-bold text-foreground px-2">{user.name}님</span>
                                 <button onClick={logout} className="inline-flex items-center justify-center h-9 px-3 text-sm font-bold rounded-lg text-foreground hover:bg-secondary transition-colors">
                                     로그아웃
+                                </button>
+                                <button onClick={handleWithdraw} className="inline-flex items-center justify-center h-9 px-3 text-sm font-bold rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors">
+                                    탈퇴
                                 </button>
                             </>
                         ) : (
