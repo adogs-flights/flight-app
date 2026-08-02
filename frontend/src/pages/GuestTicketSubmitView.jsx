@@ -61,6 +61,8 @@ export default function GuestTicketSubmitView() {
     const [error, setError] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
+    const [result, setResult] = useState(null); // 제출 응답(id, lookup_token)
+    const [copied, setCopied] = useState(false);
 
     useEffect(() => {
         if (orgSlug) {
@@ -131,12 +133,28 @@ export default function GuestTicketSubmitView() {
 
         setSubmitting(true);
         try {
-            await apiClient.post('/guest-submissions', formData);
+            const res = await apiClient.post('/guest-submissions', formData);
+            setResult(res.data);
             setSubmitted(true);
         } catch (err) {
             setError(err.response?.data?.detail || '제출에 실패했습니다.');
         } finally {
             setSubmitting(false);
+        }
+    };
+
+    // 제출자에게 안내할 상태 조회 링크 (lookup_token 포함)
+    const statusUrl = result
+        ? `${window.location.origin}/submission-status?id=${result.id}&token=${result.lookup_token}`
+        : '';
+
+    const handleCopy = async () => {
+        try {
+            await navigator.clipboard.writeText(statusUrl);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch {
+            setError('링크 복사에 실패했습니다. 링크를 직접 선택해 복사해주세요.');
         }
     };
 
@@ -162,10 +180,42 @@ export default function GuestTicketSubmitView() {
                     )}
 
                     {submitted ? (
-                        <div className="p-6 rounded-xl border-2 border-green/20 bg-green/5 text-center space-y-2 animate-in fade-in duration-500">
-                            <div className="text-2xl">✅</div>
-                            <div className="text-sm font-bold text-green">제출이 완료되었습니다!</div>
-                            <div className="text-xs text-muted-foreground">관리자 검토 후 남겨주신 연락처로 안내드리겠습니다.</div>
+                        <div className="space-y-4 animate-in fade-in duration-500">
+                            <div className="p-6 rounded-xl border-2 border-green/20 bg-green/5 text-center space-y-2">
+                                <div className="text-2xl">✅</div>
+                                <div className="text-sm font-bold text-green">제출이 완료되었습니다!</div>
+                                <div className="text-xs text-muted-foreground">담당자 검토 후 진행됩니다.</div>
+                            </div>
+
+                            {statusUrl && (
+                                <div className="p-4 rounded-xl border-2 border-primary/20 bg-primary/5 space-y-3">
+                                    <p className="text-xs font-bold text-foreground">🔖 아래 링크로 진행 상태를 확인하세요.</p>
+                                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                                        이 링크는 <strong>제출자 본인만</strong> 상태를 볼 수 있는 열쇠입니다. 꼭 저장해 두세요.
+                                    </p>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            readOnly
+                                            value={statusUrl}
+                                            onFocus={e => e.target.select()}
+                                            className="flex-1 h-10 rounded-lg border-2 border-border bg-background px-3 text-[11px] text-muted-foreground focus:outline-none"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={handleCopy}
+                                            className="shrink-0 h-10 px-3 text-xs font-bold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                                        >
+                                            {copied ? '복사됨!' : '복사'}
+                                        </button>
+                                    </div>
+                                    <a
+                                        href={statusUrl}
+                                        className="inline-block text-xs font-bold text-primary hover:underline"
+                                    >
+                                        지금 상태 확인하기 →
+                                    </a>
+                                </div>
+                            )}
                         </div>
                     ) : (
                         <div className="space-y-5 sm:space-y-6">

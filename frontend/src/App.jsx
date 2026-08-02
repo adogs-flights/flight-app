@@ -18,6 +18,7 @@ import SignupChoice from './pages/SignupChoice';
 import GeneralSignup from './pages/GeneralSignup';
 import OrgSignup from './pages/OrgSignup';
 import PublicNeedBoard from './pages/PublicNeedBoard';
+import SubmissionStatusView from './pages/SubmissionStatusView';
 
 function App() {
   return (
@@ -41,6 +42,8 @@ function AppContent() {
       <Route path="/guide" element={<VolunteerGuideView />} />
       {/* 이동봉사 구해요 공개 게시판. 비로그인·일반 사용자 모두 접근 가능 */}
       <Route path="/board" element={<PublicNeedBoard />} />
+      {/* 제출자 상태 조회 (lookup_token 기반, 비로그인 접근) */}
+      <Route path="/submission-status" element={<SubmissionStatusView />} />
       {/* 카카오 콜백은 로그인 전 상태에서 도착하므로 !user 분기 바깥에 있어야 한다 */}
       <Route path="/auth/kakao/callback" element={<KakaoCallback />} />
 

@@ -20,8 +20,9 @@ from sqlalchemy.orm import Session, joinedload
 import models
 import schemas
 from database import get_db
+from email_utils import send_email
 from permissions import scope_to_org
-from routers.auth import CurrentUser, OrgUser
+from routers.auth import BASE_URL, CurrentUser, OrgUser
 from services import gdrive_service, storage_service
 
 router = APIRouter(prefix="/api/guest-submissions", tags=["Guest Ticket Submissions"])
@@ -31,6 +32,34 @@ DBSession = Annotated[Session, Depends(get_db)]
 
 ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp", "application/pdf"}
 MAX_UPLOAD_SIZE = 10 * 1024 * 1024  # 10MB
+
+
+def _notify_new_submission(
+    recipient_emails: list[str], kakao_id: str | None, need_post_title: str | None
+) -> None:
+    """[백그라운드] 새 제출이 들어오면 담당자에게 검토를 요청하는 이메일을 보낸다.
+
+    전화번호 같은 민감정보는 메일에 싣지 않고 카카오 아이디만 넣는다.
+    상세 정보는 제출 검토 화면에서 확인한다.
+    SMTP 미설정 시 email_utils가 콘솔로 출력한다. 개별 발송 실패는 삼켜서
+    한 명 실패가 다른 수신자 발송을 막지 않게 한다.
+    """
+    subject = "새 이동봉사 티켓 제출이 접수되었습니다."
+    link = f"{BASE_URL}/submissions"
+    post_line = (
+        f"<p>응답 게시글: <b>{need_post_title}</b></p>" if need_post_title else ""
+    )
+    body = (
+        "<p>새로운 이동봉사 티켓 제출이 접수되었습니다. 검토가 필요합니다.</p>"
+        f"<p>제출자 카카오 아이디: <b>{kakao_id or '미입력'}</b></p>"
+        f"{post_line}"
+        f'<p><a href="{link}">제출 검토하러 가기</a></p>'
+    )
+    for email in recipient_emails:
+        try:
+            send_email(receiver_email=email, subject=subject, body=body)
+        except Exception as e:  # noqa: BLE001
+            print(f"[notify] 제출 알림 이메일 실패 ({email}): {e}")
 
 
 @router.post(
@@ -150,7 +179,71 @@ async def create_guest_submission(
             eticket_image.content_type,
         )
 
+    # 새 제출 알림: 지정 단체가 있으면 그 단체 회원에게, 없으면 관리자에게 보낸다.
+    # 수신자 이메일은 요청 세션에서 미리 뽑고, 실제 발송만 백그라운드로 넘긴다.
+    if db_submission.organization_id:
+        recipient_rows = (
+            db.query(models.User.email)
+            .filter(
+                models.User.organization_id == db_submission.organization_id,
+                models.User.email.isnot(None),
+            )
+            .all()
+        )
+    else:
+        recipient_rows = (
+            db.query(models.User.email)
+            .filter(models.User.role == "admin", models.User.email.isnot(None))
+            .all()
+        )
+    recipient_emails = [row[0] for row in recipient_rows if row[0]]
+
+    need_post_title = None
+    if db_submission.need_post_id:
+        np = (
+            db.query(models.NeedPost.title)
+            .filter(models.NeedPost.id == db_submission.need_post_id)
+            .first()
+        )
+        need_post_title = np[0] if np else None
+
+    if recipient_emails:
+        background_tasks.add_task(
+            _notify_new_submission,
+            recipient_emails,
+            db_submission.kakao_id,
+            need_post_title,
+        )
+
     return db_submission
+
+
+@router.get(
+    "/{submission_id}/status",
+    response_model=schemas.GuestSubmissionStatusPublic,
+)
+def get_submission_status(
+    submission_id: str, token: str, db: DBSession
+) -> models.GuestTicketSubmission:
+    """제출자가 조회 링크(id + lookup_token)로 진행 상태를 확인한다. 공개 엔드포인트.
+
+    토큰 불일치는 404. 상태 뷰라 전화번호·e티켓 등 개인정보는 응답에 담지 않는다.
+    """
+    submission = (
+        db.query(models.GuestTicketSubmission)
+        .options(
+            joinedload(models.GuestTicketSubmission.need_post),
+            joinedload(models.GuestTicketSubmission.organization),
+        )
+        .filter(
+            models.GuestTicketSubmission.id == submission_id,
+            models.GuestTicketSubmission.lookup_token == token,
+        )
+        .first()
+    )
+    if not submission:
+        raise HTTPException(status_code=404, detail="제출 내역을 찾을 수 없습니다.")
+    return submission
 
 
 @router.get("", response_model=list[schemas.GuestTicketSubmission])
@@ -241,6 +334,18 @@ def approve_guest_submission(
     submission.status = "approved"
     submission.reviewed_at = datetime.now(timezone.utc)
     submission.created_ticket_id = db_ticket.id
+
+    # 게시글에 응답한 제출이면 해당 '구해요' 글을 해결 처리(매칭)한다.
+    # 제출-게시글-티켓 연결은 submission.need_post_id / created_ticket_id로 추적된다.
+    if submission.need_post_id:
+        need_post = (
+            db.query(models.NeedPost)
+            .filter(models.NeedPost.id == submission.need_post_id)
+            .first()
+        )
+        if need_post and not need_post.is_resolved:
+            need_post.is_resolved = True
+
     db.commit()
 
     return db_ticket
