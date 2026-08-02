@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import logo from '../assets/flight-app.PNG';
 import Footer from '../components/layout/Footer';
 import Reveal from '../components/ui/Reveal';
+import UsageGuideSection from '../components/UsageGuideSection';
 
 const STEPS = [
     {
@@ -110,11 +111,14 @@ export default function LandingPage() {
                     </div>
                     <Reveal className="mt-10 text-center">
                         <Link to="/guide" className="inline-flex items-center gap-1 text-sm font-bold text-primary hover:underline">
-                            해외이동봉사가 처음이신가요? 안내문 보러가기 →
+                            해외이동봉사 안내문 보러가기 →
                         </Link>
                     </Reveal>
                 </div>
             </section>
+
+            {/* 역할별 서비스 사용 가이드 (별도 페이지에서 랜딩으로 이동) */}
+            <UsageGuideSection />
 
             <Footer />
         </div>
