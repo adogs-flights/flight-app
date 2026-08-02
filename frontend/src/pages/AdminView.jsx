@@ -113,6 +113,29 @@ export default function AdminView() {
         submissionModal.openModal();
     };
 
+    const handleEditEmail = async (u) => {
+        const newEmail = window.prompt('새 이메일을 입력하세요', u.email || '');
+        if (newEmail === null) return;
+        const trimmed = newEmail.trim();
+        if (!trimmed || trimmed === u.email) return;
+        try {
+            await apiClient.patch(`/users/${u.id}`, { email: trimmed });
+            fetchData();
+        } catch (err) {
+            alert(err.response?.data?.detail || '이메일 수정에 실패했습니다.');
+        }
+    };
+
+    const handleDeleteUser = async (u) => {
+        if (!window.confirm(`'${u.name}'(${u.email || '이메일 없음'}) 회원을 탈퇴 처리하시겠습니까?\n신청·게시글이 함께 삭제되며 되돌릴 수 없습니다.`)) return;
+        try {
+            await apiClient.delete(`/users/${u.id}`);
+            fetchData();
+        } catch (err) {
+            alert(err.response?.data?.detail || '탈퇴 처리에 실패했습니다.');
+        }
+    };
+
     const handleApprove = async (u) => {
         if (!window.confirm(`'${u.organization?.name || u.name}' 단체 계정을 승인하시겠습니까?`)) return;
         try {
@@ -200,7 +223,8 @@ export default function AdminView() {
                             <th className="px-6 py-4">이메일</th>
                             <th className="px-6 py-4">권한</th>
                             <th className="px-6 py-4">단체</th>
-                            <th className="px-6 py-4 text-right">가입일</th>
+                            <th className="px-6 py-4">가입일</th>
+                            <th className="px-6 py-4 text-right">관리</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-border/50">
@@ -214,7 +238,13 @@ export default function AdminView() {
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 text-muted-foreground">{u.organization?.name || '-'}</td>
-                                <td className="px-6 py-4 text-muted-foreground text-xs text-right">{new Date(u.created_at).toLocaleDateString()}</td>
+                                <td className="px-6 py-4 text-muted-foreground text-xs">{new Date(u.created_at).toLocaleDateString()}</td>
+                                <td className="px-6 py-4 text-right">
+                                    <div className="flex items-center justify-end gap-2">
+                                        <button className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-secondary text-secondary-foreground border border-border hover:bg-muted transition-all active:scale-95" onClick={() => handleEditEmail(u)}>이메일 수정</button>
+                                        <button className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20 transition-all active:scale-95" onClick={() => handleDeleteUser(u)}>탈퇴</button>
+                                    </div>
+                                </td>
                             </tr>
                         ))}
                     </tbody>
@@ -235,6 +265,10 @@ export default function AdminView() {
                             <div className="text-xs text-muted-foreground">{u.organization.name}</div>
                         )}
                         <div className="text-[10px] text-muted-foreground/60 italic">{new Date(u.created_at).toLocaleDateString()} 가입</div>
+                        <div className="flex items-center justify-end gap-2 pt-1">
+                            <button className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-secondary border border-border" onClick={() => handleEditEmail(u)}>이메일 수정</button>
+                            <button className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-destructive/10 text-destructive border border-destructive/20" onClick={() => handleDeleteUser(u)}>탈퇴</button>
+                        </div>
                     </div>
                 ))}
             </div>

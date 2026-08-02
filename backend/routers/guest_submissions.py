@@ -143,7 +143,7 @@ async def create_guest_submission(
     phone: Annotated[str, Form()],
     airline: Annotated[str, Form()],
     verification_method: Annotated[schemas.GuestSubmissionVerificationMethod, Form()],
-    kakao_id: Annotated[str | None, Form()] = None,
+    kakao_id: Annotated[str, Form()],
     reservation_number: Annotated[str | None, Form()] = None,
     passenger_last_name_en: Annotated[str | None, Form()] = None,
     passenger_first_name_en: Annotated[str | None, Form()] = None,
@@ -160,6 +160,9 @@ async def create_guest_submission(
 
     if not airline.strip():
         raise HTTPException(status_code=400, detail="항공사를 선택해주세요.")
+
+    if not kakao_id.strip():
+        raise HTTPException(status_code=400, detail="카카오톡 아이디를 입력해주세요.")
 
     if verification_method == schemas.GuestSubmissionVerificationMethod.eticket_image:
         if not eticket_image:
@@ -420,6 +423,10 @@ def approve_guest_submission(
         if owner_token:
             background_tasks.add_task(
                 gdrive_service.create_gdrive_folder, db, db_ticket.id, owner_user_id
+            )
+            # 폴더 생성 다음 순서로 e티켓을 그 폴더에 올린다(폴더 존재 보장).
+            background_tasks.add_task(
+                gdrive_service.upload_eticket_to_ticket_folder, db, submission.id
             )
 
     return db_ticket

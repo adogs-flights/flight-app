@@ -105,6 +105,12 @@ class User(BaseModel):
         from_attributes = True
 
 
+class UserEmailUpdate(BaseModel):
+    """관리자가 회원 이메일을 수정할 때 쓰는 바디."""
+
+    email: EmailStr
+
+
 class OrgRegisterRequest(BaseModel):
     """단체 자율 회원가입 요청. 새 단체를 만들고, 관리자 승인 전까지 비활성 상태로 둔다."""
 

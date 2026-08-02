@@ -617,6 +617,68 @@ def reject_user(user_id: str, db: DBSession, admin_user: AdminUser) -> None:
     db.commit()
 
 
+# /users/me DELETE는 반드시 /users/{user_id} DELETE보다 먼저 등록해야 한다.
+# 아니면 'me'가 user_id로 잡힌다.
+@router.delete("/users/me", status_code=status.HTTP_204_NO_CONTENT)
+def delete_own_account(
+    db: DBSession, current_user: CurrentUser, response: Response
+) -> None:
+    """회원 본인이 계정을 탈퇴(삭제)한다.
+
+    신청·구해요 글은 함께 삭제되고, 소유/작성한 티켓은 소유자만 비워진다(FK SET NULL).
+    """
+    db.delete(current_user)
+    db.commit()
+    clear_auth_cookies(response)
+
+
+@router.patch("/users/{user_id}", response_model=schemas.User)
+def update_user_email(
+    user_id: str,
+    update_in: schemas.UserEmailUpdate,
+    db: DBSession,
+    admin_user: AdminUser,
+) -> models.User:
+    """관리자가 회원 이메일을 수정한다. 이메일은 고유해야 한다."""
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="회원을 찾을 수 없습니다.")
+
+    new_email = str(update_in.email)
+    duplicate = (
+        db.query(models.User)
+        .filter(models.User.email == new_email, models.User.id != user_id)
+        .first()
+    )
+    if duplicate:
+        raise HTTPException(status_code=400, detail="이미 사용 중인 이메일입니다.")
+
+    user.email = new_email
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+@router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_user_by_admin(
+    user_id: str, db: DBSession, admin_user: AdminUser
+) -> None:
+    """관리자가 회원을 탈퇴 처리(삭제)한다.
+
+    본인 계정은 실수 방지를 위해 이 경로로 못 지운다(본인 탈퇴를 쓴다).
+    """
+    if user_id == admin_user.id:
+        raise HTTPException(
+            status_code=400,
+            detail="본인 계정은 여기서 삭제할 수 없습니다. '회원 탈퇴'를 사용하세요.",
+        )
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="회원을 찾을 수 없습니다.")
+    db.delete(user)
+    db.commit()
+
+
 @router.post("/users", response_model=schemas.User, status_code=status.HTTP_201_CREATED)
 def create_user_by_admin(
     user_in: schemas.UserCreate,
