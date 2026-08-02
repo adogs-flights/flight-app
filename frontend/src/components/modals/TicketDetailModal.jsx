@@ -5,6 +5,7 @@ import { getAirportColor } from '../../utils/airportUtils';
 import { toBlob } from 'html-to-image';
 import apiClient from '../../utils/api';
 import TicketDepartureSection from './TicketDepartureSection';
+import TicketEticketSection from './TicketEticketSection';
 
 export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick, onDeleteClick, onUpdate }) {
     const { user, rawAirports } = useAuth();
@@ -335,6 +336,9 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick
                     </div>
                 )}
             </div>
+
+            {/* e티켓 이미지 (소유자/관리자만) — 공유 이미지 캡처 영역 밖에 둔다 */}
+            {canDelete && <TicketEticketSection ticket={ticket} />}
 
             {/* 출국 준비 추가정보 (소유자/관리자만) — 공유 이미지 캡처 영역 밖에 둔다 */}
             {canDelete && (

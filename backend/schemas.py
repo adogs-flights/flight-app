@@ -226,6 +226,7 @@ class Ticket(TicketBase):
     dep_address: str | None = None
     has_passport: bool = False
     has_seat_confirm: bool = False
+    has_eticket: bool = False
     departure_submitted: bool = False
 
     class Config:

@@ -142,14 +142,10 @@ async def create_guest_submission(
     background_tasks: BackgroundTasks,
     phone: Annotated[str, Form()],
     airline: Annotated[str, Form()],
-    verification_method: Annotated[schemas.GuestSubmissionVerificationMethod, Form()],
     kakao_id: Annotated[str, Form()],
-    reservation_number: Annotated[str | None, Form()] = None,
-    passenger_last_name_en: Annotated[str | None, Form()] = None,
-    passenger_first_name_en: Annotated[str | None, Form()] = None,
+    eticket_image: Annotated[UploadFile, File()],
     organization_id: Annotated[int | None, Form()] = None,
     need_post_id: Annotated[str | None, Form()] = None,
-    eticket_image: Annotated[UploadFile | None, File()] = None,
 ) -> models.GuestTicketSubmission:
     """
     Public endpoint. Anyone (no login required) can submit their flight ticket info
@@ -164,21 +160,8 @@ async def create_guest_submission(
     if not kakao_id.strip():
         raise HTTPException(status_code=400, detail="카카오톡 아이디를 입력해주세요.")
 
-    if verification_method == schemas.GuestSubmissionVerificationMethod.eticket_image:
-        if not eticket_image:
-            raise HTTPException(
-                status_code=400, detail="e티켓 이미지를 첨부해주세요."
-            )
-    else:
-        if (
-            not (reservation_number and reservation_number.strip())
-            or not (passenger_last_name_en and passenger_last_name_en.strip())
-            or not (passenger_first_name_en and passenger_first_name_en.strip())
-        ):
-            raise HTTPException(
-                status_code=400,
-                detail="예약번호와 탑승객 성/이름을 모두 입력해주세요.",
-            )
+    if not eticket_image:
+        raise HTTPException(status_code=400, detail="e티켓 이미지를 첨부해주세요.")
 
     if organization_id is not None:
         organization = (
@@ -223,18 +206,12 @@ async def create_guest_submission(
                 status_code=502, detail="이미지 저장소 연결에 실패했습니다."
             ) from e
 
-    is_reservation_method = (
-        verification_method == schemas.GuestSubmissionVerificationMethod.reservation_number
-    )
     db_submission = models.GuestTicketSubmission(
         phone=phone,
         kakao_id=kakao_id,
         airline=airline,
-        verification_method=verification_method.value,
+        verification_method=schemas.GuestSubmissionVerificationMethod.eticket_image.value,
         eticket_object_key=eticket_object_key,
-        reservation_number=reservation_number if is_reservation_method else None,
-        passenger_last_name_en=passenger_last_name_en if is_reservation_method else None,
-        passenger_first_name_en=passenger_first_name_en if is_reservation_method else None,
         organization_id=organization_id,
         need_post_id=need_post_id,
         lookup_token=secrets.token_urlsafe(24),
@@ -391,6 +368,8 @@ def approve_guest_submission(
         status="owned",  # 소유자의 일정으로 들어간다(웹에서 만든 티켓과 동일)
         created_by_id=owner_user_id,
         owner_id=owner_user_id,
+        # 제출 시 받은 e티켓 이미지를 이 일정에서도 볼 수 있게 티켓으로 이관한다.
+        eticket_object_key=submission.eticket_object_key,
     )
     db.add(db_ticket)
     db.commit()

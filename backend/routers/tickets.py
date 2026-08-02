@@ -340,11 +340,11 @@ async def submit_ticket_departure_info(
 
 
 def _serve_ticket_document(ticket: models.Ticket, kind: str) -> Response:
-    object_key = (
-        ticket.passport_object_key
-        if kind == "passport"
-        else ticket.seat_confirm_object_key
-    )
+    object_key = {
+        "passport": ticket.passport_object_key,
+        "seat_confirm": ticket.seat_confirm_object_key,
+        "eticket": ticket.eticket_object_key,
+    }.get(kind)
     if not object_key:
         raise HTTPException(status_code=404, detail="파일을 찾을 수 없습니다.")
     try:
@@ -372,13 +372,26 @@ def get_ticket_seat_confirm(
     return _serve_ticket_document(ticket, "seat_confirm")
 
 
+@router.get("/{ticket_id}/eticket")
+def get_ticket_eticket(
+    ticket_id: str, db: DBSession, current_user: OrgUser
+) -> Response:
+    """봉사자가 제출한 e티켓 이미지 스트리밍(소유자/관리자만)."""
+    ticket = _get_ticket_for_departure(db, ticket_id, current_user)
+    return _serve_ticket_document(ticket, "eticket")
+
+
 @router.delete("/{ticket_id}/departure-info", response_model=schemas.Ticket)
 def delete_ticket_departure_info(
     ticket_id: str, db: DBSession, current_user: OrgUser
 ) -> models.Ticket:
     """티켓의 출국 준비 개인정보를 영구 삭제한다(소유자/관리자만)."""
     ticket = _get_ticket_for_departure(db, ticket_id, current_user)
-    for key in (ticket.passport_object_key, ticket.seat_confirm_object_key):
+    for key in (
+        ticket.passport_object_key,
+        ticket.seat_confirm_object_key,
+        ticket.eticket_object_key,
+    ):
         if key:
             try:
                 storage_service.delete_object(key)
@@ -386,6 +399,7 @@ def delete_ticket_departure_info(
                 print(f"[purge] 파일 삭제 실패 ({key}): {e}")
     ticket.passport_object_key = None
     ticket.seat_confirm_object_key = None
+    ticket.eticket_object_key = None
     ticket.dep_address = None
     db.commit()
     db.refresh(ticket)
