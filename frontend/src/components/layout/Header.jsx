@@ -1,7 +1,6 @@
 import { useAuth } from '../../hooks/useAuth';
 import { Link } from 'react-router-dom';
 import logo from '../../assets/flight-app.PNG'
-import NotificationBell from './NotificationBell';
 
 export default function Header({ onMenuClick, onPwChangeClick }) {
     const { user, logout, deleteAccount } = useAuth();
@@ -43,7 +42,6 @@ export default function Header({ onMenuClick, onPwChangeClick }) {
                 <div className="flex items-center gap-2 sm:gap-4">
                     {user && (
                         <>
-                            <NotificationBell />
                             <div className="flex items-center gap-3">
                                 <div className="flex items-center gap-2 pr-2 border-r">
                                     <div className="flex items-center justify-center w-8 h-8 rounded-full bg-secondary text-secondary-foreground font-bold text-xs ring-1 ring-border shadow-sm">

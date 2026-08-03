@@ -55,12 +55,6 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     organization = relationship("Organization")
-    notifications = relationship(
-        "Notification",
-        back_populates="user",
-        cascade="all, delete-orphan",
-        passive_deletes=True,
-    )
     tickets_created = relationship(
         "Ticket",
         back_populates="creator",
@@ -363,28 +357,3 @@ class GoogleDriveSync(Base):
     )
 
     ticket = relationship("Ticket", back_populates="google_sync")
-
-
-class Notification(Base):
-    """인앱 알림. 이벤트 발생 시 수신자별로 1건씩 저장하고, 벨/뱃지로 노출한다.
-
-    문구는 생성 시점에 렌더해 title/body로 저장한다(발송·표시 로직 분리).
-    link는 클릭 시 이동할 앱 내부 경로(예: '/submissions').
-    """
-
-    __tablename__ = "notifications"
-
-    id = Column(String, primary_key=True, default=generate_uuid)
-    user_id = Column(
-        String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
-    )
-    # 'submission_created' | 'application_received' | 'account_approved' | ...
-    type = Column(String, nullable=False)
-    title = Column(String, nullable=False)
-    body = Column(Text, nullable=True)
-    link = Column(String, nullable=True)  # 앱 내부 딥링크 경로
-    is_read = Column(Boolean, nullable=False, default=False, index=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
-    read_at = Column(DateTime(timezone=True), nullable=True)
-
-    user = relationship("User", back_populates="notifications")

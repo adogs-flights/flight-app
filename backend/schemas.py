@@ -537,23 +537,3 @@ class GuestSubmissionStatusPublic(BaseModel):
 
     class Config:
         from_attributes = True
-
-
-# ======================================================================================
-# Notifications (인앱 알림)
-# ======================================================================================
-class Notification(BaseModel):
-    id: str
-    type: str
-    title: str
-    body: str | None = None
-    link: str | None = None
-    is_read: bool
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
-
-
-class UnreadCount(BaseModel):
-    count: int
