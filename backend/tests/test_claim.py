@@ -130,22 +130,28 @@ def test_admin_cannot_claim_submission(client, db_session, make_user):
     assert submission.user_id is None
 
 
-def test_create_guest_submission_generates_lookup_token(client, db_session):
+def test_create_guest_submission_generates_lookup_token(client, db_session, monkeypatch):
     """공개 제출 엔드포인트가 실제로 lookup_token을 발급하는지 end-to-end로 증명한다.
 
     lookup_token은 NOT NULL 컬럼이라, 이 값을 채우지 못하면 제출 자체가
     IntegrityError로 죽는다. 스키마 검사만으로는 이 경로를 못 잡는다.
+    e티켓 이미지가 필수라, 저장소/드라이브 연동은 목으로 대체하고 파일을 함께 보낸다.
     """
+    import routers.guest_submissions as gs
+
+    monkeypatch.setattr(gs.storage_service, "upload_bytes", lambda *a, **k: None)
+    monkeypatch.setattr(
+        gs.gdrive_service, "backup_guest_submission_to_drive", lambda *a, **k: None
+    )
+
     response = client.post(
         "/api/guest-submissions",
         data={
             "phone": "01099998888",
             "airline": "KE",
-            "verification_method": "reservation_number",
-            "reservation_number": "ABC123",
-            "passenger_last_name_en": "Kim",
-            "passenger_first_name_en": "Minsu",
+            "kakao_id": "gildong",
         },
+        files={"eticket_image": ("eticket.jpg", b"fake-image-bytes", "image/jpeg")},
     )
 
     assert response.status_code == 201

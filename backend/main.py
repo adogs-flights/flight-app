@@ -18,6 +18,7 @@ from routers import (
     guest_submissions,
     master,
     need_posts,
+    notifications,
     organizations,
     ticket_applications,
     tickets,
@@ -135,6 +136,7 @@ app.include_router(need_posts.router)
 app.include_router(master.router)
 app.include_router(organizations.router)
 app.include_router(guest_submissions.router)
+app.include_router(notifications.router)
 
 
 # --- Annotated types ---

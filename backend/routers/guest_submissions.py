@@ -23,7 +23,7 @@ from database import get_db
 from email_utils import send_email
 from permissions import scope_to_org
 from routers.auth import BASE_URL, CurrentUser, OrgUser
-from services import gdrive_service, storage_service
+from services import gdrive_service, notification_service, storage_service
 
 router = APIRouter(prefix="/api/guest-submissions", tags=["Guest Ticket Submissions"])
 
@@ -54,6 +54,25 @@ def _submission_recipients(
             .all()
         )
     return [row[0] for row in rows if row[0]]
+
+
+def _submission_recipient_user_ids(
+    db: Session, submission: models.GuestTicketSubmission
+) -> list[str]:
+    """제출 인앱 알림 수신자(지정 단체 회원 or 관리자)의 user_id."""
+    if submission.organization_id:
+        rows = (
+            db.query(models.User.id)
+            .filter(models.User.organization_id == submission.organization_id)
+            .all()
+        )
+    else:
+        rows = (
+            db.query(models.User.id)
+            .filter(models.User.role == "admin")
+            .all()
+        )
+    return [row[0] for row in rows]
 
 
 def _notify_submission_event(
@@ -250,6 +269,20 @@ async def create_guest_submission(
             db_submission.kakao_id,
             need_post_title,
         )
+
+    # 인앱 알림: 단체 담당자/관리자 벨에 바로 뜨게 저장(이메일과 별개 채널).
+    notification_service.create_notifications(
+        db,
+        _submission_recipient_user_ids(db, db_submission),
+        type="submission_created",
+        title="새 이동봉사 티켓 제출",
+        body=(
+            f"‘{need_post_title}’ 게시글에 새 제출이 접수되었습니다."
+            if need_post_title
+            else "새로운 이동봉사 티켓 제출이 접수되었습니다."
+        ),
+        link="/submissions",
+    )
 
     return db_submission
 

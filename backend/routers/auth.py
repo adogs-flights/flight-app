@@ -14,7 +14,7 @@ import schemas
 from database import get_db
 from email_utils import send_email
 from permissions import scope_to_org
-from services import kakao_service
+from services import kakao_service, notification_service
 
 # ======================================================================================
 # Configuration
@@ -577,6 +577,16 @@ def approve_user(user_id: str, db: DBSession, admin_user: AdminUser) -> models.U
             organization.is_active = True
     db.commit()
     db.refresh(user)
+
+    # 인앱 알림: 승인된 단체 담당자가 로그인하면 벨에서 확인할 수 있다.
+    notification_service.create_notifications(
+        db,
+        [user.id],
+        type="account_approved",
+        title="가입이 승인되었습니다",
+        body="단체 계정 가입이 승인되었습니다. 이제 모든 기능을 이용하실 수 있어요.",
+        link="/schedules",
+    )
     return user
 
 
