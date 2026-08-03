@@ -8,6 +8,7 @@ import schemas
 from database import get_db
 from email_utils import send_email
 from routers.auth import OrgUser
+from services import notification_service
 
 router = APIRouter(prefix="/api", tags=["Ticket Applications"])
 
@@ -80,6 +81,17 @@ def create_application_for_ticket(
         <p>사이트에서 신청 내역을 확인하고 처리해주세요.</p>
         """
         send_email(ticket.owner.email, subject, body)
+
+    # 인앱 알림: 티켓 소유자 벨에 새 신청을 알린다.
+    if ticket.owner_id:
+        notification_service.create_notifications(
+            db,
+            [ticket.owner_id],
+            type="application_received",
+            title="새 나눔 신청 도착",
+            body=f"‘{ticket.title}’ 티켓에 {current_user.name}님이 나눔을 신청했습니다.",
+            link="/mytickets",
+        )
 
     db.refresh(db_application)
     return db_application
