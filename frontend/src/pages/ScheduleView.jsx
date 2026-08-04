@@ -174,7 +174,9 @@ export default function ScheduleView() {
         const lines = monthTickets.map(t => {
             const d = new Date(t.departure_date);
             const when = `${month + 1}/${d.getDate()}(${WEEKDAYS[d.getDay()]})`;
-            return `• ${when} · ${t.arrival_airport || '미지정'} · ${t.capacity ?? 0}마리`;
+            // capacity는 레거시 필드(항상 1)라 신뢰할 수 없다. 실제 정원은 제목에
+            // '기내 N석 / 수하물 M석' 형태로 담겨 있으므로 제목을 그대로 쓴다.
+            return `• ${when} · ${t.arrival_airport || '미지정'} · ${t.title || '제목 없음'}`;
         });
 
         return `${header}\n\n${lines.join('\n')}`;
