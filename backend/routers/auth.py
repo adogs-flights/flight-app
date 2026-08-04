@@ -507,7 +507,18 @@ def register_org(reg_in: schemas.OrgRegisterRequest, db: DBSession) -> models.Us
             detail="이미 등록된 단체명입니다. 담당자 계정 추가는 관리자에게 문의해주세요.",
         )
 
-    organization = models.Organization(name=org_name, is_active=False)
+    # 슬러그(공개 링크 주소)는 가입 시 직접 정한다. 중복이면 막는다.
+    if db.query(models.Organization).filter(models.Organization.slug == reg_in.slug).first():
+        raise HTTPException(
+            status_code=400,
+            detail="이미 사용 중인 링크 주소(slug)입니다. 다른 주소를 입력해주세요.",
+        )
+
+    organization = models.Organization(
+        name=org_name,
+        is_active=False,
+        slug=reg_in.slug,
+    )
     db.add(organization)
     db.flush()  # organization.id 확보
 

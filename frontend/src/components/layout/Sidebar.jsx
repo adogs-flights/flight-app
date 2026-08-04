@@ -33,6 +33,7 @@ function NavItem({ to, icon, children, count }) {
 export default function Sidebar({ isOpen, onClose, onPwChangeClick }) {
     const { user } = useAuth();
     const isAdmin = user?.role === 'admin';
+    const hasOrg = Boolean(user?.organization_id);
 
     // 마지막 확인 시각 이후 생긴 새 내역 개수 (제출 검토·내 신청·내 티켓·단체 승인)
     const counts = useSidebarActivity();
@@ -72,6 +73,7 @@ export default function Sidebar({ isOpen, onClose, onPwChangeClick }) {
                                 <NavItem to="/mytickets" icon="" count={counts.owned_new_applications}>내 티켓</NavItem>
                                 <NavItem to="/myapplications" icon="" count={counts.my_application_updates}>내 신청 현황</NavItem>
                                 <NavItem to="/submissions" icon="" count={counts.submissions}>제출 검토</NavItem>
+                                {hasOrg && <NavItem to="/org-settings" icon="">단체 소개 관리</NavItem>}
                                 {isAdmin && <NavItem to="/admin" icon="" count={counts.pending_orgs}>관리자 페이지</NavItem>}
 
                                 <hr></hr>

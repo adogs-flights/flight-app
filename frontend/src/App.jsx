@@ -19,6 +19,8 @@ import GeneralSignup from './pages/GeneralSignup';
 import OrgSignup from './pages/OrgSignup';
 import PublicNeedBoard from './pages/PublicNeedBoard';
 import SubmissionStatusView from './pages/SubmissionStatusView';
+import OrgIntroView from './pages/OrgIntroView';
+import OrgProfileEdit from './pages/OrgProfileEdit';
 
 function App() {
   return (
@@ -46,6 +48,8 @@ function AppContent() {
       <Route path="/submission-status" element={<SubmissionStatusView />} />
       {/* 카카오 콜백은 로그인 전 상태에서 도착하므로 !user 분기 바깥에 있어야 한다 */}
       <Route path="/auth/kakao/callback" element={<KakaoCallback />} />
+      {/* 공개 단체 소개 페이지 */}
+      <Route path="/org/:slug" element={<OrgIntroView />} />
 
       {!user ? (
         <>
@@ -70,6 +74,7 @@ function AppContent() {
           <Route path="mytickets" element={<MyTicketsView />} />
           <Route path="myapplications" element={<MyApplicationsView />} />
           <Route path="submissions" element={<SubmissionReviewView />} />
+          <Route path="org-settings" element={<OrgProfileEdit />} />
           {user.role === 'admin' && <Route path="admin" element={<AdminView />} />}
           <Route path="*" element={<Navigate to="/" />} />
         </Route>
