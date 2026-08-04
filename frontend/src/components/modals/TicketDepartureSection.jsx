@@ -8,8 +8,10 @@ const fileClass = "flex w-full rounded-lg border-2 border-border bg-background p
 export default function TicketDepartureSection({ ticket, canManage, onDone }) {
     const { apiClient } = useAuth();
     const [address, setAddress] = useState('');
+    const [kakaoId, setKakaoId] = useState('');
     const [passport, setPassport] = useState(null);
     const [seatConfirm, setSeatConfirm] = useState(null);
+    const [eticket, setEticket] = useState(null);
     const [passportUrl, setPassportUrl] = useState('');
     const [seatUrl, setSeatUrl] = useState('');
     const [submitting, setSubmitting] = useState(false);
@@ -33,11 +35,15 @@ export default function TicketDepartureSection({ ticket, canManage, onDone }) {
     const submit = async () => {
         setError('');
         if (!address.trim()) { setError('주소를 입력해주세요.'); return; }
+        if (!kakaoId.trim()) { setError('카카오톡 아이디를 입력해주세요.'); return; }
         if (!passport || !seatConfirm) { setError('여권 사본과 자리 확약 캡쳐를 모두 첨부해주세요.'); return; }
+        if (!eticket && !ticket.has_eticket) { setError('e티켓 사진을 첨부해주세요.'); return; }
         const fd = new FormData();
         fd.append('dep_address', address);
+        fd.append('dep_kakao_id', kakaoId);
         fd.append('passport', passport);
         fd.append('seat_confirm', seatConfirm);
+        if (eticket) fd.append('eticket', eticket);
         setSubmitting(true);
         try {
             const res = await apiClient.post(`/tickets/${ticket.id}/departure-info`, fd);
@@ -60,7 +66,7 @@ export default function TicketDepartureSection({ ticket, canManage, onDone }) {
     };
 
     // 삭제(파기)는 e티켓까지 함께 지운다. 지울 게 하나도 없을 때만 '삭제됨'으로 본다.
-    const purged = ticket.departure_submitted && !ticket.has_passport && !ticket.has_seat_confirm && !ticket.dep_address && !ticket.has_eticket;
+    const purged = ticket.departure_submitted && !ticket.has_passport && !ticket.has_seat_confirm && !ticket.dep_address && !ticket.dep_kakao_id && !ticket.has_eticket;
     // e티켓만 있고 출국 정보는 아직 없는 티켓(승인 직후)에서도 파기할 수 있어야 한다.
     const canPurge = canManage && !purged && (ticket.departure_submitted || ticket.has_eticket);
 
@@ -74,6 +80,7 @@ export default function TicketDepartureSection({ ticket, canManage, onDone }) {
                 ) : (
                     <div className="mt-2 space-y-2">
                         {ticket.dep_address && <div className="text-sm"><span className="font-bold">주소:</span> {ticket.dep_address}</div>}
+                        {ticket.dep_kakao_id && <div className="text-sm"><span className="font-bold">카카오톡 아이디:</span> {ticket.dep_kakao_id}</div>}
                         <div className="flex flex-wrap gap-3">
                             {passportUrl && <a href={passportUrl} target="_blank" rel="noreferrer" className="text-xs font-bold text-primary hover:underline">📄 여권 사본</a>}
                             {seatUrl && <a href={seatUrl} target="_blank" rel="noreferrer" className="text-xs font-bold text-primary hover:underline">🎫 자리 확약 캡쳐</a>}
@@ -83,6 +90,7 @@ export default function TicketDepartureSection({ ticket, canManage, onDone }) {
             ) : canManage ? (
                 <div className="mt-2 space-y-2">
                     <input className={inputClass} value={address} onChange={e => setAddress(e.target.value)} placeholder="출국 준비 서류에 기재될 주소" />
+                    <input className={inputClass} value={kakaoId} onChange={e => setKakaoId(e.target.value)} placeholder="카카오톡 아이디" />
                     <div className="flex flex-col gap-1">
                         <span className="text-[11px] text-muted-foreground">여권 사본</span>
                         <input className={fileClass} type="file" accept="image/*,application/pdf" onChange={e => setPassport(e.target.files?.[0] || null)} />
@@ -90,6 +98,10 @@ export default function TicketDepartureSection({ ticket, canManage, onDone }) {
                     <div className="flex flex-col gap-1">
                         <span className="text-[11px] text-muted-foreground">자리 확약 캡쳐</span>
                         <input className={fileClass} type="file" accept="image/*,application/pdf" onChange={e => setSeatConfirm(e.target.files?.[0] || null)} />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <span className="text-[11px] text-muted-foreground">e티켓 사진{ticket.has_eticket && ' (이미 등록됨 · 교체 시에만 첨부)'}</span>
+                        <input className={fileClass} type="file" accept="image/*,application/pdf" onChange={e => setEticket(e.target.files?.[0] || null)} />
                     </div>
                     {error && <div className="px-3 py-2 text-xs font-medium text-destructive bg-destructive/10 border border-destructive/20 rounded-lg">{error}</div>}
                     <button onClick={submit} disabled={submitting} className="w-full h-10 text-sm font-bold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50">

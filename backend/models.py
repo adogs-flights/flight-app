@@ -127,6 +127,7 @@ class Ticket(Base):
     # 출국 준비 추가정보(2차). 봉사자 제출 티켓이든 단체 등록 티켓이든 여기에 모은다.
     # 민감 파일은 스토리지 키만 저장하고 소유자/관리자만 열람한다.
     dep_address = Column(String, nullable=True)  # 주소
+    dep_kakao_id = Column(String, nullable=True)  # 카카오톡 아이디
     passport_object_key = Column(String, nullable=True)  # 여권 사본
     seat_confirm_object_key = Column(String, nullable=True)  # 자리 확약 캡쳐
     departure_submitted_at = Column(DateTime(timezone=True), nullable=True)
