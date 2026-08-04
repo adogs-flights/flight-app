@@ -438,6 +438,36 @@ def reject_guest_submission(
     return submission
 
 
+@router.delete("/{submission_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_guest_submission(
+    submission_id: str, db: DBSession, current_user: OrgUser
+) -> None:
+    """제출 내역을 영구 삭제한다(자기 단체만, 관리자는 전체).
+
+    검토 목록 정리용. 승인되어 만들어진 일정(티켓)은 건드리지 않고 제출 기록만
+    지운다. 승인 시 e티켓 키를 티켓과 공유하므로, 연결된 티켓이 없을 때만
+    스토리지의 e티켓 이미지를 함께 삭제한다.
+    """
+    query = db.query(models.GuestTicketSubmission).filter(
+        models.GuestTicketSubmission.id == submission_id
+    )
+    submission = scope_to_org(query, current_user, models.GuestTicketSubmission).first()
+    if not submission:
+        raise HTTPException(status_code=404, detail="제출 내역을 찾을 수 없습니다.")
+
+    if submission.eticket_object_key and submission.created_ticket_id is None:
+        try:
+            storage_service.delete_object(submission.eticket_object_key)
+        except Exception as e:  # noqa: BLE001
+            print(
+                f"[submission delete] e티켓 삭제 실패 "
+                f"({submission.eticket_object_key}): {e}"
+            )
+
+    db.delete(submission)
+    db.commit()
+
+
 @router.post(
     "/{submission_id}/departure-info",
     response_model=schemas.GuestSubmissionStatusPublic,
