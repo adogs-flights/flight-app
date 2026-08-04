@@ -10,6 +10,7 @@ const labelClass = "text-xs font-bold uppercase tracking-wider text-muted-foregr
 export default function OrgSignup() {
     const { registerOrg } = useAuth();
     const [organizationName, setOrganizationName] = useState('');
+    const [slug, setSlug] = useState('');
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -24,7 +25,7 @@ export default function OrgSignup() {
         special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
     };
     const isAllPassed = Object.values(checks).every(Boolean);
-    const canSubmit = organizationName.trim() && name.trim() && email.trim() && password && !submitting;
+    const canSubmit = organizationName.trim() && slug.trim() && name.trim() && email.trim() && password && !submitting;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -37,10 +38,15 @@ export default function OrgSignup() {
             setError('비밀번호는 8자 이상이며 영문·숫자·특수문자를 포함해야 합니다.');
             return;
         }
+        if (!/^[a-z0-9-]+$/.test(slug)) {
+            setError('링크 주소는 영문 소문자, 숫자, 하이픈(-)만 사용할 수 있습니다.');
+            return;
+        }
         setSubmitting(true);
         try {
             await registerOrg({
                 organization_name: organizationName.trim(),
+                slug,
                 name: name.trim(),
                 email: email.trim(),
                 password
@@ -87,6 +93,22 @@ export default function OrgSignup() {
                             <div className="space-y-2">
                                 <label className={labelClass}>단체명</label>
                                 <input className={inputClass} value={organizationName} onChange={e => setOrganizationName(e.target.value)} placeholder="예) 사단법인 어독스" />
+                            </div>
+                            <div className="space-y-2">
+                                <label className={labelClass}>공개 링크 주소</label>
+                                <input
+                                    className={inputClass}
+                                    value={slug}
+                                    onChange={e => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                                    placeholder="예) adogs"
+                                    autoCapitalize="none"
+                                    autoCorrect="off"
+                                    spellCheck={false}
+                                />
+                                <p className="text-[11px] text-muted-foreground ml-1">
+                                    소개 페이지·봉사 제출 링크에 쓰입니다: <span className="font-bold text-foreground">/org/{slug || '주소'}</span>
+                                    <br />영문 소문자·숫자·하이픈(-)만 사용 가능합니다.
+                                </p>
                             </div>
                             <div className="space-y-2">
                                 <label className={labelClass}>담당자 이름</label>

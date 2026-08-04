@@ -269,6 +269,16 @@ class Organization(Base):
     slug = Column(String, unique=True, index=True, nullable=True)  # 전용 제출 링크용
     is_active = Column(Boolean, default=True)
 
+    # 공개 단체 소개 페이지(/org/{slug})용 정보. 담당자가 직접 편집한다.
+    description = Column(Text, nullable=True)  # 단체 소개글
+    logo_object_key = Column(String, nullable=True)  # 로고 이미지(스토리지 키)
+    homepage_url = Column(String, nullable=True)  # 홈페이지
+    instagram_url = Column(String, nullable=True)  # 인스타그램
+
+    @property
+    def has_logo(self) -> bool:
+        return self.logo_object_key is not None
+
 
 class GuestTicketSubmission(Base):
     __tablename__ = "guest_ticket_submissions"

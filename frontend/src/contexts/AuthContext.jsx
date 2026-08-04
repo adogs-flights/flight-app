@@ -78,6 +78,13 @@ export const AuthProvider = ({ children }) => {
         setUser(userResponse.data);
     }, []);
 
+    const refreshUser = useCallback(async () => {
+        // 프로필·단체 소개 등을 수정한 뒤 user 정보를 다시 읽어 전역에 반영한다.
+        const userResponse = await apiClient.get('/users/me');
+        setUser(userResponse.data);
+        return userResponse.data;
+    }, []);
+
     const deleteAccount = async () => {
         // 본인 탈퇴: 계정을 삭제하고 로그아웃 상태로 전환한다.
         await apiClient.delete('/users/me');
@@ -95,7 +102,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, deleteAccount, registerOrg, startKakaoLogin, completeKakaoLogin, loading, apiClient, airlines, airports, rawAirports, fetchStaticData }}>
+        <AuthContext.Provider value={{ user, login, logout, deleteAccount, registerOrg, startKakaoLogin, completeKakaoLogin, refreshUser, loading, apiClient, airlines, airports, rawAirports, fetchStaticData }}>
             {children}
         </AuthContext.Provider>
     );

@@ -42,7 +42,23 @@ class OrganizationCreate(OrganizationBase):
     pass
 
 
-class OrganizationUpdate(BaseModel):
+class OrganizationProfileUpdate(BaseModel):
+    """단체 담당자 본인이 편집하는 소개 정보(이름·슬러그·활성 상태는 제외)."""
+
+    description: str | None = None
+    homepage_url: str | None = None
+    instagram_url: str | None = None
+
+    @field_validator("description", "homepage_url", "instagram_url")
+    @classmethod
+    def empty_to_none(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        v = v.strip()
+        return v or None
+
+
+class OrganizationUpdate(OrganizationProfileUpdate):
     name: str | None = None
     slug: str | None = None
     is_active: bool | None = None
@@ -59,6 +75,10 @@ class OrganizationUpdate(BaseModel):
 
 class Organization(OrganizationBase):
     id: int
+    description: str | None = None
+    homepage_url: str | None = None
+    instagram_url: str | None = None
+    has_logo: bool = False
 
     class Config:
         from_attributes = True
@@ -118,6 +138,15 @@ class OrgRegisterRequest(BaseModel):
     email: EmailStr
     password: str
     organization_name: str
+    slug: str  # 공개 소개·제출 링크 주소(/org/{slug})
+
+    @field_validator("slug")
+    @classmethod
+    def slug_format(cls, v: str) -> str:
+        v = (v or "").strip().lower()
+        if not re.fullmatch(r"[a-z0-9-]+", v):
+            raise ValueError("링크 주소는 영문 소문자, 숫자, 하이픈(-)만 사용할 수 있습니다.")
+        return v
 
     @field_validator("password")
     @classmethod
