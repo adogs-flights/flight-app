@@ -28,6 +28,7 @@ export default function ScheduleView() {
     
     const [currentDate, setCurrentDate] = useState(new Date());
     const [isSaving, setIsSaving] = useState(false);
+    const [copied, setCopied] = useState(false);
     const calendarRef = useRef(null);
 
     const year = currentDate.getFullYear();
@@ -151,6 +152,58 @@ export default function ScheduleView() {
         ));
     };
 
+    const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+
+    // 현재 보고 있는 달(+공항 필터)의 일정을 텍스트 한 덩어리로 만든다.
+    const buildMonthText = () => {
+        const monthTickets = filteredTickets
+            .filter(t => {
+                if (!t.departure_date) return false;
+                const d = new Date(t.departure_date);
+                return d.getFullYear() === year && d.getMonth() === month;
+            })
+            .sort((a, b) => new Date(a.departure_date) - new Date(b.departure_date));
+
+        const scope = selectedAirport === '전체' ? '' : ` · ${selectedAirport}`;
+        const header = `📅 ${year}년 ${month + 1}월 봉사 일정${scope} · 총 ${monthTickets.length}건`;
+
+        if (monthTickets.length === 0) {
+            return `${header}\n\n등록된 일정이 없습니다.`;
+        }
+
+        const lines = monthTickets.map(t => {
+            const d = new Date(t.departure_date);
+            const when = `${month + 1}/${d.getDate()}(${WEEKDAYS[d.getDay()]})`;
+            return `• ${when} · ${t.arrival_airport || '미지정'} · ${t.capacity ?? 0}마리`;
+        });
+
+        return `${header}\n\n${lines.join('\n')}`;
+    };
+
+    const handleCopyText = async () => {
+        const text = buildMonthText();
+        try {
+            if (navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(text);
+            } else {
+                // 구형 브라우저·비보안 컨텍스트 폴백
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed';
+                ta.style.opacity = '0';
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+            }
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch (err) {
+            console.error('Copy failed:', err);
+            alert('복사에 실패했습니다.');
+        }
+    };
+
     const handleShare = async (e) => {
         if (e) e.stopPropagation();
         if (!calendarRef.current || isSaving) return;
@@ -225,8 +278,11 @@ export default function ScheduleView() {
                 {view === 'cal' ? (
                     <div className="flex flex-col">
                         <CalendarView tickets={filteredTickets} onTicketClick={handleTicketClick} onMoreClick={handleDayMoreClick} currentDate={currentDate} setCurrentDate={setCurrentDate} calendarRef={calendarRef} isSaving={isSaving} />
-                        <div className="py-4 sm:hidden">
-                            <button className="w-full flex items-center justify-center gap-2 h-11 px-4 text-sm font-bold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm" onClick={handleShare}>일정 공유하기</button>
+                        <div className="flex flex-col sm:flex-row gap-2 py-4">
+                            <button className="w-full sm:w-auto flex items-center justify-center gap-2 h-11 px-4 text-sm font-bold rounded-lg bg-secondary text-secondary-foreground border border-border hover:bg-muted transition-colors" onClick={handleCopyText}>
+                                {copied ? '✓ 복사됨' : '📋 이번 달 일정 텍스트 복사'}
+                            </button>
+                            <button className="w-full sm:w-auto flex items-center justify-center gap-2 h-11 px-4 text-sm font-bold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm sm:hidden" onClick={handleShare}>일정 공유하기</button>
                         </div>
                     </div>
                 ) : (
