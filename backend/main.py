@@ -13,6 +13,7 @@ import models
 from alembic import command
 from database import engine, get_db
 from routers import (
+    activity,
     auth,
     gdrive,
     guest_submissions,
@@ -135,6 +136,7 @@ app.include_router(need_posts.router)
 app.include_router(master.router)
 app.include_router(organizations.router)
 app.include_router(guest_submissions.router)
+app.include_router(activity.router)
 
 
 # --- Annotated types ---

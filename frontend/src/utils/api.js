@@ -19,4 +19,9 @@ export const gdriveApi = {
     setFolder: (folderId) => apiClient.post(`/gdrive/set-folder?folder_id=${folderId}`),
 };
 
+// 사이드바 '새 내역' 표기용 활동 요약
+export const activityApi = {
+    getSidebar: () => apiClient.get('/activity/sidebar'),
+};
+
 export default apiClient;

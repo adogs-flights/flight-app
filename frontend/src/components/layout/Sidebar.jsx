@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { useSidebarActivity } from '../../hooks/useSidebarActivity';
 import logo from '../../assets/flight-app.PNG';
 
 function NavItem({ to, icon, children, count }) {
@@ -33,10 +34,8 @@ export default function Sidebar({ isOpen, onClose, onPwChangeClick }) {
     const { user } = useAuth();
     const isAdmin = user?.role === 'admin';
 
-    // These counts would come from API calls
-    const scheduleCount = 0;
-    const needCount = 0;
-    const giveCount = 0;
+    // 마지막 확인 시각 이후 생긴 새 내역 개수 (제출 검토·내 신청·내 티켓·단체 승인)
+    const counts = useSidebarActivity();
 
     return (
         <>
@@ -67,13 +66,13 @@ export default function Sidebar({ isOpen, onClose, onPwChangeClick }) {
                         <div className="space-y-2">
                             <h4 className="px-3 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/50 mb-3 ml-1">Main Menu</h4>
                             <nav className="flex flex-col gap-1.5">
-                                <NavItem to="/schedules" icon="" count={scheduleCount}>일정 관리</NavItem>
-                                <NavItem to="/needs" icon="" count={needCount}>구해요 게시판</NavItem>
-                                <NavItem to="/give" icon="" count={giveCount}>나눔해요</NavItem>
-                                <NavItem to="/mytickets" icon="">내 티켓</NavItem>
-                                <NavItem to="/myapplications" icon="">내 신청 현황</NavItem>
-                                <NavItem to="/submissions" icon="">제출 검토</NavItem>
-                                {isAdmin && <NavItem to="/admin" icon="">관리자 페이지</NavItem>}
+                                <NavItem to="/schedules" icon="">일정 관리</NavItem>
+                                <NavItem to="/needs" icon="">구해요 게시판</NavItem>
+                                <NavItem to="/give" icon="">나눔해요</NavItem>
+                                <NavItem to="/mytickets" icon="" count={counts.owned_new_applications}>내 티켓</NavItem>
+                                <NavItem to="/myapplications" icon="" count={counts.my_application_updates}>내 신청 현황</NavItem>
+                                <NavItem to="/submissions" icon="" count={counts.submissions}>제출 검토</NavItem>
+                                {isAdmin && <NavItem to="/admin" icon="" count={counts.pending_orgs}>관리자 페이지</NavItem>}
 
                                 <hr></hr>
                                 
