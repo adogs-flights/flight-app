@@ -45,6 +45,16 @@ export default function SubmissionReviewView() {
         reviewModal.openModal();
     };
 
+    const handleDelete = async (item) => {
+        if (!window.confirm('이 제출 내역을 삭제할까요?\n승인되어 만들어진 일정은 그대로 유지됩니다.')) return;
+        try {
+            await apiClient.delete(`/guest-submissions/${item.id}`);
+            fetchData();
+        } catch {
+            alert('삭제에 실패했습니다.');
+        }
+    };
+
     const renderRows = () => {
         if (loading) return <div className="flex items-center justify-center h-[200px] text-sm text-muted-foreground">불러오는 중...</div>;
         if (error) return <div className="m-4 px-4 py-3 text-xs font-medium text-destructive bg-destructive/10 border border-destructive/20 rounded-lg">{error}</div>;
@@ -80,9 +90,14 @@ export default function SubmissionReviewView() {
                                     <td className="px-6 py-4 text-xs">{statusLabel(s.status)}</td>
                                     <td className="px-6 py-4 text-muted-foreground text-xs">{new Date(s.submitted_at).toLocaleDateString()}</td>
                                     <td className="px-6 py-4 text-right">
-                                        <button className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-secondary text-secondary-foreground border border-border hover:bg-muted transition-all active:scale-95" onClick={() => handleReview(s)}>
-                                            {s.status === 'pending' ? '검토' : '상세'}
-                                        </button>
+                                        <div className="flex items-center justify-end gap-2">
+                                            <button className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-secondary text-secondary-foreground border border-border hover:bg-muted transition-all active:scale-95" onClick={() => handleReview(s)}>
+                                                {s.status === 'pending' ? '검토' : '상세'}
+                                            </button>
+                                            <button className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20 transition-all active:scale-95" onClick={() => handleDelete(s)}>
+                                                삭제
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
@@ -98,9 +113,12 @@ export default function SubmissionReviewView() {
                                 <span className="text-[10px] font-bold">{statusLabel(s.status)}</span>
                             </div>
                             <div className="text-xs text-muted-foreground">{methodLabel(s.verification_method)}{s.need_post ? ` · 🐶 ${s.need_post.title}` : ''}</div>
-                            <div className="flex items-center justify-end">
+                            <div className="flex items-center justify-end gap-2">
                                 <button className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-secondary border border-border" onClick={() => handleReview(s)}>
                                     {s.status === 'pending' ? '검토' : '상세'}
+                                </button>
+                                <button className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-destructive/10 text-destructive border border-destructive/20" onClick={() => handleDelete(s)}>
+                                    삭제
                                 </button>
                             </div>
                         </div>
