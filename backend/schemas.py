@@ -38,10 +38,6 @@ class OrganizationBase(BaseModel):
         return v
 
 
-class OrganizationCreate(OrganizationBase):
-    pass
-
-
 class OrganizationProfileUpdate(BaseModel):
     """단체 담당자 본인이 편집하는 소개 정보(이름·슬러그·활성 상태는 제외)."""
 
@@ -56,6 +52,10 @@ class OrganizationProfileUpdate(BaseModel):
             return None
         v = v.strip()
         return v or None
+
+
+class OrganizationCreate(OrganizationBase, OrganizationProfileUpdate):
+    pass
 
 
 class OrganizationUpdate(OrganizationProfileUpdate):
