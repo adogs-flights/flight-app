@@ -566,6 +566,8 @@ def _build_ticket_info_text(db: Session, ticket: models.Ticket) -> str:
     lines.append(f"담당자: {ticket.manager_name or '-'}")
     lines.append(f"연락처: {ticket.contact or '-'}")
     lines.append(f"주소: {ticket.dep_address or '-'}")
+    if ticket.dep_kakao_id:
+        lines.append(f"카카오톡 아이디: {ticket.dep_kakao_id}")
     lines.append(f"항공사: {ticket.airline or '-'}")
     lines.append(f"도착 공항: {ticket.arrival_airport or '-'}")
     lines.append(
@@ -606,6 +608,7 @@ def upload_departure_docs_to_ticket_folder(db: Session, ticket_id: str) -> None:
     docs = [
         ("0 passport", ticket.passport_object_key),
         ("2 confirmation", ticket.seat_confirm_object_key),
+        ("3 eticket", ticket.eticket_object_key),
     ]
     for label, object_key in docs:
         if not object_key:

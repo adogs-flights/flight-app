@@ -224,6 +224,7 @@ class Ticket(TicketBase):
     google_sync: GoogleDriveSync | None = None
     # 출국 준비 추가정보 (파일은 boolean으로만 노출, 실제 파일은 소유자/관리자만 서빙)
     dep_address: str | None = None
+    dep_kakao_id: str | None = None
     has_passport: bool = False
     has_seat_confirm: bool = False
     has_eticket: bool = False

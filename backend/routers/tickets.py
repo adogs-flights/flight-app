@@ -314,8 +314,10 @@ async def submit_ticket_departure_info(
     current_user: OrgUser,
     background_tasks: BackgroundTasks,
     dep_address: Annotated[str, Form()],
+    dep_kakao_id: Annotated[str | None, Form()] = None,
     passport: Annotated[UploadFile | None, File()] = None,
     seat_confirm: Annotated[UploadFile | None, File()] = None,
+    eticket: Annotated[UploadFile | None, File()] = None,
 ) -> models.Ticket:
     """단체 담당자가 티켓에 출국 준비 추가정보를 입력한다(봉사자 2차 입력과 동일 항목).
 
@@ -328,7 +330,10 @@ async def submit_ticket_departure_info(
         ticket.seat_confirm_object_key = await _store_departure_doc(
             seat_confirm, "seatconfirm"
         )
+    if eticket:
+        ticket.eticket_object_key = await _store_departure_doc(eticket, "eticket")
     ticket.dep_address = dep_address.strip()
+    ticket.dep_kakao_id = (dep_kakao_id or "").strip() or None
     ticket.departure_submitted_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(ticket)
@@ -401,6 +406,7 @@ def delete_ticket_departure_info(
     ticket.seat_confirm_object_key = None
     ticket.eticket_object_key = None
     ticket.dep_address = None
+    ticket.dep_kakao_id = None
     db.commit()
     db.refresh(ticket)
     return ticket
