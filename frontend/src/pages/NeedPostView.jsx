@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import NeedPostItem from '../components/NeedPostItem';
+import NeedPostCard from '../components/NeedPostCard';
 import NeedPostFormModal from '../components/modals/NeedPostFormModal';
 import NeedPostDetailModal from '../components/modals/NeedPostDetailModal';
 import { useModal } from '../hooks/useModal';
@@ -93,21 +93,37 @@ export default function NeedPostView() {
         return true;
     });
 
+    // 급구·미해결을 위로, 해결된 글은 아래로. 같은 그룹은 희망일이 빠른 순.
+    const sortedPosts = [...filteredPosts].sort((a, b) => {
+        if (a.is_resolved !== b.is_resolved) return a.is_resolved ? 1 : -1;
+        if (a.is_urgent !== b.is_urgent) return a.is_urgent ? -1 : 1;
+        const da = a.desired_date ? new Date(a.desired_date).getTime() : Infinity;
+        const db = b.desired_date ? new Date(b.desired_date).getTime() : Infinity;
+        return da - db;
+    });
+
     const renderContent = () => {
         if (postsState.loading) {
-            return <div className="empty"><div>Loading...</div></div>;
+            return <div className="flex items-center justify-center py-20 text-sm text-muted-foreground">불러오는 중...</div>;
         }
         if (postsState.error) {
-            return <div className="empty"><div className="text-red-500">{postsState.error}</div></div>;
+            return <div className="flex items-center justify-center py-20 text-sm text-destructive">{postsState.error}</div>;
         }
-        if (filteredPosts.length === 0) {
-            return <div className="empty flex space-x-1"><div className="empty-icon">🔍</div><div className="empty-text">조건에 맞는 게시글이 없습니다</div></div>;
+        if (sortedPosts.length === 0) {
+            return (
+                <div className="flex flex-col items-center justify-center py-20 gap-2 text-muted-foreground">
+                    <span className="text-3xl">🔍</span>
+                    <span className="text-sm">조건에 맞는 게시글이 없습니다</span>
+                </div>
+            );
         }
-        return filteredPosts.map(post => (
-            <div key={post.id} onClick={() => handleDetailClick(post)} style={{ cursor: 'pointer' }}>
-                <NeedPostItem post={post} />
+        return (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {sortedPosts.map(post => (
+                    <NeedPostCard key={post.id} post={post} onClick={() => handleDetailClick(post)} />
+                ))}
             </div>
-        ));
+        );
     };
 
     return (
@@ -136,31 +152,34 @@ export default function NeedPostView() {
                 </div>
             </div>
 
-            <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                <button
-                    className={`shrink-0 px-4 py-1.5 text-xs font-black rounded-full border-2 transition-all ${activeFilter === 'ALL' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-muted-foreground border-border hover:border-primary/30'}`}
-                    onClick={() => setActiveFilter('ALL')}
-                >
-                    전체
-                </button>
-                <button
-                    className={`shrink-0 px-4 py-1.5 text-xs font-black rounded-full border-2 transition-all ${activeFilter === 'THIS_MONTH' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-muted-foreground border-border hover:border-primary/30'}`}
-                    onClick={() => setActiveFilter('THIS_MONTH')}
-                >
-                    이번 달
-                </button>
-                <button
-                    className={`shrink-0 px-4 py-1.5 text-xs font-black rounded-full border-2 transition-all ${activeFilter === 'AFTER_MONTH' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-muted-foreground border-border hover:border-primary/30'}`}
-                    onClick={() => setActiveFilter('AFTER_MONTH')}
-                >
-                    이번 달 이후
-                </button>
+            <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                    <button
+                        className={`shrink-0 px-4 py-1.5 text-xs font-black rounded-full border-2 transition-all ${activeFilter === 'ALL' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-muted-foreground border-border hover:border-primary/30'}`}
+                        onClick={() => setActiveFilter('ALL')}
+                    >
+                        전체
+                    </button>
+                    <button
+                        className={`shrink-0 px-4 py-1.5 text-xs font-black rounded-full border-2 transition-all ${activeFilter === 'THIS_MONTH' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-muted-foreground border-border hover:border-primary/30'}`}
+                        onClick={() => setActiveFilter('THIS_MONTH')}
+                    >
+                        이번 달
+                    </button>
+                    <button
+                        className={`shrink-0 px-4 py-1.5 text-xs font-black rounded-full border-2 transition-all ${activeFilter === 'AFTER_MONTH' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-muted-foreground border-border hover:border-primary/30'}`}
+                        onClick={() => setActiveFilter('AFTER_MONTH')}
+                    >
+                        이번 달 이후
+                    </button>
+                </div>
+                {!postsState.loading && !postsState.error && (
+                    <span className="shrink-0 text-xs font-bold text-muted-foreground whitespace-nowrap">총 {sortedPosts.length}건</span>
+                )}
             </div>
 
-            <div className="flex flex-col bg-card rounded-xl overflow-hidden min-h-[400px]">
-                <div className="flex-1 divide-y divide-border/50 animate-in fade-in duration-300 px-5">
-                    {renderContent()}
-                </div>
+            <div className="min-h-[400px] animate-in fade-in duration-300">
+                {renderContent()}
             </div>
 
             <NeedPostFormModal 
