@@ -59,7 +59,9 @@ def get_gdrive_status(current_user: CurrentUser, db: DBSession) -> dict[str, Any
         .filter(models.UserGoogleToken.user_id == current_user.id)
         .first()
     )
-    if not token:
+    # 연동 해제 시 토큰만 비우고 row·폴더 ID는 보존하므로,
+    # 실제 연결 여부는 access_token 유무로 판단한다.
+    if not token or not token.access_token:
         return {"is_connected": False}
 
     return {
