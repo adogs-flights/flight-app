@@ -115,9 +115,9 @@ function GoogleDriveSyncPanel({ onStatusUpdate }) {
                             <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
                                 {!status.is_connected 
                                     ? '구글 계정을 연결하여 티켓을 구글 드라이브와 자동으로 동기화해보세요.'
-                                    : !status.root_folder_id 
+                                    : !status.root_folder_id
                                         ? '연동이 완료되었습니다. 아래 버튼을 눌러 동기화 폴더를 설정해주세요.'
-                                        : "구글 드라이브의 '해봉티켓_동기화' 폴더와 연결되어 있습니다."}
+                                        : '구글 드라이브 동기화 폴더와 연결되어 있습니다. 다른 폴더로 바꾸려면 폴더 변경을 눌러주세요.'}
                             </p>
                         </div>
                     </div>
@@ -151,10 +151,14 @@ function GoogleDriveSyncPanel({ onStatusUpdate }) {
                             </div>
                         ) : (
                             <div className="flex items-center gap-2 w-full sm:w-auto">
-                                <div className="flex-1 sm:flex-none text-center text-xs font-bold text-slate-400 bg-white px-4 py-2.5 rounded-xl border-2 border-slate-100 whitespace-nowrap">
-                                    설정 완료
-                                </div>
-                                <button 
+                                <button
+                                    onClick={openSelectModal}
+                                    disabled={actionLoading}
+                                    className="flex-1 sm:flex-none bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold px-5 py-2.5 rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50 whitespace-nowrap"
+                                >
+                                    폴더 변경
+                                </button>
+                                <button
                                     onClick={handleDisconnect}
                                     disabled={actionLoading}
                                     className="shrink-0 bg-destructive/10 hover:bg-destructive/20 text-destructive border-2 border-destructive/10 text-xs font-bold px-4 py-2.5 rounded-xl transition-all active:scale-95 disabled:opacity-50"

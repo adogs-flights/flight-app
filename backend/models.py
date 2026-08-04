@@ -336,7 +336,7 @@ class UserGoogleToken(Base):
     user_id = Column(
         String, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False
     )
-    access_token = Column(String, nullable=False)
+    access_token = Column(String, nullable=True)  # 연동 해제 시 None (폴더 ID 보존)
     refresh_token = Column(String, nullable=True)
     expires_at = Column(DateTime(timezone=True), nullable=False)
     root_folder_id = Column(String, nullable=True)  # 동기화 루트 폴더 ID
