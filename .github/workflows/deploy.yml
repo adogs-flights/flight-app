@@ -99,14 +99,14 @@ jobs:
       IMAGE_NAME_BACKEND: ghcr.io/${{ github.repository_owner }}/flight-backend
     steps:
       - uses: actions/checkout@v4
-      - name: Copy docker-compose.yml
+      - name: Copy deployment files
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.ORACLE_HOST }}
           username: ${{ secrets.ORACLE_USER }}
           key: ${{ secrets.ORACLE_KEY }}
           port: ${{ secrets.ORACLE_PORT }}
-          source: "docker-compose.yml"
+          source: "docker-compose.yml,frontend/public/privacy.html,frontend/public/terms.html"
           target: "/home/ubuntu/flight-app"
 
       - name: Deploy via SSH (Robust)
@@ -132,6 +132,10 @@ jobs:
             # 환경 변수 명시적 전달 및 이미지 갱신
             export IMAGE_NAME_FRONTEND=$IMAGE_NAME_FRONTEND
             export IMAGE_NAME_BACKEND=$IMAGE_NAME_BACKEND
+
+            # Nginx가 직접 제공하는 공개 정책 문서를 현재 소스와 동기화한다.
+            install -m 0644 frontend/public/privacy.html /home/ubuntu/nginx/flight-privacy.html
+            install -m 0644 frontend/public/terms.html /home/ubuntu/nginx/flight-terms.html
             
             docker compose pull
 
