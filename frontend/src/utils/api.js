@@ -13,10 +13,8 @@ export const gdriveApi = {
     getStatus: () => apiClient.get('/gdrive/status'),
     connect: () => apiClient.get('/gdrive/connect'),
     disconnect: () => apiClient.delete('/gdrive/disconnect'),
-    setupFolder: (folderName, autoCreate = true) =>
-        apiClient.post(`/gdrive/setup-folder?folder_name=${encodeURIComponent(folderName)}&auto_create=${autoCreate}`),
-    listFolders: () => apiClient.get('/gdrive/folders'),
-    setFolder: (folderId) => apiClient.post(`/gdrive/set-folder?folder_id=${folderId}`),
+    setupFolder: (folderName) =>
+        apiClient.post(`/gdrive/setup-folder?folder_name=${encodeURIComponent(folderName)}`),
 };
 
 // 사이드바 '새 내역' 표기용 활동 요약

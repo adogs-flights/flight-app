@@ -129,12 +129,12 @@ const ROLES = {
                 ),
             },
             {
-                title: '구글 드라이브 연동으로 서류 보관',
-                where: '내 티켓 → 구글 드라이브 동기화',
+                title: 'Google Drive 백업으로 서류 보관',
+                where: '내 티켓 → Google Drive 백업',
                 desc: (
                     <>
-                        <p>구글 계정을 연결하고 동기화 폴더를 지정하면, e티켓·제출 정보가 <strong className="text-foreground">‘해봉티켓_동기화’ 폴더</strong>에 자동으로 저장됩니다.</p>
-                        <p>연동 상태(미연결 → 폴더 설정 필요 → 연동중)를 패널에서 단계별로 확인할 수 있어요.</p>
+                        <p>구글 계정을 연결하고 전용 폴더를 만들면, e티켓·제출 정보가 <strong className="text-foreground">‘해봉티켓_동기화’ 폴더</strong>에 자동으로 저장됩니다.</p>
+                        <p>해봉티켓이 직접 생성한 폴더와 파일만 관리하며, Drive의 다른 개인 파일에는 접근하지 않아요.</p>
                     </>
                 ),
             },

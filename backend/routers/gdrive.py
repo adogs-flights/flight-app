@@ -77,7 +77,6 @@ def connect_google_drive(current_user: CurrentUser) -> dict[str, str]:
     # PKCE를 위해 flow에서 생성된 code_verifier를 state에 포함
     authorization_url, _ = flow.authorization_url(
         access_type="offline",
-        include_granted_scopes="true",
         prompt="consent"
     )
 
@@ -87,7 +86,6 @@ def connect_google_drive(current_user: CurrentUser) -> dict[str, str]:
     # 생성된 state를 포함하여 다시 URL 구성
     authorization_url, _ = flow.authorization_url(
         access_type="offline",
-        include_granted_scopes="true",
         prompt="consent",
         state=state
     )
@@ -164,7 +162,9 @@ def google_drive_callback(
 @router.delete("/disconnect")
 def disconnect_google_drive(current_user: CurrentUser, db: DBSession) -> dict[str, str]:
     """
-    구글 드라이브 연동을 해제합니다. 토큰 정보만 삭제하고 루트 폴더 아이디는 보존합니다.
+    구글 드라이브 연동을 해제하고 앱의 토큰·폴더 연결 정보를 삭제합니다.
+
+    Google Drive에 이미 생성된 실제 폴더와 파일은 삭제하지 않습니다.
     """
     token = (
         db.query(models.UserGoogleToken)
@@ -174,82 +174,31 @@ def disconnect_google_drive(current_user: CurrentUser, db: DBSession) -> dict[st
     if not token:
         raise HTTPException(status_code=404, detail="연동된 계정이 없습니다.")
 
-    # 토큰 정보만 비우기 (루트 폴더 ID 보존)
+    # 좁은 drive.file 권한으로 재연결할 때 과거의 임의 폴더를 재사용하지 않도록
+    # 앱에 저장된 연결 정보도 함께 비운다. Drive의 실제 데이터는 그대로 남는다.
     token.access_token = None
     token.refresh_token = None
+    token.root_folder_id = None
     db.commit()
 
     return {
         "detail": (
             "구글 드라이브 연동이 해제되었습니다. "
-            "설정된 폴더 정보는 유지됩니다."
+            "Drive에 백업된 폴더와 파일은 그대로 유지됩니다."
         )
     }
-
-
-@router.get("/folders")
-def get_google_drive_folders(
-    current_user: CurrentUser, db: DBSession
-) -> list[dict[str, str]]:
-    """
-    사용자의 구글 드라이브에서 폴더 목록을 조회합니다.
-    """
-    token = (
-        db.query(models.UserGoogleToken)
-        .filter(models.UserGoogleToken.user_id == current_user.id)
-        .first()
-    )
-    if not token or not token.access_token:
-        raise HTTPException(status_code=400, detail="구글 연동이 필요합니다.")
-
-    return gdrive_service.list_user_folders(token)
-
-
-@router.post("/set-folder")
-def set_google_drive_folder(
-    current_user: CurrentUser,
-    db: DBSession,
-    background_tasks: BackgroundTasks,
-    folder_id: str
-) -> dict[str, Any]:
-    """
-    기존의 특정 폴더를 동기화 폴더로 설정합니다.
-    """
-    token = (
-        db.query(models.UserGoogleToken)
-        .filter(models.UserGoogleToken.user_id == current_user.id)
-        .first()
-    )
-    if not token or not token.access_token:
-        raise HTTPException(status_code=400, detail="구글 연동이 필요합니다.")
-
-    # 1. DB에 폴더 ID 저장
-    token.root_folder_id = folder_id
-    db.commit()
-
-    # 2. 초기 동기화 트리거 (v1.7 정합성 강화를 위해 구현했으나 단방향 전환을 위해 주석 처리)
-    # background_tasks.add_task(
-    #     gdrive_service.sync_drive_to_web, db, current_user.id, folder_id
-    # )
-
-    # try:
-    #     gdrive_service.watch_folder(token, folder_id)
-    # except Exception as e:
-    #     print(f"Watch 등록 실패 (무시 가능): {e}")
-
-    return {"detail": "폴더 설정이 완료되었습니다.", "folder_id": folder_id}
 
 
 @router.post("/setup-folder")
 def setup_sync_folder(
     current_user: CurrentUser,
     db: DBSession,
-    background_tasks: BackgroundTasks,
-    folder_name: str | None = "해봉티켓_동기화",
-    auto_create: bool = True
+    folder_name: str = "해봉티켓_동기화",
 ) -> dict[str, Any]:
     """
-    동기화용 루트 폴더를 설정하거나 자동으로 생성합니다.
+    해봉티켓 전용 루트 폴더를 찾거나 새로 생성합니다.
+
+    drive.file 범위에서는 서비스가 직접 생성한 폴더만 조회·관리한다.
     """
     token = (
         db.query(models.UserGoogleToken)
@@ -261,34 +210,14 @@ def setup_sync_folder(
             status_code=400, detail="구글 연동이 선행되어야 합니다."
         )
 
-    folder_id = None
-    if auto_create:
-        # 1. 같은 이름의 폴더가 있는지 먼저 확인 (중복 생성 방지)
-        folder_id = gdrive_service.find_folder_by_name(token, folder_name)
-        if not folder_id:
-            # 2. 없으면 생성
-            folder_id = gdrive_service.create_root_sync_folder(token, folder_name)
-    else:
-        # 이름으로 찾기만 수행
-        folder_id = gdrive_service.find_folder_by_name(token, folder_name)
-        if not folder_id:
-            raise HTTPException(
-                status_code=404, detail="해당 이름의 폴더를 찾을 수 없습니다."
-            )
+    # 같은 이름의 앱 생성 폴더를 재사용하고, 없으면 새로 만든다.
+    folder_id = gdrive_service.find_folder_by_name(token, folder_name)
+    if not folder_id:
+        folder_id = gdrive_service.create_root_sync_folder(token, folder_name)
 
-    # 3. DB에 폴더 ID 저장
+    # DB에는 앱이 관리할 수 있는 전용 폴더 ID만 저장한다.
     token.root_folder_id = folder_id
     db.commit()
-
-    # 4. 초기 동기화 트리거 (단방향 전환을 위해 주석 처리)
-    # background_tasks.add_task(
-    #     gdrive_service.sync_drive_to_web, db, current_user.id, folder_id
-    # )
-
-    # try:
-    #     gdrive_service.watch_folder(token, folder_id)
-    # except Exception as e:
-    #     print(f"Watch 등록 실패 (무시 가능): {e}")
 
     return {"detail": "폴더 설정이 완료되었습니다.", "folder_id": folder_id}
 

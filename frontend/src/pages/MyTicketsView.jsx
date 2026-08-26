@@ -5,7 +5,7 @@ import TicketFormModal from '../components/modals/TicketFormModal';
 import ApplicantListModal from '../components/modals/ApplicantListModal';
 import TicketDetailModal from '../components/modals/TicketDetailModal';
 import DateFilterModal from '../components/modals/DateFilterModal';
-import FolderSelectModal from '../components/modals/FolderSelectModal';
+import FolderSetupModal from '../components/modals/FolderSetupModal';
 import { useModal } from '../hooks/useModal';
 import { getAirportColor } from '../utils/airportUtils';
 import { gdriveApi } from '../utils/api';
@@ -66,30 +66,13 @@ function GoogleDriveSyncPanel({ onStatusUpdate }) {
     const handleSetupFolder = async (folderName) => {
         setActionLoading(true);
         try {
-            await gdriveApi.setupFolder(folderName, true);
+            await gdriveApi.setupFolder(folderName);
             alert(`'${folderName}' 폴더가 생성되고 연동되었습니다.`);
             closeSelectModal();
             fetchStatus();
             onStatusUpdate && onStatusUpdate();
         } catch {
             alert('폴더 생성에 실패했습니다.');
-        } finally {
-            setActionLoading(false);
-        }
-    };
-
-    const handleSelectFolder = async (folder) => {
-        if (!window.confirm(`'${folder.name}' 폴더를 동기화 폴더로 설정하시겠습니까?`)) return;
-        
-        setActionLoading(true);
-        try {
-            await gdriveApi.setFolder(folder.id);
-            alert('폴더 설정이 완료되었습니다.');
-            closeSelectModal();
-            fetchStatus();
-            onStatusUpdate && onStatusUpdate();
-        } catch {
-            alert('폴더 설정에 실패했습니다.');
         } finally {
             setActionLoading(false);
         }
@@ -107,17 +90,17 @@ function GoogleDriveSyncPanel({ onStatusUpdate }) {
                         </div>
                         <div className="flex-1 min-w-0">
                             <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                                구글 드라이브 동기화
+                                Google Drive 백업
                                 {status.is_connected && status.root_folder_id && (
                                     <span className="bg-green-100 text-green-700 text-[10px] px-2 py-0.5 rounded-full font-black">연동중</span>
                                 )}
                             </h3>
                             <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
                                 {!status.is_connected 
-                                    ? '구글 계정을 연결하여 티켓을 구글 드라이브와 자동으로 동기화해보세요.'
+                                    ? '구글 계정을 연결하여 e티켓과 출국 준비 파일을 전용 폴더에 백업해보세요.'
                                     : !status.root_folder_id
                                         ? '연동이 완료되었습니다. 아래 버튼을 눌러 동기화 폴더를 설정해주세요.'
-                                        : '구글 드라이브 동기화 폴더와 연결되어 있습니다. 다른 폴더로 바꾸려면 폴더 변경을 눌러주세요.'}
+                                        : '해봉티켓 전용 폴더에 e티켓과 출국 준비 파일을 안전하게 백업합니다.'}
                             </p>
                         </div>
                     </div>
@@ -156,7 +139,7 @@ function GoogleDriveSyncPanel({ onStatusUpdate }) {
                                     disabled={actionLoading}
                                     className="flex-1 sm:flex-none bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold px-5 py-2.5 rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50 whitespace-nowrap"
                                 >
-                                    폴더 변경
+                                    전용 폴더 설정
                                 </button>
                                 <button
                                     onClick={handleDisconnect}
@@ -171,11 +154,11 @@ function GoogleDriveSyncPanel({ onStatusUpdate }) {
                 </div>
             </div>
 
-            <FolderSelectModal 
+            <FolderSetupModal
                 isOpen={isSelectOpen} 
                 onClose={closeSelectModal} 
-                onSelect={handleSelectFolder}
-                onCreate={handleSetupFolder} 
+                onCreate={handleSetupFolder}
+                loading={actionLoading}
             />
         </>
     );

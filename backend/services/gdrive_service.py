@@ -16,7 +16,6 @@ from services import storage_service
 # Google API Scopes
 SCOPES = [
     "https://www.googleapis.com/auth/drive.file",
-    "https://www.googleapis.com/auth/drive.metadata.readonly",
 ]
 
 # 환경 변수 설정
@@ -364,23 +363,6 @@ def find_folder_by_name(
     return folders[0]["id"] if folders else None
 
 
-def list_user_folders(user_token: models.UserGoogleToken) -> list[dict[str, str]]:
-    """
-    사용자의 구글 드라이브에서 폴더 목록을 가져옵니다.
-    """
-    service = get_drive_service(user_token)
-    query = "mimeType = 'application/vnd.google-apps.folder' and trashed = false"
-
-    results = service.files().list(
-        q=query,
-        fields="files(id, name)",
-        pageSize=50,
-        orderBy="name"
-    ).execute()
-
-    return results.get("files", [])
-
-
 def get_or_create_folder(
     user_token: models.UserGoogleToken,
     folder_name: str,
@@ -649,5 +631,4 @@ def create_root_sync_folder(
     }
     folder = service.files().create(body=file_metadata, fields="id").execute()
     return folder.get("id")
-
 

@@ -51,11 +51,12 @@ export default function LandingPage() {
                 <div className="relative max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-16 flex flex-col items-center text-center gap-8">
                     <img src={logo} alt="" className="w-20 h-20 sm:w-24 sm:h-24 animate-in fade-in zoom-in-95 duration-500" />
                     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both" style={{ animationDelay: '100ms' }}>
-                        <p className="text-sm sm:text-base font-black tracking-[0.2em] text-primary uppercase">해봉티켓</p>
-                        <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-foreground">
+                        <p className="text-sm sm:text-base font-black tracking-[0.2em] text-primary uppercase">해외이동봉사 매칭 서비스</p>
+                        <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-foreground">해봉티켓</h1>
+                        <h2 className="text-xl sm:text-3xl font-bold tracking-tight text-foreground">
                             강아지의 해외 이동,<br />
                             <span className="text-primary">함께 봉사해요</span>
-                        </h1>
+                        </h2>
                         <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
                             <span className="font-bold text-foreground">해봉티켓</span>은 출국을 앞둔 항공권 소유자와
                             이동봉사가 필요한 유기견 구조 단체를 연결해, 구조된 강아지의 해외 입양·이동을 돕는
