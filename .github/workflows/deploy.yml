@@ -28,6 +28,7 @@ jobs:
               - 'backend/**'
             config:
               - 'docker-compose.yml'
+              - 'nginx/**'
               - '.github/workflows/deploy.yml'
 
   # 프론트엔드 빌드 (병렬 실행 & 캐싱 적용)
@@ -106,7 +107,7 @@ jobs:
           username: ${{ secrets.ORACLE_USER }}
           key: ${{ secrets.ORACLE_KEY }}
           port: ${{ secrets.ORACLE_PORT }}
-          source: "docker-compose.yml,frontend/public/privacy.html,frontend/public/terms.html"
+          source: "docker-compose.yml,nginx,frontend/public/privacy.html,frontend/public/terms.html"
           target: "/home/ubuntu/flight-app"
 
       - name: Deploy via SSH (Robust)
@@ -133,19 +134,36 @@ jobs:
             export IMAGE_NAME_FRONTEND=$IMAGE_NAME_FRONTEND
             export IMAGE_NAME_BACKEND=$IMAGE_NAME_BACKEND
 
-            # Nginx가 직접 제공하는 공개 정책 문서를 현재 소스와 동기화한다.
-            install -m 0644 frontend/public/privacy.html /home/ubuntu/nginx/flight-privacy.html
-            install -m 0644 frontend/public/terms.html /home/ubuntu/nginx/flight-terms.html
-            
+            docker network inspect shared-infra >/dev/null
+
             docker compose pull
 
-            # DB가 healthy가 될 때까지 기다린 뒤 마이그레이션을 먼저 적용한다.
+            # shared-infra PostgreSQL이 healthy가 될 때까지 기다린 뒤 마이그레이션을 먼저 적용한다.
             # main.py도 기동 시 alembic upgrade를 돌리지만 그쪽은 예외를 삼켜서
             # 실패해도 앱이 그대로 뜬다. 여기서 돌려야 set -e로 배포가 멈춘다.
-            docker compose up -d flight-db
+            for attempt in $(seq 1 30); do
+              if docker exec postgresql sh -lc 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"' >/dev/null 2>&1; then
+                break
+              fi
+              if [ "$attempt" -eq 30 ]; then
+                echo "shared-infra PostgreSQL did not become ready"
+                exit 1
+              fi
+              sleep 2
+            done
+
             docker compose run --rm flight-backend alembic upgrade head
 
             docker compose up -d --remove-orphans
-            
-            # 사용하지 않는 이미지 정리 (선택 사항)
-            docker image prune -f
+
+            for attempt in $(seq 1 30); do
+              if curl --fail --silent --show-error -H 'Host: adogs-ticket.shop' http://127.0.0.1:18091/ >/dev/null; then
+                exit 0
+              fi
+              if [ "$attempt" -eq 30 ]; then
+                docker compose ps
+                docker logs --tail 100 flight-nginx || true
+                exit 1
+              fi
+              sleep 2
+            done

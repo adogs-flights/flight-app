@@ -1,59 +1,57 @@
 services:
-  flight-db:
-    image: postgres:16-alpine
-    container_name: postgresql
-    ports:
-      - "15432:5432"
-    environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - flight-app
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-    restart: unless-stopped
-
   flight-backend:
     image: ${IMAGE_NAME_BACKEND:-flight-backend}:latest
     container_name: flight-backend
-    ports:
-      - "127.0.0.1:8010:8010"
     volumes:
       - ./data:/app/data
     env_file:
       - .env
     networks:
       - flight-app
+      - shared-infra
       - monitoring_net
-    depends_on:
-      flight-db:
-        condition: service_healthy
     restart: unless-stopped
 
   flight-frontend:
     image: ${IMAGE_NAME_FRONTEND:-flight-frontend}:latest
     container_name: flight-frontend
-    ports:
-      - "127.0.0.1:3010:3010"
     networks:
       - flight-app
     depends_on:
       - flight-backend
     restart: unless-stopped
 
+  flight-nginx:
+    image: nginx@sha256:5aca99593157f4ae539a5dec1092a0ad8762f8e2eb1789085a13a0f5622369f6
+    container_name: flight-nginx
+    ports:
+      - "127.0.0.1:18091:80"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./frontend/public/privacy.html:/usr/share/nginx/html/privacy.html:ro
+      - ./frontend/public/terms.html:/usr/share/nginx/html/terms.html:ro
+    depends_on:
+      - flight-backend
+      - flight-frontend
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - flight-app
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
 networks:
   flight-app:
     name: flight-app
     external: true
+  shared-infra:
+    name: shared-infra
+    external: true
   monitoring_net:
     name: monitoring_net
     external: true
-
-volumes:
-  postgres_data:
