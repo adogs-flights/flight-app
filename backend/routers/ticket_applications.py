@@ -1,18 +1,68 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 import models
 import schemas
 from database import get_db
 from email_utils import send_email
-from routers.auth import OrgUser
+from routers.auth import BASE_URL, OrgUser
 
 router = APIRouter(prefix="/api", tags=["Ticket Applications"])
 
 # --- Annotated types ---
 DBSession = Annotated[Session, Depends(get_db)]
+
+
+def _owner_org_recipients(db: Session, ticket: models.Ticket) -> list[str]:
+    """새 나눔 신청 알림 수신자 이메일.
+
+    티켓을 소유한 단체 회원 전원(email 보유)에게 보낸다. 소유자에게 단체가 없으면
+    소유자 개인 이메일로 폴백한다.
+    """
+    org_id = ticket.owner.organization_id if ticket.owner else None
+    if org_id is not None:
+        rows = (
+            db.query(models.User.email)
+            .filter(
+                models.User.organization_id == org_id,
+                models.User.email.isnot(None),
+            )
+            .all()
+        )
+        emails = [row[0] for row in rows if row[0]]
+        if emails:
+            return emails
+    if ticket.owner and ticket.owner.email:
+        return [ticket.owner.email]
+    return []
+
+
+def _notify_new_application(
+    recipient_emails: list[str],
+    ticket_title: str,
+    applicant_name: str,
+    message: str,
+) -> None:
+    """[백그라운드] 티켓 소유 단체 회원에게 새 나눔 신청 알림 메일을 보낸다.
+
+    개별 발송 실패는 삼켜서 한 명 실패가 다른 수신자 발송을 막지 않게 한다.
+    SMTP 미설정 시 email_utils가 콘솔로 출력한다.
+    """
+    subject = f"[{ticket_title}] 새로운 나눔 신청"
+    link = f"{BASE_URL}/"
+    body = (
+        f"<h3>'{ticket_title}' 티켓에 새로운 나눔 신청이 있습니다.</h3>"
+        f"<p><strong>신청자:</strong> {applicant_name}</p>"
+        f"<p><strong>메시지:</strong> {message}</p>"
+        f'<p><a href="{link}">사이트에서 신청 내역을 확인하고 처리해주세요.</a></p>'
+    )
+    for email in recipient_emails:
+        try:
+            send_email(receiver_email=email, subject=subject, body=body)
+        except Exception as e:  # noqa: BLE001
+            print(f"[notify] 신규 신청 알림 이메일 실패 ({email}): {e}")
 
 
 @router.post(
@@ -25,6 +75,7 @@ def create_application_for_ticket(
     application_in: schemas.TicketApplicationCreate,
     db: DBSession,
     current_user: OrgUser,
+    background_tasks: BackgroundTasks,
 ) -> models.TicketApplication:
     """
     Create a new application for a ticket.
@@ -70,16 +121,16 @@ def create_application_for_ticket(
     db.add(db_application)
     db.commit()
 
-    # Notify ticket owner
-    if ticket.owner and ticket.owner.email:
-        subject = f"[{ticket.title}] 새로운 나눔 신청"
-        body = f"""
-        <h3>'{ticket.title}' 티켓에 새로운 나눔 신청이 있습니다.</h3>
-        <p><strong>신청자:</strong> {current_user.name} ({current_user.email})</p>
-        <p><strong>메시지:</strong> {application_in.message}</p>
-        <p>사이트에서 신청 내역을 확인하고 처리해주세요.</p>
-        """
-        send_email(ticket.owner.email, subject, body)
+    # 티켓 소유 단체 회원 전원에게 새 신청 알림(백그라운드로 발송, 응답 지연 방지).
+    recipients = _owner_org_recipients(db, ticket)
+    if recipients:
+        background_tasks.add_task(
+            _notify_new_application,
+            recipients,
+            ticket.title,
+            current_user.name,
+            application_in.message,
+        )
 
     db.refresh(db_application)
     return db_application
