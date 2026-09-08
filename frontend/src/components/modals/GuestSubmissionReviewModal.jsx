@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
 import SelectField from '../ui/SelectField';
 import { useAuth } from '../../hooks/useAuth';
+import { getAirportColor, getAirportLabel } from '../../utils/airportUtils';
 
 const emptyForm = {
     title: '',
@@ -22,7 +23,7 @@ const emptyForm = {
 };
 
 export default function GuestSubmissionReviewModal({ isOpen, onClose, submission, onReviewed }) {
-    const { apiClient, airports, airlines } = useAuth();
+    const { apiClient, airports, airlines, rawAirports } = useAuth();
 
     const [form, setForm] = useState(emptyForm);
     const [users, setUsers] = useState([]);
@@ -201,7 +202,19 @@ export default function GuestSubmissionReviewModal({ isOpen, onClose, submission
                         <div className="text-sm"><span className="font-bold">지정 단체:</span> {submission.organization.name}</div>
                     )}
                     {submission.need_post && (
-                        <div className="text-sm"><span className="font-bold">응답한 게시글:</span> 🐶 {submission.need_post.title}</div>
+                        <div className="text-sm">
+                            <span className="font-bold">응답한 게시글:</span> 🐶 {submission.need_post.title}
+                            {submission.need_post.airport_code && (
+                                <>
+                                    <span className="ml-2 inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md text-[10px] font-black border shadow-sm align-middle whitespace-nowrap"
+                                        style={(() => { const c = getAirportColor(submission.need_post.airport_code, rawAirports); return { backgroundColor: c.bg, color: c.text, borderColor: c.bg }; })()}
+                                    >
+                                        ✈ {submission.need_post.airport_code}
+                                    </span>
+                                    <span className="ml-1.5 text-xs text-muted-foreground">{getAirportLabel(submission.need_post.airport_code, airports)}</span>
+                                </>
+                            )}
+                        </div>
                     )}
                     {submission.status === 'approved' && (
                         !submission.departure_submitted ? (
