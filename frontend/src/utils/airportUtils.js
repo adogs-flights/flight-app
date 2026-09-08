@@ -36,5 +36,18 @@ export const getAirportColor = (code, rawAirports = []) => {
   return DEFAULT_AIRPORT_COLOR;
 };
 
+/**
+ * Returns the human-readable airport name for a code, falling back to the code.
+ * @param {string} code - Airport code (e.g., 'JFK')
+ * @param {Array} airports - [{ value, label }] from /api/static/airports
+ * @returns {string} - Airport name label, or the code itself if not found
+ */
+export const getAirportLabel = (code, airports = []) => {
+  if (!code) return '';
+  const upperCode = code.toUpperCase();
+  const match = airports.find(a => a.value?.toUpperCase() === upperCode);
+  return match ? match.label : code;
+};
+
 // MAJOR_AIRPORTS는 정렬용으로 유지 (필요시 DB의 sort_order 등으로 대체 가능)
 export const MAJOR_AIRPORTS = ['JFK', 'LAX', 'YVR', 'YYZ', 'ORD'];

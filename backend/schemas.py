@@ -376,6 +376,7 @@ class NeedPostRef(BaseModel):
 
     id: str
     title: str
+    airport_code: str
 
     class Config:
         from_attributes = True

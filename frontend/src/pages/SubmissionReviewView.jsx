@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useModal } from '../hooks/useModal';
+import { getAirportColor, getAirportLabel } from '../utils/airportUtils';
 import GuestSubmissionReviewModal from '../components/modals/GuestSubmissionReviewModal';
 
 const STATUS_TABS = [
@@ -13,8 +14,24 @@ const STATUS_TABS = [
 const statusLabel = (s) => (s === 'approved' ? '✅ 승인됨' : s === 'rejected' ? '❌ 반려됨' : '⏳ 검토 대기');
 const methodLabel = (m) => (m === 'eticket_image' ? '📷 이미지' : '🔢 예약번호');
 
+// 제출이 응답한 '구해요' 게시글의 도착 공항을 색상 배지로 보여준다.
+// 좁은 목록에서는 코드만 노출하고, 전체 공항명은 툴팁으로 보여준다.
+function AirportBadge({ code, airports, rawAirports }) {
+    if (!code) return null;
+    const colors = getAirportColor(code, rawAirports);
+    return (
+        <span
+            className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md text-[10px] font-black border shadow-sm align-middle whitespace-nowrap"
+            style={{ backgroundColor: colors.bg, color: colors.text, borderColor: colors.bg }}
+            title={getAirportLabel(code, airports)}
+        >
+            ✈ {code}
+        </span>
+    );
+}
+
 export default function SubmissionReviewView() {
-    const { apiClient } = useAuth();
+    const { apiClient, airports, rawAirports } = useAuth();
     const [submissions, setSubmissions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -76,6 +93,7 @@ export default function SubmissionReviewView() {
                                 <th className="px-6 py-4">전화번호</th>
                                 <th className="px-6 py-4">증빙</th>
                                 <th className="px-6 py-4">응답 게시글</th>
+                                <th className="px-6 py-4">공항</th>
                                 <th className="px-6 py-4">상태</th>
                                 <th className="px-6 py-4">제출일</th>
                                 <th className="px-6 py-4 text-right">관리</th>
@@ -87,6 +105,7 @@ export default function SubmissionReviewView() {
                                     <td className="px-6 py-4 font-semibold text-foreground">{s.phone}</td>
                                     <td className="px-6 py-4 text-xs">{methodLabel(s.verification_method)}</td>
                                     <td className="px-6 py-4 text-muted-foreground text-xs">{s.need_post ? `🐶 ${s.need_post.title}` : '-'}</td>
+                                    <td className="px-6 py-4 text-xs">{s.need_post ? <AirportBadge code={s.need_post.airport_code} airports={airports} rawAirports={rawAirports} /> : '-'}</td>
                                     <td className="px-6 py-4 text-xs">{statusLabel(s.status)}</td>
                                     <td className="px-6 py-4 text-muted-foreground text-xs">{new Date(s.submitted_at).toLocaleDateString()}</td>
                                     <td className="px-6 py-4 text-right">
@@ -112,7 +131,10 @@ export default function SubmissionReviewView() {
                                 <span className="font-bold text-foreground">{s.phone}</span>
                                 <span className="text-[10px] font-bold">{statusLabel(s.status)}</span>
                             </div>
-                            <div className="text-xs text-muted-foreground">{methodLabel(s.verification_method)}{s.need_post ? ` · 🐶 ${s.need_post.title}` : ''}</div>
+                            <div className="text-xs text-muted-foreground flex items-center flex-wrap gap-1">
+                                <span>{methodLabel(s.verification_method)}{s.need_post ? ` · 🐶 ${s.need_post.title}` : ''}</span>
+                                {s.need_post && <AirportBadge code={s.need_post.airport_code} airports={airports} rawAirports={rawAirports} />}
+                            </div>
                             <div className="flex items-center justify-end gap-2">
                                 <button className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-secondary border border-border" onClick={() => handleReview(s)}>
                                     {s.status === 'pending' ? '검토' : '상세'}
