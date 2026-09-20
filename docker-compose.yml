@@ -15,6 +15,20 @@ services:
   flight-frontend:
     image: ${IMAGE_NAME_FRONTEND:-flight-frontend}:latest
     container_name: flight-frontend
+    user: node
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 256
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=64m,mode=1777
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - flight-app
     depends_on:
