@@ -8,6 +8,10 @@ permissions:
   contents: read
   packages: write
 
+concurrency:
+  group: flight-app-production
+  cancel-in-progress: false
+
 jobs:
   # 변경 사항 감지 (Path-based filtering)
   changes:
@@ -29,6 +33,7 @@ jobs:
             config:
               - 'docker-compose.yml'
               - 'nginx/**'
+              - 'scripts/prune-deployment-images.sh'
               - '.github/workflows/deploy.yml'
 
   # 프론트엔드 빌드 (병렬 실행 & 캐싱 적용)
@@ -100,6 +105,8 @@ jobs:
       IMAGE_NAME_BACKEND: ghcr.io/${{ github.repository_owner }}/flight-backend
     steps:
       - uses: actions/checkout@v4
+      - name: Test scoped image cleanup
+        run: bash scripts/prune-deployment-images.test.sh
       - name: Copy deployment files
         uses: appleboy/scp-action@master
         with:
@@ -107,7 +114,7 @@ jobs:
           username: ${{ secrets.ORACLE_USER }}
           key: ${{ secrets.ORACLE_KEY }}
           port: ${{ secrets.ORACLE_PORT }}
-          source: "docker-compose.yml,nginx,frontend/public/privacy.html,frontend/public/terms.html"
+          source: "docker-compose.yml,nginx,frontend/public/privacy.html,frontend/public/terms.html,scripts/prune-deployment-images.sh"
           target: "/home/ubuntu/flight-app"
 
       - name: Deploy via SSH (Robust)
@@ -119,7 +126,7 @@ jobs:
           port: ${{ secrets.ORACLE_PORT }}
           envs: IMAGE_NAME_FRONTEND, IMAGE_NAME_BACKEND
           script: |
-            set -e  # 에러 발생 시 즉시 중단
+            set -euo pipefail
             
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
@@ -135,6 +142,18 @@ jobs:
             export IMAGE_NAME_BACKEND=$IMAGE_NAME_BACKEND
 
             docker network inspect shared-infra >/dev/null
+
+            FRONTEND_CONTAINER=$(docker compose ps -q flight-frontend)
+            BACKEND_CONTAINER=$(docker compose ps -q flight-backend)
+            if [ -n "$FRONTEND_CONTAINER" ] && [ -n "$BACKEND_CONTAINER" ]; then
+              bash scripts/prune-deployment-images.sh snapshot \
+                .deploy-image-state.tsv \
+                "$IMAGE_NAME_FRONTEND=$FRONTEND_CONTAINER" \
+                "$IMAGE_NAME_BACKEND=$BACKEND_CONTAINER"
+            else
+              rm -f .deploy-image-state.tsv
+              echo 'One or more previous service containers are absent; image cleanup state was not created.'
+            fi
 
             docker compose pull
 
@@ -158,7 +177,7 @@ jobs:
 
             for attempt in $(seq 1 30); do
               if curl --fail --silent --show-error -H 'Host: adogs-ticket.shop' http://127.0.0.1:18091/ >/dev/null; then
-                exit 0
+                break
               fi
               if [ "$attempt" -eq 30 ]; then
                 docker compose ps
@@ -167,3 +186,18 @@ jobs:
               fi
               sleep 2
             done
+
+            curl --fail --silent --show-error --location --max-redirs 3 \
+              --retry 10 --retry-delay 3 \
+              https://adogs-ticket.shop/ >/dev/null
+
+            if [ -f .deploy-image-state.tsv ]; then
+              FRONTEND_CONTAINER=$(docker compose ps -q flight-frontend)
+              BACKEND_CONTAINER=$(docker compose ps -q flight-backend)
+              bash scripts/prune-deployment-images.sh cleanup \
+                .deploy-image-state.tsv \
+                "$IMAGE_NAME_FRONTEND=$FRONTEND_CONTAINER" \
+                "$IMAGE_NAME_BACKEND=$BACKEND_CONTAINER"
+            else
+              echo 'Image cleanup skipped: no previous deployment state.'
+            fi
