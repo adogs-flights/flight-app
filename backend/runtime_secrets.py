@@ -59,6 +59,8 @@ def secret_value(name, default=None):
         raise RuntimeError("RUNTIME_SECRET_UNAVAILABLE")
     if "FLIGHT_SECRET_DIRECTORY" in os.environ:
         return read_runtime(os.environ["FLIGHT_SECRET_DIRECTORY"])[name]
+    if os.environ.get("ENV") == "production":
+        raise RuntimeError("RUNTIME_SECRET_REQUIRED")
     return os.environ.get(name, default)
 
 
@@ -67,6 +69,8 @@ def database_url():
         if "FLIGHT_SECRET_DIRECTORY" in os.environ:
             raise RuntimeError("MIGRATION_SECRET_REQUIRED")
         return read_generation_file(os.environ["FLIGHT_MIGRATION_SECRET_DIRECTORY"], "DATABASE_URL")
+    if os.environ.get("ENV") == "production" and "FLIGHT_SECRET_DIRECTORY" not in os.environ:
+        raise RuntimeError("DATABASE_CONFIGURATION_REQUIRED")
     value = secret_value("DATABASE_URL")
     if not value and os.environ.get("ENV") == "production":
         raise RuntimeError("DATABASE_CONFIGURATION_REQUIRED")

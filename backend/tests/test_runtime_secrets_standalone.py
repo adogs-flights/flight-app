@@ -45,6 +45,11 @@ class RuntimeSecretsTests(unittest.TestCase):
         with patch.dict(os.environ, {"ENV": "production"}, clear=True):
             with self.assertRaisesRegex(RuntimeError, "DATABASE_CONFIGURATION_REQUIRED"):
                 secrets.database_url()
+
+    def test_production_refuses_legacy_secret_environment_without_mount(self):
+        with patch.dict(os.environ, {"ENV": "production", "SECRET_KEY": "legacy-fixture"}, clear=True):
+            with self.assertRaisesRegex(RuntimeError, "RUNTIME_SECRET_REQUIRED"):
+                secrets.secret_value("SECRET_KEY")
         with patch.dict(os.environ, {"FLIGHT_SECRET_DIRECTORY": "/runtime", "FLIGHT_MIGRATION_SECRET_DIRECTORY": "/migration"}, clear=True):
             with self.assertRaisesRegex(RuntimeError, "MIGRATION_SECRET_REQUIRED"):
                 secrets.database_url()

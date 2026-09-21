@@ -29,7 +29,12 @@ Before retiring a previous credential, confirm other shared-infrastructure
 consumers have moved. The old shared PostgreSQL administrator is not revoked as
 part of Flight alone. The operator's ignored credential input is retained.
 
-Verification checkpoint: four secret-reader tests and three deployment-order
+Verification checkpoint: five secret-reader tests and three deployment-order
 fixtures pass. The existing guest submission test returns 422 instead of 201 on
 unchanged main as well as this branch; it is not fixed by this Vault migration.
-Live cutover, redeployment, and reboot checks must be reported separately.
+Live first cutover `c402394` / Actions `35561308234` succeeded. Nineteen live
+checks passed (file mounts, absent secret env, dedicated DB role, services, HTTP).
+An actual failed Vault version lookup preserved the generation and running app;
+restoring the valid manifest and reloading succeeded. IMDS guard is installed.
+Full VM reboot remains untested. Existing GitHub `ENV_FILE` is unused, but the
+operator's API credential lacks permission to delete that repository Secret.
