@@ -10,8 +10,10 @@ from urllib.parse import urlencode
 
 import requests
 
-KAKAO_REST_API_KEY = os.environ.get("KAKAO_REST_API_KEY", "")
-KAKAO_CLIENT_SECRET = os.environ.get("KAKAO_CLIENT_SECRET", "")
+from runtime_secrets import secret_value
+
+KAKAO_REST_API_KEY = secret_value("KAKAO_REST_API_KEY", "")
+KAKAO_CLIENT_SECRET = secret_value("KAKAO_CLIENT_SECRET", "")
 KAKAO_REDIRECT_URI = os.environ.get("KAKAO_REDIRECT_URI", "")
 
 AUTHORIZE_URL = "https://kauth.kakao.com/oauth/authorize"

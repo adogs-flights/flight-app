@@ -3,9 +3,10 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from runtime_secrets import database_url
 
 # Get DATABASE_URL from environment variable, with a default for development
-DATABASE_URL = os.environ.get("DATABASE_URL")
+DATABASE_URL = database_url()
 
 # If DATABASE_URL is not set, default to local SQLite DB
 if DATABASE_URL is None:

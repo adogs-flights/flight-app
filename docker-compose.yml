@@ -1,16 +1,50 @@
 services:
   flight-backend:
-    image: ${IMAGE_NAME_BACKEND:-flight-backend}:latest
+    image: ${IMAGE_NAME_BACKEND:-ghcr.io/adogs-flights/flight-backend}:${FLIGHT_BACKEND_TAG:?immutable backend revision required}
     container_name: flight-backend
     volumes:
       - ./data:/app/data
-    env_file:
-      - .env
+      - type: bind
+        source: /run/oci-service-secrets/flight
+        target: /run/secrets/flight
+        read_only: true
+        bind:
+          create_host_path: false
+    environment:
+      FLIGHT_SECRET_DIRECTORY: /run/secrets/flight
+      ENV: production
+      PYTHONDONTWRITEBYTECODE: "1"
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?required}
+      BASE_URL: ${BASE_URL:?required}
+      COOKIE_SECURE: "true"
+      SMTP_SERVER: ${SMTP_SERVER:?required}
+      SMTP_PORT: ${SMTP_PORT:?required}
+      SMTP_USERNAME: ${SMTP_USERNAME:?required}
+      SENDER_EMAIL: ${SENDER_EMAIL:?required}
+      GDRIVE_UPLOAD_ADMIN_EMAIL: ${GDRIVE_UPLOAD_ADMIN_EMAIL:?required}
+      KAKAO_REDIRECT_URI: ${KAKAO_REDIRECT_URI:?required}
+    group_add:
+      - ${FLIGHT_RUNTIME_GID:?host runtime group required}
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,size=64m,mode=1777
+    ulimits:
+      core: 0
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - flight-app
       - shared-infra
       - monitoring_net
-    restart: unless-stopped
+    # systemd recreates /run secrets before starting this existing container.
+    restart: "no"
 
   flight-frontend:
     image: ${IMAGE_NAME_FRONTEND:-flight-frontend}:latest

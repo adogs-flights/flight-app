@@ -17,7 +17,9 @@ from database import SQLALCHEMY_DATABASE_URL, Base
 config = context.config
 
 # Overwrite sqlalchemy.url with the one from our database.py
-config.set_main_option("sqlalchemy.url", SQLALCHEMY_DATABASE_URL)
+if "FLIGHT_SECRET_DIRECTORY" in os.environ:
+    raise RuntimeError("MIGRATION_SECRET_REQUIRED")
+config.set_main_option("sqlalchemy.url", SQLALCHEMY_DATABASE_URL.replace("%", "%%"))
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

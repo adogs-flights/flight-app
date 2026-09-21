@@ -19,7 +19,9 @@ SCOPES = [
 ]
 
 # 환경 변수 설정
-GOOGLE_CLIENT_CONFIG = os.environ.get("GOOGLE_CLIENT_CONFIG")  # JSON string
+from runtime_secrets import secret_value
+
+GOOGLE_CLIENT_CONFIG = secret_value("GOOGLE_CLIENT_CONFIG")  # JSON string
 BASE_URL = os.environ.get("BASE_URL", "http://localhost:8000").rstrip("/")
 REDIRECT_URI = f"{BASE_URL}/api/gdrive/callback"
 WEBHOOK_URL = f"{BASE_URL}/api/gdrive/webhook"
@@ -631,4 +633,3 @@ def create_root_sync_folder(
     }
     folder = service.files().create(body=file_metadata, fields="id").execute()
     return folder.get("id")
-
