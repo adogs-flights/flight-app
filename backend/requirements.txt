@@ -1,6 +1,6 @@
 fastapi
 uvicorn
-sqlalchemy==2.0.54
+sqlalchemy
 alembic
 pydantic
 python-dateutil
