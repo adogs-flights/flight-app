@@ -1,6 +1,7 @@
 import { createContext, useState, useEffect, useCallback } from 'react';
 import apiClient from '../utils/api';
 import { MAJOR_AIRPORTS } from '../utils/airportUtils';
+import { disablePush } from '../utils/push';
 
 const AuthContext = createContext();
 
@@ -92,6 +93,8 @@ export const AuthProvider = ({ children }) => {
     };
 
     const logout = async () => {
+        try { await disablePush(); }
+        catch { console.warn('브라우저 알림 구독 해제 요청에 실패했습니다.'); }
         try {
             // refresh 토큰은 쿠키로 전달된다. 본문이 없다.
             await apiClient.post('/logout');

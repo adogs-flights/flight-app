@@ -73,6 +73,7 @@ export default function Sidebar({ isOpen, onClose, onPwChangeClick }) {
                                 <NavItem to="/mytickets" icon="" count={counts.owned_new_applications}>내 티켓</NavItem>
                                 <NavItem to="/myapplications" icon="" count={counts.my_application_updates}>내 신청 현황</NavItem>
                                 <NavItem to="/submissions" icon="" count={counts.submissions}>제출 검토</NavItem>
+                                <NavItem to="/notifications" icon="">알림 설정</NavItem>
                                 {hasOrg && <NavItem to="/org-settings" icon="">단체 소개 관리</NavItem>}
                                 {isAdmin && <NavItem to="/admin" icon="" count={counts.pending_orgs}>관리자 페이지</NavItem>}
 

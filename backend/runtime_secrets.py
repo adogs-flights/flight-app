@@ -8,6 +8,7 @@ from pathlib import Path
 
 NAMES = {"DATABASE_URL", "SECRET_KEY", "SMTP_PASSWORD", "KAKAO_CLIENT_SECRET",
          "KAKAO_REST_API_KEY", "GOOGLE_CLIENT_CONFIG"}
+OPTIONAL_NAMES = {"VAPID_PUBLIC_KEY", "VAPID_PRIVATE_KEY", "VAPID_SUBJECT"}
 
 
 def read_generation_file(directory, name, owner_uid=0):
@@ -45,7 +46,9 @@ def read_generation_file(directory, name, owner_uid=0):
 def read_runtime(directory):
     try:
         values = json.loads(read_generation_file(directory, "CONFIG_JSON"))
-        if not isinstance(values, dict) or set(values) != NAMES or not all(isinstance(v, str) for v in values.values()):
+        if (not isinstance(values, dict) or not NAMES.issubset(values)
+                or not set(values).issubset(NAMES | OPTIONAL_NAMES)
+                or not all(isinstance(v, str) for v in values.values())):
             raise ValueError()
         if not values["DATABASE_URL"] or not values["SECRET_KEY"]:
             raise ValueError()
@@ -55,10 +58,10 @@ def read_runtime(directory):
 
 
 def secret_value(name, default=None):
-    if name not in NAMES:
+    if name not in NAMES | OPTIONAL_NAMES:
         raise RuntimeError("RUNTIME_SECRET_UNAVAILABLE")
     if "FLIGHT_SECRET_DIRECTORY" in os.environ:
-        return read_runtime(os.environ["FLIGHT_SECRET_DIRECTORY"])[name]
+        return read_runtime(os.environ["FLIGHT_SECRET_DIRECTORY"]).get(name, default)
     if os.environ.get("ENV") == "production":
         raise RuntimeError("RUNTIME_SECRET_REQUIRED")
     return os.environ.get(name, default)

@@ -46,6 +46,17 @@ class RuntimeSecretsTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "DATABASE_CONFIGURATION_REQUIRED"):
                 secrets.database_url()
 
+    def test_optional_vapid_is_backwards_compatible_and_never_env_fallback(self):
+        values = dict.fromkeys(secrets.NAMES, "synthetic-only")
+        for configured in (False, True):
+            if configured:
+                values.update(dict.fromkeys(secrets.OPTIONAL_NAMES, "fixture-vapid"))
+            secrets.read_runtime.cache_clear()
+            with patch.object(secrets, "read_generation_file", return_value=json.dumps(values)):
+                with patch.dict(os.environ, {"FLIGHT_SECRET_DIRECTORY": "/fixture", "VAPID_PRIVATE_KEY": "must-not-use"}):
+                    self.assertEqual(secrets.secret_value("VAPID_PRIVATE_KEY", ""), "fixture-vapid" if configured else "")
+        secrets.read_runtime.cache_clear()
+
     def test_production_refuses_legacy_secret_environment_without_mount(self):
         with patch.dict(os.environ, {"ENV": "production", "SECRET_KEY": "legacy-fixture"}, clear=True):
             with self.assertRaisesRegex(RuntimeError, "RUNTIME_SECRET_REQUIRED"):

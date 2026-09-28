@@ -55,6 +55,9 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     organization = relationship("Organization")
+    push_subscriptions = relationship(
+        "PushSubscription", back_populates="user", cascade="all, delete-orphan"
+    )
     tickets_created = relationship(
         "Ticket",
         back_populates="creator",
@@ -86,6 +89,20 @@ class User(Base):
         uselist=False,
         cascade="all, delete-orphan",
     )
+
+
+class PushSubscription(Base):
+    __tablename__ = "push_subscriptions"
+    __table_args__ = (UniqueConstraint("endpoint", name="uq_push_subscriptions_endpoint"),)
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    endpoint = Column(String(2048), nullable=False)
+    p256dh = Column(String(128), nullable=False)
+    auth = Column(String(64), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    user = relationship("User", back_populates="push_subscriptions")
 
 
 class RefreshToken(Base):

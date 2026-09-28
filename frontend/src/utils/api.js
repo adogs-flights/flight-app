@@ -23,3 +23,12 @@ export const activityApi = {
 };
 
 export default apiClient;
+
+export const pushApi = {
+    status: () => apiClient.get('/push/status'),
+    publicKey: () => apiClient.get('/push/public-key'),
+    subscribe: subscription => apiClient.post('/push/subscriptions', subscription),
+    subscriptionStatus: endpoint => apiClient.post('/push/subscription-status', { endpoint }),
+    unsubscribe: endpoint => apiClient.delete('/push/subscriptions', { data: { endpoint } }),
+    test: () => apiClient.post('/push/test'),
+};

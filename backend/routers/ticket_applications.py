@@ -8,6 +8,7 @@ import schemas
 from database import get_db
 from email_utils import send_email
 from routers.auth import BASE_URL, OrgUser
+from services.notification_service import NotificationMessage, NotificationService
 
 router = APIRouter(prefix="/api", tags=["Ticket Applications"])
 
@@ -121,6 +122,13 @@ def create_application_for_ticket(
     db.add(db_application)
     db.commit()
 
+    NotificationService.enqueue(
+        background_tasks, user_id=ticket.owner_id,
+        message=NotificationMessage(
+            title="새로운 티켓 나눔 신청", body="소유한 티켓에 새 신청이 들어왔습니다.", url="/mytickets",
+        ),
+    )
+
     # 티켓 소유 단체 회원 전원에게 새 신청 알림(백그라운드로 발송, 응답 지연 방지).
     recipients = _owner_org_recipients(db, ticket)
     if recipients:
@@ -185,6 +193,7 @@ def update_application_status(
     application_update: schemas.TicketApplicationUpdate,
     db: DBSession,
     current_user: OrgUser,
+    background_tasks: BackgroundTasks,
 ) -> models.TicketApplication:
     """
     Update an application's status (e.g., to 'confirmed' or 'rejected').
@@ -218,6 +227,8 @@ def update_application_status(
         return application  # No change
 
     application.status = new_status
+    push_updates = [(application.applicant_id, new_status)]
+    emails = []
 
     if new_status == "confirmed" and original_status != "confirmed":
         ticket.owner_id = application.applicant_id
@@ -229,7 +240,7 @@ def update_application_status(
             f"<h3>축하합니다! '{ticket.title}' 티켓 나눔 대상으로 확정되었습니다.</h3>"
             "<p>자세한 내용은 사이트에서 확인해주세요.</p>"
         )
-        send_email(application.applicant.email, subject_approved, body_approved)
+        emails.append((application.applicant.email, subject_approved, body_approved))
 
         other_applications = (
             db.query(models.TicketApplication)
@@ -250,7 +261,8 @@ def update_application_status(
                 "다른 분에게 나눔이 확정되었습니다.</h3>"
                 "<p>다음에 더 좋은 기회로 만나 뵙기를 바랍니다.</p>"
             )
-            send_email(other_app.applicant.email, subject_rejected, body_rejected)
+            emails.append((other_app.applicant.email, subject_rejected, body_rejected))
+            push_updates.append((other_app.applicant_id, "rejected"))
 
     elif new_status == "rejected":
         # Notify the single rejected applicant
@@ -260,11 +272,32 @@ def update_application_status(
             "선정되지 않았습니다.</h3>"
             "<p>다음에 더 좋은 기회로 만나 뵙기를 바랍니다.</p>"
         )
-        send_email(application.applicant.email, subject_rejected, body_rejected)
+        emails.append((application.applicant.email, subject_rejected, body_rejected))
 
     db.commit()
+    for user_id, result in push_updates:
+        if result in ("confirmed", "rejected"):
+            NotificationService.enqueue(
+                background_tasks, user_id=user_id,
+                message=NotificationMessage(
+                    title="티켓 나눔 신청 결과",
+                    body="신청이 승인되었습니다." if result == "confirmed" else "신청이 미선정되었습니다.",
+                    url="/myapplications",
+                ),
+            )
+    for recipient, subject, body in emails:
+        background_tasks.add_task(_send_status_email, recipient, subject, body)
     db.refresh(application)
     return application
+
+
+def _send_status_email(recipient, subject, body):
+    # Existing email notifications also belong after commit; failure is isolated.
+    try:
+        send_email(recipient, subject, body)
+    except Exception:
+        import logging
+        logging.getLogger(__name__).warning("Application status email failed")
 
 
 @router.get("/applications/{application_id}", response_model=schemas.TicketApplication)

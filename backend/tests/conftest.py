@@ -30,6 +30,17 @@ def no_smtp(monkeypatch):
     monkeypatch.setattr(routers.auth, "send_email", lambda **kwargs: None)
 
 
+@pytest.fixture(autouse=True)
+def no_push_network(monkeypatch):
+    """Never contact a real push service, even if developer VAPID keys are set."""
+    import services.web_push_provider
+
+    def blocked(*args, **kwargs):
+        raise RuntimeError("Push network disabled in tests")
+
+    monkeypatch.setattr(services.web_push_provider, "webpush", blocked)
+
+
 @pytest.fixture
 def db_engine():
     """테스트마다 격리된 인메모리 SQLite. StaticPool이라 같은 연결을 공유한다."""

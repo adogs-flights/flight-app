@@ -21,6 +21,7 @@ from routers import (
     master,
     need_posts,
     organizations,
+    push,
     ticket_applications,
     tickets,
 )
@@ -139,6 +140,7 @@ app.include_router(master.router)
 app.include_router(organizations.router)
 app.include_router(guest_submissions.router)
 app.include_router(activity.router)
+app.include_router(push.router)
 
 
 # --- Annotated types ---

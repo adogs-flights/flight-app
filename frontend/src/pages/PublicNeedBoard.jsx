@@ -117,6 +117,7 @@ export default function PublicNeedBoard() {
                         {user ? (
                             <>
                                 <span className="hidden sm:inline text-sm font-bold text-foreground px-2">{user.name}님</span>
+                                <Link to="/notifications" className="px-3 text-sm font-bold">알림 설정</Link>
                                 <button onClick={logout} className="inline-flex items-center justify-center h-9 px-3 text-sm font-bold rounded-lg text-foreground hover:bg-secondary transition-colors">
                                     로그아웃
                                 </button>
