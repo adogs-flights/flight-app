@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { useAuth } from './hooks/useAuth';
@@ -22,6 +23,8 @@ import SubmissionStatusView from './pages/SubmissionStatusView';
 import OrgIntroView from './pages/OrgIntroView';
 import OrgProfileEdit from './pages/OrgProfileEdit';
 import NotificationsView from './pages/NotificationsView';
+
+const AdminUiView = lazy(() => import('./pages/AdminUiView'));
 
 function App() {
   return (
@@ -80,7 +83,16 @@ function AppContent() {
           <Route path="submissions" element={<SubmissionReviewView />} />
           <Route path="org-settings" element={<OrgProfileEdit />} />
           <Route path="notifications" element={<NotificationsView />} />
-          {user.role === 'admin' && <Route path="admin" element={<AdminView />} />}
+          {user.role === 'admin' && (
+            <>
+              <Route path="admin" element={<AdminView />} />
+              <Route path="admin/ui" element={
+                <Suspense fallback={<p className="py-12 text-center text-sm text-muted-foreground" role="status">UI 컴포넌트를 불러오는 중...</p>}>
+                  <AdminUiView />
+                </Suspense>
+              } />
+            </>
+          )}
           <Route path="*" element={<Navigate to="/" />} />
         </Route>
       )}

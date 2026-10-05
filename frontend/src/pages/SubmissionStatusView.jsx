@@ -4,12 +4,6 @@ import apiClient from '../utils/api';
 import logo from '../assets/flight-app.PNG';
 import Footer from '../components/layout/Footer';
 
-const formatDate = (s) => {
-    if (!s) return '-';
-    const d = new Date(s);
-    return `${d.getFullYear()}. ${String(d.getMonth() + 1).padStart(2, '0')}. ${String(d.getDate()).padStart(2, '0')}`;
-};
-
 const inputClass = "flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none";
 const labelClass = "text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1";
 const fileClass = "flex w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-bold file:bg-primary file:text-primary-foreground";

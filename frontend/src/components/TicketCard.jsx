@@ -1,7 +1,7 @@
 import { useAuth } from '../hooks/useAuth';
 import { getAirportColor } from '../utils/airportUtils';
 
-const TicketStatusBadge = ({ status }) => {
+export const TicketStatusBadge = ({ status }) => {
     switch (status) {
         case 'sharing':
             return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green/10 text-green border border-green/20">🟢 나눔중</span>;

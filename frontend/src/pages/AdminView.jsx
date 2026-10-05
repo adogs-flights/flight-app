@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useModal } from '../hooks/useModal';
 import RegisterUserModal from '../components/modals/RegisterUserModal';
@@ -510,14 +511,22 @@ export default function AdminView() {
                     <h1 className="text-2xl font-bold tracking-tight text-foreground">시스템 관리</h1>
                     <p className="text-sm text-muted-foreground">회원 및 마스터 데이터를 관리합니다.</p>
                 </div>
-                {['users', 'airports', 'airlines', 'organizations'].includes(activeTab) && (
-                    <button
-                        className="inline-flex items-center justify-center px-4 py-2 text-sm font-bold transition-colors rounded-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
-                        onClick={handleCreate}
+                <div className="flex flex-wrap items-center gap-2">
+                    <Link
+                        to="/admin/ui"
+                        className="inline-flex items-center justify-center px-4 py-2 text-sm font-bold rounded-md bg-secondary text-secondary-foreground border border-border hover:bg-muted transition-colors"
                     >
-                        + {activeTab === 'users' ? '회원 등록' : activeTab === 'airports' ? '공항 등록' : activeTab === 'airlines' ? '항공사 등록' : '단체 등록'}
-                    </button>
-                )}
+                        UI 컴포넌트
+                    </Link>
+                    {['users', 'airports', 'airlines', 'organizations'].includes(activeTab) && (
+                        <button
+                            className="inline-flex items-center justify-center px-4 py-2 text-sm font-bold transition-colors rounded-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+                            onClick={handleCreate}
+                        >
+                            + {activeTab === 'users' ? '회원 등록' : activeTab === 'airports' ? '공항 등록' : activeTab === 'airlines' ? '항공사 등록' : '단체 등록'}
+                        </button>
+                    )}
+                </div>
             </div>
 
             <div className="flex flex-col bg-card rounded-xl border-2 border-border shadow-sm overflow-hidden min-h-[400px]">
