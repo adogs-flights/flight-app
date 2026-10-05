@@ -1,3 +1,4 @@
+import { Alert, Badge, Button, Card, Heading, Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from '../components/ui/primitives.js';
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useModal } from '../hooks/useModal';
@@ -20,13 +21,13 @@ function AirportBadge({ code, airports, rawAirports }) {
     if (!code) return null;
     const colors = getAirportColor(code, rawAirports);
     return (
-        <span
-            className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md text-[10px] font-black border shadow-sm align-middle whitespace-nowrap"
+        <Badge
+            variant="submissionReview"
             style={{ backgroundColor: colors.bg, color: colors.text, borderColor: colors.bg }}
             title={getAirportLabel(code, airports)}
         >
             ✈ {code}
-        </span>
+        </Badge>
     );
 }
 
@@ -74,7 +75,7 @@ export default function SubmissionReviewView() {
 
     const renderRows = () => {
         if (loading) return <div className="flex items-center justify-center h-[200px] text-sm text-muted-foreground">불러오는 중...</div>;
-        if (error) return <div className="m-4 px-4 py-3 text-xs font-medium text-destructive bg-destructive/10 border border-destructive/20 rounded-lg">{error}</div>;
+        if (error) return <Alert variant="admin">{error}</Alert>;
         if (submissions.length === 0) {
             return (
                 <div className="flex flex-col items-center justify-center h-[240px] gap-2 text-muted-foreground">
@@ -87,41 +88,41 @@ export default function SubmissionReviewView() {
             <>
                 {/* Desktop */}
                 <div className="hidden sm:block overflow-x-auto">
-                    <table className="w-full text-sm text-left border-collapse">
-                        <thead>
-                            <tr className="bg-muted/50 border-b text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                                <th className="px-6 py-4">전화번호</th>
-                                <th className="px-6 py-4">증빙</th>
-                                <th className="px-6 py-4">응답 게시글</th>
-                                <th className="px-6 py-4">공항</th>
-                                <th className="px-6 py-4">상태</th>
-                                <th className="px-6 py-4">제출일</th>
-                                <th className="px-6 py-4 text-right">관리</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border/50">
+                    <Table variant="default">
+                        <TableHead variant="plain">
+                            <TableRow variant="adminUi">
+                                <TableHeaderCell variant="admin">전화번호</TableHeaderCell>
+                                <TableHeaderCell variant="admin">증빙</TableHeaderCell>
+                                <TableHeaderCell variant="admin">응답 게시글</TableHeaderCell>
+                                <TableHeaderCell variant="admin">공항</TableHeaderCell>
+                                <TableHeaderCell variant="admin">상태</TableHeaderCell>
+                                <TableHeaderCell variant="admin">제출일</TableHeaderCell>
+                                <TableHeaderCell variant="admin2">관리</TableHeaderCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody variant="adminUi">
                             {submissions.map(s => (
-                                <tr key={s.id} className="hover:bg-muted/30 transition-colors">
-                                    <td className="px-6 py-4 font-semibold text-foreground">{s.phone}</td>
-                                    <td className="px-6 py-4 text-xs">{methodLabel(s.verification_method)}</td>
-                                    <td className="px-6 py-4 text-muted-foreground text-xs">{s.need_post ? `🐶 ${s.need_post.title}` : '-'}</td>
-                                    <td className="px-6 py-4 text-xs">{s.need_post ? <AirportBadge code={s.need_post.airport_code} airports={airports} rawAirports={rawAirports} /> : '-'}</td>
-                                    <td className="px-6 py-4 text-xs">{statusLabel(s.status)}</td>
-                                    <td className="px-6 py-4 text-muted-foreground text-xs">{new Date(s.submitted_at).toLocaleDateString()}</td>
-                                    <td className="px-6 py-4 text-right">
+                                <TableRow key={s.id} variant="adminUi2">
+                                    <TableCell variant="admin6">{s.phone}</TableCell>
+                                    <TableCell variant="admin9">{methodLabel(s.verification_method)}</TableCell>
+                                    <TableCell variant="admin4">{s.need_post ? `🐶 ${s.need_post.title}` : '-'}</TableCell>
+                                    <TableCell variant="admin9">{s.need_post ? <AirportBadge code={s.need_post.airport_code} airports={airports} rawAirports={rawAirports} /> : '-'}</TableCell>
+                                    <TableCell variant="admin9">{statusLabel(s.status)}</TableCell>
+                                    <TableCell variant="admin4">{new Date(s.submitted_at).toLocaleDateString()}</TableCell>
+                                    <TableCell variant="admin5">
                                         <div className="flex items-center justify-end gap-2">
-                                            <button className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-secondary text-secondary-foreground border border-border hover:bg-muted transition-all active:scale-95" onClick={() => handleReview(s)}>
+                                            <Button variant="secondarySmall" onClick={() => handleReview(s)}>
                                                 {s.status === 'pending' ? '검토' : '상세'}
-                                            </button>
-                                            <button className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20 transition-all active:scale-95" onClick={() => handleDelete(s)}>
+                                            </Button>
+                                            <Button variant="dangerSmall" onClick={() => handleDelete(s)}>
                                                 삭제
-                                            </button>
+                                            </Button>
                                         </div>
-                                    </td>
-                                </tr>
+                                    </TableCell>
+                                </TableRow>
                             ))}
-                        </tbody>
-                    </table>
+                        </TableBody>
+                    </Table>
                 </div>
                 {/* Mobile */}
                 <div className="sm:hidden divide-y divide-border">
@@ -136,12 +137,12 @@ export default function SubmissionReviewView() {
                                 {s.need_post && <AirportBadge code={s.need_post.airport_code} airports={airports} rawAirports={rawAirports} />}
                             </div>
                             <div className="flex items-center justify-end gap-2">
-                                <button className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-secondary border border-border" onClick={() => handleReview(s)}>
+                                <Button variant="secondaryMobile" onClick={() => handleReview(s)}>
                                     {s.status === 'pending' ? '검토' : '상세'}
-                                </button>
-                                <button className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-destructive/10 text-destructive border border-destructive/20" onClick={() => handleDelete(s)}>
+                                </Button>
+                                <Button variant="dangerMobile" onClick={() => handleDelete(s)}>
                                     삭제
-                                </button>
+                                </Button>
                             </div>
                         </div>
                     ))}
@@ -153,26 +154,26 @@ export default function SubmissionReviewView() {
     return (
         <div className="space-y-6">
             <div className="space-y-1">
-                <h1 className="text-2xl font-bold tracking-tight text-foreground">제출 검토</h1>
+                <Heading as="h1" variant="page">제출 검토</Heading>
                 <p className="text-sm text-muted-foreground">우리 단체로 접수된 이동봉사 티켓 제출을 승인하거나 반려합니다.</p>
             </div>
 
-            <div className="flex flex-col bg-card rounded-xl border-2 border-border shadow-sm overflow-hidden min-h-[400px]">
+            <Card variant="admin">
                 <div className="flex items-center gap-1 border-b px-2 bg-muted/30 overflow-x-auto scrollbar-hide">
                     {STATUS_TABS.map(t => (
-                        <button
+                        <Button
                             key={t.key}
-                            className={`shrink-0 px-4 py-3 text-xs font-bold transition-all border-b-2 -mb-[2px] ${statusFilter === t.key ? 'text-primary border-primary' : 'text-muted-foreground border-transparent hover:text-foreground'}`}
+                            variant="tab" active={statusFilter === t.key}
                             onClick={() => setStatusFilter(t.key)}
                         >
                             {t.label}
-                        </button>
+                        </Button>
                     ))}
                 </div>
                 <div className="flex-1 animate-in fade-in duration-300">
                     {renderRows()}
                 </div>
-            </div>
+            </Card>
 
             <GuestSubmissionReviewModal
                 isOpen={reviewModal.isOpen}

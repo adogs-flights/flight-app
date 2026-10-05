@@ -1,3 +1,4 @@
+import { Badge, Button, FieldLabel, Heading } from '../ui/primitives.js';
 import React from 'react';
 import Modal from '../ui/Modal';
 import { useAuth } from '../../hooks/useAuth';
@@ -22,26 +23,26 @@ export default function NeedPostDetailModal({ isOpen, onClose, post, onEditClick
         <div className="flex flex-col w-full gap-4 border-t border-slate-100 pt-4">
             <div className="flex items-center justify-between w-full">
                 <div className="flex items-center gap-2">
-                    <button 
-                        className="h-10 px-5 text-[13px] font-bold rounded-lg bg-slate-100 text-slate-900 hover:bg-slate-200 transition-all duration-200 active:scale-[0.96]" 
+                    <Button
+                        variant="detailClose"
                         onClick={onClose}
                     >
                         닫기
-                    </button>
+                    </Button>
                     {canEdit && (
-                        <button 
-                            className="h-10 px-5 text-[13px] font-bold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200 active:scale-[0.96]" 
+                        <Button
+                            variant="detailEdit"
                             onClick={() => { onClose(); onEditClick(post); }}
                         >
                             수정하기
-                        </button>
+                        </Button>
                     )}
                 </div>
             </div>
             {canEdit && (
                 <div className="flex justify-start px-1">
-                    <button 
-                        className="text-[11px] font-medium text-slate-400 hover:text-destructive underline underline-offset-4 transition-all duration-200" 
+                    <Button
+                        variant="deleteText"
                         onClick={() => {
                             if (window.confirm('정말로 이 게시글을 삭제하시겠습니까?')) {
                                 onClose();
@@ -50,7 +51,7 @@ export default function NeedPostDetailModal({ isOpen, onClose, post, onEditClick
                         }}
                     >
                         이 게시글을 삭제할까요?
-                    </button>
+                    </Button>
                 </div>
             )}
         </div>
@@ -62,38 +63,38 @@ export default function NeedPostDetailModal({ isOpen, onClose, post, onEditClick
                 <div className="space-y-2">
                     <div className="flex items-center gap-3">
                         {post.is_urgent && (
-                            <span className="px-2 py-1 rounded-md text-[10px] font-black bg-destructive text-destructive-foreground animate-pulse shadow-sm">URGENT</span>
+                            <Badge variant="needPostDetail">URGENT</Badge>
                         )}
-                        <h2 className="text-xl font-black text-foreground tracking-tight">{post.title}</h2>
+                        <Heading as="h2" variant="needPostDetail">{post.title}</Heading>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold text-muted-foreground">
                         <span className="flex items-center gap-1 bg-muted/50 px-2 py-0.5 rounded-full">👤 {post.author?.name || '익명'}</span>
                         <span className="flex items-center gap-1 bg-muted/50 px-2 py-0.5 rounded-full">📅 {formatDate(post.created_at)} 등록</span>
                         {post.is_resolved && (
-                            <span className="px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground border border-border">해결됨</span>
+                            <Badge variant="needPostDetail2">해결됨</Badge>
                         )}
                     </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                     <div className="p-4 rounded-xl bg-accent/30 border border-border/50 space-y-1.5">
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">희망 공항</label>
+                        <FieldLabel variant="needPostDetail">희망 공항</FieldLabel>
                         <div className="flex items-center gap-2">
                             {(() => {
                                 const colors = getAirportColor(post.airport_code, rawAirports);
                                 return (
-                                    <span 
-                                        className="px-2.5 py-1 rounded-lg text-xs font-black border shadow-sm" 
+                                    <Badge
+                                        variant="needPostDetail3"
                                         style={{ backgroundColor: colors.bg, color: colors.text, borderColor: colors.bg }}
                                     >
                                         {post.airport_code}
-                                    </span>
+                                    </Badge>
                                 );
                             })()}
                         </div>
                     </div>
                     <div className="p-4 rounded-xl bg-accent/30 border border-border/50 space-y-1.5">
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">필요 좌석</label>
+                        <FieldLabel variant="needPostDetail">필요 좌석</FieldLabel>
                         <div className="text-lg font-black text-foreground">
                             {post.seats_needed} <span className="text-sm font-bold text-muted-foreground">마리</span>
                         </div>
@@ -101,14 +102,14 @@ export default function NeedPostDetailModal({ isOpen, onClose, post, onEditClick
                 </div>
 
                 <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground pl-1">희망 날짜</label>
+                    <FieldLabel variant="needPostDetail2">희망 날짜</FieldLabel>
                     <div className="p-4 rounded-xl bg-muted/20 border border-border/50 text-sm font-bold text-foreground">
                         🗓️ {formatDate(post.desired_date)}
                     </div>
                 </div>
 
                 <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground pl-1">상세 내용</label>
+                    <FieldLabel variant="needPostDetail2">상세 내용</FieldLabel>
                     <div className="p-5 rounded-xl bg-background border-2 border-border/50 text-sm leading-relaxed text-foreground whitespace-pre-wrap min-h-[120px] shadow-inner">
                         {post.detail || '내용이 없습니다.'}
                     </div>

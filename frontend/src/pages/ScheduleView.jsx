@@ -1,3 +1,4 @@
+import { Button, Heading } from '../components/ui/primitives.js';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { toBlob } from 'html-to-image';
 import CalendarView from '../components/CalendarView';
@@ -253,25 +254,25 @@ export default function ScheduleView() {
         <div className="space-y-4">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-1">
-                    <h1 className="text-2xl font-bold tracking-tight text-foreground">일정 관리</h1>
+                    <Heading as="h1" variant="page">일정 관리</Heading>
                     <p className="text-sm text-muted-foreground">봉사 일정 확인 및 새로운 티켓을 등록하세요.</p>
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="inline-flex items-center p-1 rounded-lg bg-secondary/50 border border-border">
-                        <button className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${view === 'cal' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`} onClick={() => setView('cal')}>달력</button>
-                        <button className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${view === 'list' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`} onClick={() => setView('list')}>리스트</button>
+                        <Button variant="segmented2" active={view === 'cal'} onClick={() => setView('cal')}>달력</Button>
+                        <Button variant="segmented2" active={view === 'list'} onClick={() => setView('list')}>리스트</Button>
                     </div>
-                    <button className="inline-flex items-center justify-center px-4 py-2 text-sm font-bold transition-colors rounded-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm" onClick={handleCreateClick}>+ 티켓 등록</button>
+                    <Button variant="primary" onClick={handleCreateClick}>+ 티켓 등록</Button>
                 </div>
             </div>
 
             <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                <button className={`shrink-0 px-4 py-1.5 text-xs font-black rounded-full border-2 transition-all ${selectedAirport === '전체' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-muted-foreground border-border hover:border-primary/30'}`} onClick={() => setSelectedAirport('전체')}>전체</button>
+                <Button variant="filter" active={selectedAirport === '전체'} onClick={() => setSelectedAirport('전체')}>전체</Button>
                 {(airports || []).map(airport => {
                     const colors = getAirportColor(airport.value, rawAirports);
                     const isActive = selectedAirport === airport.value;
                     return (
-                        <button key={airport.value} className="shrink-0 px-4 py-1.5 text-xs font-black rounded-full border-2 transition-all" style={{ backgroundColor: colors.bg, color: colors.text, borderColor: isActive ? colors.text + '55' : colors.bg, opacity: isActive ? 1 : 0.7 }} onClick={() => setSelectedAirport(airport.value)}>{airport.value}</button>
+                        <Button key={airport.value} variant="airportChip" style={{ backgroundColor: colors.bg, color: colors.text, borderColor: isActive ? colors.text + '55' : colors.bg, opacity: isActive ? 1 : 0.7 }} onClick={() => setSelectedAirport(airport.value)}>{airport.value}</Button>
                     );
                 })}
             </div>
@@ -281,10 +282,10 @@ export default function ScheduleView() {
                     <div className="flex flex-col">
                         <CalendarView tickets={filteredTickets} onTicketClick={handleTicketClick} onMoreClick={handleDayMoreClick} currentDate={currentDate} setCurrentDate={setCurrentDate} calendarRef={calendarRef} isSaving={isSaving} />
                         <div className="flex flex-col sm:flex-row gap-2 py-4">
-                            <button className="w-full sm:w-auto flex items-center justify-center gap-2 h-11 px-4 text-sm font-bold rounded-lg bg-secondary text-secondary-foreground border border-border hover:bg-muted transition-colors" onClick={handleCopyText}>
+                            <Button variant="calendarExport" onClick={handleCopyText}>
                                 {copied ? '✓ 복사됨' : '📋 이번 달 일정 텍스트 복사'}
-                            </button>
-                            <button className="w-full sm:w-auto flex items-center justify-center gap-2 h-11 px-4 text-sm font-bold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm sm:hidden" onClick={handleShare}>일정 공유하기</button>
+                            </Button>
+                            <Button variant="calendarCopy" onClick={handleShare}>일정 공유하기</Button>
                         </div>
                     </div>
                 ) : (

@@ -1,3 +1,4 @@
+import { ActionLink, FieldLabel } from '../ui/primitives.js';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -26,23 +27,23 @@ export default function TicketEticketSection({ ticket }) {
 
     return (
         <div className="mt-4 pt-4 border-t-2 border-border/50 px-1">
-            <label className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground">e티켓</label>
+            <FieldLabel variant="ticketDeparture">e티켓</FieldLabel>
             {failed ? (
                 <p className="mt-2 text-xs text-muted-foreground">e티켓을 불러오지 못했습니다.</p>
             ) : !url ? (
                 <p className="mt-2 text-xs text-muted-foreground">불러오는 중…</p>
             ) : isPdf ? (
-                <a href={url} target="_blank" rel="noreferrer" className="mt-2 inline-block text-xs font-bold text-primary hover:underline">
+                <ActionLink href={url} target="_blank" rel="noreferrer" variant="ticketEticket">
                     📄 e티켓 (PDF) 보기
-                </a>
+                </ActionLink>
             ) : (
-                <a href={url} target="_blank" rel="noreferrer" className="mt-2 block">
+                <ActionLink href={url} target="_blank" rel="noreferrer" variant="ticketEticket2">
                     <img
                         src={url}
                         alt="e티켓"
                         className="max-h-72 w-auto rounded-lg border border-border shadow-sm"
                     />
-                </a>
+                </ActionLink>
             )}
         </div>
     );

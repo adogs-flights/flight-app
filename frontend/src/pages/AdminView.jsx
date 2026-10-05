@@ -1,3 +1,4 @@
+import { ActionLink, Alert, Badge, Button, Card, Heading, Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from '../components/ui/primitives.js';
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -8,17 +9,7 @@ import AirlineModal from '../components/modals/AirlineModal';
 import OrganizationModal from '../components/modals/OrganizationModal';
 import GuestSubmissionReviewModal from '../components/modals/GuestSubmissionReviewModal';
 
-const ROLE_LABEL = {
-    admin: '관리자',
-    org: '단체',
-    general: '일반'
-};
-
-const ROLE_BADGE = {
-    admin: 'bg-sky/10 text-sky border-sky/20',
-    org: 'bg-earth/10 text-earth-foreground border-earth/20',
-    general: 'bg-muted text-muted-foreground border-border'
-};
+import UserRoleBadge from '../components/ui/UserRoleBadge';
 
 export default function AdminView() {
     const { apiClient, fetchStaticData } = useAuth();
@@ -167,33 +158,33 @@ export default function AdminView() {
             <>
                 {/* Desktop Table */}
                 <div className="hidden sm:block overflow-x-auto">
-                    <table className="w-full text-sm text-left border-collapse">
-                        <thead>
-                            <tr className="bg-muted/50 border-b text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                                <th className="px-6 py-4">단체명</th>
-                                <th className="px-6 py-4">담당자</th>
-                                <th className="px-6 py-4">이메일</th>
-                                <th className="px-6 py-4">신청일</th>
-                                <th className="px-6 py-4 text-right">처리</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border/50">
+                    <Table variant="default">
+                        <TableHead variant="plain">
+                            <TableRow variant="adminUi">
+                                <TableHeaderCell variant="admin">단체명</TableHeaderCell>
+                                <TableHeaderCell variant="admin">담당자</TableHeaderCell>
+                                <TableHeaderCell variant="admin">이메일</TableHeaderCell>
+                                <TableHeaderCell variant="admin">신청일</TableHeaderCell>
+                                <TableHeaderCell variant="admin2">처리</TableHeaderCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody variant="adminUi">
                             {pendingUsers.map(u => (
-                                <tr key={u.id} className="hover:bg-muted/30 transition-colors">
-                                    <td className="px-6 py-4 font-bold text-foreground">{u.organization?.name || '-'}</td>
-                                    <td className="px-6 py-4">{u.name}</td>
-                                    <td className="px-6 py-4 text-muted-foreground">{u.email}</td>
-                                    <td className="px-6 py-4 text-muted-foreground text-xs">{new Date(u.created_at).toLocaleDateString()}</td>
-                                    <td className="px-6 py-4 text-right">
+                                <TableRow key={u.id} variant="adminUi2">
+                                    <TableCell variant="admin">{u.organization?.name || '-'}</TableCell>
+                                    <TableCell variant="admin2">{u.name}</TableCell>
+                                    <TableCell variant="admin3">{u.email}</TableCell>
+                                    <TableCell variant="admin4">{new Date(u.created_at).toLocaleDateString()}</TableCell>
+                                    <TableCell variant="admin5">
                                         <div className="flex items-center justify-end gap-2">
-                                            <button className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-green/10 text-green border border-green/20 hover:bg-green/20 transition-all active:scale-95" onClick={() => handleApprove(u)}>승인</button>
-                                            <button className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20 transition-all active:scale-95" onClick={() => handleReject(u)}>거부</button>
+                                            <Button variant="approveSmall" onClick={() => handleApprove(u)}>승인</Button>
+                                            <Button variant="dangerSmall" onClick={() => handleReject(u)}>거부</Button>
                                         </div>
-                                    </td>
-                                </tr>
+                                    </TableCell>
+                                </TableRow>
                             ))}
-                        </tbody>
-                    </table>
+                        </TableBody>
+                    </Table>
                 </div>
                 {/* Mobile Cards */}
                 <div className="sm:hidden divide-y divide-border">
@@ -203,8 +194,8 @@ export default function AdminView() {
                             <div className="text-xs text-muted-foreground">{u.name} · {u.email}</div>
                             <div className="text-[10px] text-muted-foreground/60 italic">{new Date(u.created_at).toLocaleDateString()} 신청</div>
                             <div className="flex items-center justify-end gap-2 pt-1">
-                                <button className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-green/10 text-green border border-green/20" onClick={() => handleApprove(u)}>승인</button>
-                                <button className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-destructive/10 text-destructive border border-destructive/20" onClick={() => handleReject(u)}>거부</button>
+                                <Button variant="approveMobile" onClick={() => handleApprove(u)}>승인</Button>
+                                <Button variant="dangerMobile" onClick={() => handleReject(u)}>거부</Button>
                             </div>
                         </div>
                     ))}
@@ -217,39 +208,37 @@ export default function AdminView() {
         <>
             {/* Desktop Table */}
             <div className="hidden sm:block overflow-x-auto">
-                <table className="w-full text-sm text-left border-collapse">
-                    <thead>
-                        <tr className="bg-muted/50 border-b text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                            <th className="px-6 py-4">이름</th>
-                            <th className="px-6 py-4">이메일</th>
-                            <th className="px-6 py-4">권한</th>
-                            <th className="px-6 py-4">단체</th>
-                            <th className="px-6 py-4">가입일</th>
-                            <th className="px-6 py-4 text-right">관리</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border/50">
+                <Table variant="default">
+                    <TableHead variant="plain">
+                        <TableRow variant="adminUi">
+                            <TableHeaderCell variant="admin">이름</TableHeaderCell>
+                            <TableHeaderCell variant="admin">이메일</TableHeaderCell>
+                            <TableHeaderCell variant="admin">권한</TableHeaderCell>
+                            <TableHeaderCell variant="admin">단체</TableHeaderCell>
+                            <TableHeaderCell variant="admin">가입일</TableHeaderCell>
+                            <TableHeaderCell variant="admin2">관리</TableHeaderCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody variant="adminUi">
                         {users.map(u => (
-                            <tr key={u.id} className="hover:bg-muted/30 transition-colors">
-                                <td className="px-6 py-4 font-semibold text-foreground">{u.name}</td>
-                                <td className="px-6 py-4 text-muted-foreground">{u.email}</td>
-                                <td className="px-6 py-4">
-                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border whitespace-nowrap ${ROLE_BADGE[u.role] || ROLE_BADGE.general}`}>
-                                        {ROLE_LABEL[u.role] || u.role}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4 text-muted-foreground">{u.organization?.name || '-'}</td>
-                                <td className="px-6 py-4 text-muted-foreground text-xs">{new Date(u.created_at).toLocaleDateString()}</td>
-                                <td className="px-6 py-4 text-right">
+                            <TableRow key={u.id} variant="adminUi2">
+                                <TableCell variant="admin6">{u.name}</TableCell>
+                                <TableCell variant="admin3">{u.email}</TableCell>
+                                <TableCell variant="admin2">
+                                    <UserRoleBadge role={u.role} />
+                                </TableCell>
+                                <TableCell variant="admin3">{u.organization?.name || '-'}</TableCell>
+                                <TableCell variant="admin4">{new Date(u.created_at).toLocaleDateString()}</TableCell>
+                                <TableCell variant="admin5">
                                     <div className="flex items-center justify-end gap-2">
-                                        <button className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-secondary text-secondary-foreground border border-border hover:bg-muted transition-all active:scale-95" onClick={() => handleEditEmail(u)}>이메일 수정</button>
-                                        <button className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20 transition-all active:scale-95" onClick={() => handleDeleteUser(u)}>탈퇴</button>
+                                        <Button variant="secondarySmall" onClick={() => handleEditEmail(u)}>이메일 수정</Button>
+                                        <Button variant="dangerSmall" onClick={() => handleDeleteUser(u)}>탈퇴</Button>
                                     </div>
-                                </td>
-                            </tr>
+                                </TableCell>
+                            </TableRow>
                         ))}
-                    </tbody>
-                </table>
+                    </TableBody>
+                </Table>
             </div>
             {/* Mobile Cards */}
             <div className="sm:hidden divide-y divide-border">
@@ -257,9 +246,7 @@ export default function AdminView() {
                     <div key={u.id} className="p-4 space-y-2">
                         <div className="flex items-center justify-between">
                             <span className="font-bold text-foreground">{u.name}</span>
-                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${ROLE_BADGE[u.role] || ROLE_BADGE.general}`}>
-                                {ROLE_LABEL[u.role] || u.role}
-                            </span>
+                            <UserRoleBadge role={u.role} compact />
                         </div>
                         <div className="text-xs text-muted-foreground">{u.email}</div>
                         {u.organization?.name && (
@@ -267,8 +254,8 @@ export default function AdminView() {
                         )}
                         <div className="text-[10px] text-muted-foreground/60 italic">{new Date(u.created_at).toLocaleDateString()} 가입</div>
                         <div className="flex items-center justify-end gap-2 pt-1">
-                            <button className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-secondary border border-border" onClick={() => handleEditEmail(u)}>이메일 수정</button>
-                            <button className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-destructive/10 text-destructive border border-destructive/20" onClick={() => handleDeleteUser(u)}>탈퇴</button>
+                            <Button variant="secondaryMobile" onClick={() => handleEditEmail(u)}>이메일 수정</Button>
+                            <Button variant="dangerMobile" onClick={() => handleDeleteUser(u)}>탈퇴</Button>
                         </div>
                     </div>
                 ))}
@@ -280,42 +267,42 @@ export default function AdminView() {
         <>
             {/* Desktop Table */}
             <div className="hidden sm:block overflow-x-auto">
-                <table className="w-full text-sm text-left border-collapse">
-                    <thead>
-                        <tr className="bg-muted/50 border-b text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                            <th className="px-6 py-4">코드</th>
-                            <th className="px-6 py-4">공항명</th>
-                            <th className="px-6 py-4">국가</th>
-                            <th className="px-6 py-4">색상</th>
-                            <th className="px-6 py-4">상태</th>
-                            <th className="px-6 py-4 text-right">관리</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border/50">
+                <Table variant="default">
+                    <TableHead variant="plain">
+                        <TableRow variant="adminUi">
+                            <TableHeaderCell variant="admin">코드</TableHeaderCell>
+                            <TableHeaderCell variant="admin">공항명</TableHeaderCell>
+                            <TableHeaderCell variant="admin">국가</TableHeaderCell>
+                            <TableHeaderCell variant="admin">색상</TableHeaderCell>
+                            <TableHeaderCell variant="admin">상태</TableHeaderCell>
+                            <TableHeaderCell variant="admin2">관리</TableHeaderCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody variant="adminUi">
                         {airports.map(a => (
-                            <tr key={a.id} className="hover:bg-muted/30 transition-colors">
-                                <td className="px-6 py-4 font-black text-foreground">{a.code}</td>
-                                <td className="px-6 py-4 font-bold">{a.name}</td>
-                                <td className="px-6 py-4 text-muted-foreground">{a.country}</td>
-                                <td className="px-6 py-4">
-                                    <span 
-                                        className="px-2 py-0.5 rounded-md text-[10px] font-black border shadow-sm" 
+                            <TableRow key={a.id} variant="adminUi2">
+                                <TableCell variant="admin7">{a.code}</TableCell>
+                                <TableCell variant="admin8">{a.name}</TableCell>
+                                <TableCell variant="admin3">{a.country}</TableCell>
+                                <TableCell variant="admin2">
+                                    <Badge
+                                        variant="admin"
                                         style={{ backgroundColor: a.bg_color, color: a.text_color, borderColor: a.bg_color }}
                                     >
                                         Chip
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4 text-xs">{a.is_active ? '✅ 활성' : '❌ 중지'}</td>
-                                <td className="px-6 py-4 text-right">
+                                    </Badge>
+                                </TableCell>
+                                <TableCell variant="admin9">{a.is_active ? '✅ 활성' : '❌ 중지'}</TableCell>
+                                <TableCell variant="admin5">
                                     <div className="flex items-center justify-end gap-2">
-                                        <button className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-secondary text-secondary-foreground border border-border hover:bg-muted transition-all active:scale-95" onClick={() => handleEdit(a)}>수정</button>
-                                        <button className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20 transition-all active:scale-95" onClick={() => handleDelete(a.id)}>삭제</button>
+                                        <Button variant="secondarySmall" onClick={() => handleEdit(a)}>수정</Button>
+                                        <Button variant="dangerSmall" onClick={() => handleDelete(a.id)}>삭제</Button>
                                     </div>
-                                </td>
-                            </tr>
+                                </TableCell>
+                            </TableRow>
                         ))}
-                    </tbody>
-                </table>
+                    </TableBody>
+                </Table>
             </div>
             {/* Mobile Cards */}
             <div className="sm:hidden divide-y divide-border">
@@ -326,18 +313,18 @@ export default function AdminView() {
                                 <span className="font-black text-foreground">{a.code}</span>
                                 <span className="text-xs font-bold text-muted-foreground">{a.name}</span>
                             </div>
-                            <span 
-                                className="px-2 py-0.5 rounded-md text-[10px] font-black border" 
+                            <Badge
+                                variant="admin2"
                                 style={{ backgroundColor: a.bg_color, color: a.text_color, borderColor: a.bg_color }}
                             >
                                 {a.country}
-                            </span>
+                            </Badge>
                         </div>
                         <div className="flex items-center justify-between">
                             <span className="text-[10px] font-bold">{a.is_active ? '✅ 활성 상태' : '❌ 사용 중지'}</span>
                             <div className="flex items-center gap-2">
-                                <button className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-secondary border border-border" onClick={() => handleEdit(a)}>수정</button>
-                                <button className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-destructive/10 text-destructive border border-destructive/20" onClick={() => handleDelete(a.id)}>삭제</button>
+                                <Button variant="secondaryMobile" onClick={() => handleEdit(a)}>수정</Button>
+                                <Button variant="dangerMobile" onClick={() => handleDelete(a.id)}>삭제</Button>
                             </div>
                         </div>
                     </div>
@@ -350,31 +337,31 @@ export default function AdminView() {
         <>
             {/* Desktop Table */}
             <div className="hidden sm:block overflow-x-auto">
-                <table className="w-full text-sm text-left border-collapse">
-                    <thead>
-                        <tr className="bg-muted/50 border-b text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                            <th className="px-6 py-4">코드</th>
-                            <th className="px-6 py-4">항공사명</th>
-                            <th className="px-6 py-4">상태</th>
-                            <th className="px-6 py-4 text-right">관리</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border/50">
+                <Table variant="default">
+                    <TableHead variant="plain">
+                        <TableRow variant="adminUi">
+                            <TableHeaderCell variant="admin">코드</TableHeaderCell>
+                            <TableHeaderCell variant="admin">항공사명</TableHeaderCell>
+                            <TableHeaderCell variant="admin">상태</TableHeaderCell>
+                            <TableHeaderCell variant="admin2">관리</TableHeaderCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody variant="adminUi">
                         {airlines.map(a => (
-                            <tr key={a.id} className="hover:bg-muted/30 transition-colors">
-                                <td className="px-6 py-4 font-black text-foreground">{a.code}</td>
-                                <td className="px-6 py-4 font-bold">{a.name}</td>
-                                <td className="px-6 py-4 text-xs">{a.is_active ? '✅ 활성' : '❌ 중지'}</td>
-                                <td className="px-6 py-4 text-right">
+                            <TableRow key={a.id} variant="adminUi2">
+                                <TableCell variant="admin7">{a.code}</TableCell>
+                                <TableCell variant="admin8">{a.name}</TableCell>
+                                <TableCell variant="admin9">{a.is_active ? '✅ 활성' : '❌ 중지'}</TableCell>
+                                <TableCell variant="admin5">
                                     <div className="flex items-center justify-end gap-2">
-                                        <button className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-secondary text-secondary-foreground border border-border hover:bg-muted transition-all active:scale-95" onClick={() => handleEdit(a)}>수정</button>
-                                        <button className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20 transition-all active:scale-95" onClick={() => handleDelete(a.id)}>삭제</button>
+                                        <Button variant="secondarySmall" onClick={() => handleEdit(a)}>수정</Button>
+                                        <Button variant="dangerSmall" onClick={() => handleDelete(a.id)}>삭제</Button>
                                     </div>
-                                </td>
-                            </tr>
+                                </TableCell>
+                            </TableRow>
                         ))}
-                    </tbody>
-                </table>
+                    </TableBody>
+                </Table>
             </div>
             {/* Mobile Cards */}
             <div className="sm:hidden divide-y divide-border">
@@ -388,8 +375,8 @@ export default function AdminView() {
                             <span className="text-[10px] font-bold">{a.is_active ? '✅ 사용 중' : '❌ 중지됨'}</span>
                         </div>
                         <div className="flex items-center justify-end gap-2">
-                            <button className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-secondary border border-border" onClick={() => handleEdit(a)}>수정</button>
-                            <button className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-destructive/10 text-destructive border border-destructive/20" onClick={() => handleDelete(a.id)}>삭제</button>
+                            <Button variant="secondaryMobile" onClick={() => handleEdit(a)}>수정</Button>
+                            <Button variant="dangerMobile" onClick={() => handleDelete(a.id)}>삭제</Button>
                         </div>
                     </div>
                 ))}
@@ -401,29 +388,29 @@ export default function AdminView() {
         <>
             {/* Desktop Table */}
             <div className="hidden sm:block overflow-x-auto">
-                <table className="w-full text-sm text-left border-collapse">
-                    <thead>
-                        <tr className="bg-muted/50 border-b text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                            <th className="px-6 py-4">단체명</th>
-                            <th className="px-6 py-4">상태</th>
-                            <th className="px-6 py-4 text-right">관리</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border/50">
+                <Table variant="default">
+                    <TableHead variant="plain">
+                        <TableRow variant="adminUi">
+                            <TableHeaderCell variant="admin">단체명</TableHeaderCell>
+                            <TableHeaderCell variant="admin">상태</TableHeaderCell>
+                            <TableHeaderCell variant="admin2">관리</TableHeaderCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody variant="adminUi">
                         {organizations.map(o => (
-                            <tr key={o.id} className="hover:bg-muted/30 transition-colors">
-                                <td className="px-6 py-4 font-bold">{o.name}</td>
-                                <td className="px-6 py-4 text-xs">{o.is_active ? '✅ 활성' : '❌ 중지'}</td>
-                                <td className="px-6 py-4 text-right">
+                            <TableRow key={o.id} variant="adminUi2">
+                                <TableCell variant="admin8">{o.name}</TableCell>
+                                <TableCell variant="admin9">{o.is_active ? '✅ 활성' : '❌ 중지'}</TableCell>
+                                <TableCell variant="admin5">
                                     <div className="flex items-center justify-end gap-2">
-                                        <button className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-secondary text-secondary-foreground border border-border hover:bg-muted transition-all active:scale-95" onClick={() => handleEdit(o)}>수정</button>
-                                        <button className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20 transition-all active:scale-95" onClick={() => handleDelete(o.id)}>삭제</button>
+                                        <Button variant="secondarySmall" onClick={() => handleEdit(o)}>수정</Button>
+                                        <Button variant="dangerSmall" onClick={() => handleDelete(o.id)}>삭제</Button>
                                     </div>
-                                </td>
-                            </tr>
+                                </TableCell>
+                            </TableRow>
                         ))}
-                    </tbody>
-                </table>
+                    </TableBody>
+                </Table>
             </div>
             {/* Mobile Cards */}
             <div className="sm:hidden divide-y divide-border">
@@ -434,8 +421,8 @@ export default function AdminView() {
                             <span className="text-[10px] font-bold">{o.is_active ? '✅ 사용 중' : '❌ 중지됨'}</span>
                         </div>
                         <div className="flex items-center justify-end gap-2">
-                            <button className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-secondary border border-border" onClick={() => handleEdit(o)}>수정</button>
-                            <button className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-destructive/10 text-destructive border border-destructive/20" onClick={() => handleDelete(o.id)}>삭제</button>
+                            <Button variant="secondaryMobile" onClick={() => handleEdit(o)}>수정</Button>
+                            <Button variant="dangerMobile" onClick={() => handleDelete(o.id)}>삭제</Button>
                         </div>
                     </div>
                 ))}
@@ -455,34 +442,34 @@ export default function AdminView() {
         <>
             {/* Desktop Table */}
             <div className="hidden sm:block overflow-x-auto">
-                <table className="w-full text-sm text-left border-collapse">
-                    <thead>
-                        <tr className="bg-muted/50 border-b text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                            <th className="px-6 py-4">전화번호</th>
-                            <th className="px-6 py-4">증빙 방법</th>
-                            <th className="px-6 py-4">지정 단체</th>
-                            <th className="px-6 py-4">상태</th>
-                            <th className="px-6 py-4">제출일</th>
-                            <th className="px-6 py-4 text-right">관리</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border/50">
+                <Table variant="default">
+                    <TableHead variant="plain">
+                        <TableRow variant="adminUi">
+                            <TableHeaderCell variant="admin">전화번호</TableHeaderCell>
+                            <TableHeaderCell variant="admin">증빙 방법</TableHeaderCell>
+                            <TableHeaderCell variant="admin">지정 단체</TableHeaderCell>
+                            <TableHeaderCell variant="admin">상태</TableHeaderCell>
+                            <TableHeaderCell variant="admin">제출일</TableHeaderCell>
+                            <TableHeaderCell variant="admin2">관리</TableHeaderCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody variant="adminUi">
                         {submissions.map(s => (
-                            <tr key={s.id} className="hover:bg-muted/30 transition-colors">
-                                <td className="px-6 py-4 font-semibold text-foreground">{s.phone}</td>
-                                <td className="px-6 py-4 text-xs">{verificationMethodLabel(s.verification_method)}</td>
-                                <td className="px-6 py-4 text-muted-foreground">{s.organization?.name || '미지정'}</td>
-                                <td className="px-6 py-4 text-xs">{submissionStatusLabel(s.status)}</td>
-                                <td className="px-6 py-4 text-muted-foreground text-xs">{new Date(s.submitted_at).toLocaleDateString()}</td>
-                                <td className="px-6 py-4 text-right">
-                                    <button className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-secondary text-secondary-foreground border border-border hover:bg-muted transition-all active:scale-95" onClick={() => handleReviewSubmission(s)}>
+                            <TableRow key={s.id} variant="adminUi2">
+                                <TableCell variant="admin6">{s.phone}</TableCell>
+                                <TableCell variant="admin9">{verificationMethodLabel(s.verification_method)}</TableCell>
+                                <TableCell variant="admin3">{s.organization?.name || '미지정'}</TableCell>
+                                <TableCell variant="admin9">{submissionStatusLabel(s.status)}</TableCell>
+                                <TableCell variant="admin4">{new Date(s.submitted_at).toLocaleDateString()}</TableCell>
+                                <TableCell variant="admin5">
+                                    <Button variant="secondarySmall" onClick={() => handleReviewSubmission(s)}>
                                         {s.status === 'pending' ? '검토' : '상세'}
-                                    </button>
-                                </td>
-                            </tr>
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
                         ))}
-                    </tbody>
-                </table>
+                    </TableBody>
+                </Table>
             </div>
             {/* Mobile Cards */}
             <div className="sm:hidden divide-y divide-border">
@@ -494,9 +481,9 @@ export default function AdminView() {
                         </div>
                         <div className="text-xs text-muted-foreground">{verificationMethodLabel(s.verification_method)} · {s.organization?.name || '단체 미지정'}</div>
                         <div className="flex items-center justify-end">
-                            <button className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-secondary border border-border" onClick={() => handleReviewSubmission(s)}>
+                            <Button variant="secondaryMobile" onClick={() => handleReviewSubmission(s)}>
                                 {s.status === 'pending' ? '검토' : '상세'}
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 ))}
@@ -508,72 +495,72 @@ export default function AdminView() {
         <div className="space-y-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-1">
-                    <h1 className="text-2xl font-bold tracking-tight text-foreground">시스템 관리</h1>
+                    <Heading as="h1" variant="page">시스템 관리</Heading>
                     <p className="text-sm text-muted-foreground">회원 및 마스터 데이터를 관리합니다.</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                    <Link
+                    <ActionLink as={Link}
                         to="/admin/ui"
-                        className="inline-flex items-center justify-center px-4 py-2 text-sm font-bold rounded-md bg-secondary text-secondary-foreground border border-border hover:bg-muted transition-colors"
+                        variant="admin"
                     >
                         UI 컴포넌트
-                    </Link>
+                    </ActionLink>
                     {['users', 'airports', 'airlines', 'organizations'].includes(activeTab) && (
-                        <button
-                            className="inline-flex items-center justify-center px-4 py-2 text-sm font-bold transition-colors rounded-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+                        <Button
+                            variant="primary"
                             onClick={handleCreate}
                         >
                             + {activeTab === 'users' ? '회원 등록' : activeTab === 'airports' ? '공항 등록' : activeTab === 'airlines' ? '항공사 등록' : '단체 등록'}
-                        </button>
+                        </Button>
                     )}
                 </div>
             </div>
 
-            <div className="flex flex-col bg-card rounded-xl border-2 border-border shadow-sm overflow-hidden min-h-[400px]">
+            <Card variant="admin">
                 <div className="flex items-center gap-1 border-b px-2 bg-muted/30 overflow-x-auto scrollbar-hide">
-                    <button 
-                        className={`shrink-0 px-4 py-3 text-xs font-bold transition-all border-b-2 -mb-[2px] ${activeTab === 'users' ? 'text-primary border-primary' : 'text-muted-foreground border-transparent hover:text-foreground'}`}
+                    <Button
+                        variant="tab" active={activeTab === 'users'}
                         onClick={() => setActiveTab('users')}
                     >
                         👥 회원
-                    </button>
-                    <button
-                        className={`shrink-0 px-4 py-3 text-xs font-bold transition-all border-b-2 -mb-[2px] ${activeTab === 'pending' ? 'text-primary border-primary' : 'text-muted-foreground border-transparent hover:text-foreground'}`}
+                    </Button>
+                    <Button
+                        variant="tab" active={activeTab === 'pending'}
                         onClick={() => setActiveTab('pending')}
                     >
                         ✅ 가입 승인{pendingUsers.length > 0 ? ` (${pendingUsers.length})` : ''}
-                    </button>
-                    <button
-                        className={`shrink-0 px-4 py-3 text-xs font-bold transition-all border-b-2 -mb-[2px] ${activeTab === 'airports' ? 'text-primary border-primary' : 'text-muted-foreground border-transparent hover:text-foreground'}`}
+                    </Button>
+                    <Button
+                        variant="tab" active={activeTab === 'airports'}
                         onClick={() => setActiveTab('airports')}
                     >
                         🏢 공항
-                    </button>
-                    <button
-                        className={`shrink-0 px-4 py-3 text-xs font-bold transition-all border-b-2 -mb-[2px] ${activeTab === 'airlines' ? 'text-primary border-primary' : 'text-muted-foreground border-transparent hover:text-foreground'}`}
+                    </Button>
+                    <Button
+                        variant="tab" active={activeTab === 'airlines'}
                         onClick={() => setActiveTab('airlines')}
                     >
                         ✈️ 항공사
-                    </button>
-                    <button
-                        className={`shrink-0 px-4 py-3 text-xs font-bold transition-all border-b-2 -mb-[2px] ${activeTab === 'organizations' ? 'text-primary border-primary' : 'text-muted-foreground border-transparent hover:text-foreground'}`}
+                    </Button>
+                    <Button
+                        variant="tab" active={activeTab === 'organizations'}
                         onClick={() => setActiveTab('organizations')}
                     >
                         🏢 단체
-                    </button>
-                    <button
-                        className={`shrink-0 px-4 py-3 text-xs font-bold transition-all border-b-2 -mb-[2px] ${activeTab === 'submissions' ? 'text-primary border-primary' : 'text-muted-foreground border-transparent hover:text-foreground'}`}
+                    </Button>
+                    <Button
+                        variant="tab" active={activeTab === 'submissions'}
                         onClick={() => setActiveTab('submissions')}
                     >
                         📋 제출 검토
-                    </button>
+                    </Button>
                 </div>
 
                 <div className="flex-1 animate-in fade-in duration-300">
                     {error && (
-                        <div className="m-4 px-4 py-3 text-xs font-medium text-destructive bg-destructive/10 border border-destructive/20 rounded-lg">
+                        <Alert variant="admin">
                             {error}
-                        </div>
+                        </Alert>
                     )}
                     
                     {loading ? (
@@ -588,7 +575,7 @@ export default function AdminView() {
                         activeTab === 'organizations' ? renderOrganizations() : renderSubmissions()
                     )}
                 </div>
-            </div>
+            </Card>
 
             <RegisterUserModal isOpen={userModal.isOpen} onClose={userModal.closeModal} onUserRegistered={handleSaved} />
             <AirportModal isOpen={airportModal.isOpen} onClose={airportModal.closeModal} airport={selectedItem} onSaved={handleSaved} apiClient={apiClient} />

@@ -1,3 +1,4 @@
+import { ActionLink, Button, Heading, Input } from '../components/ui/primitives.js';
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -93,12 +94,12 @@ export default function PublicNeedBoard() {
     };
 
     const filterBtn = (key, label) => (
-        <button
-            className={`shrink-0 px-4 py-1.5 text-xs font-black rounded-full border-2 transition-all ${activeFilter === key ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-muted-foreground border-border hover:border-primary/30'}`}
+        <Button
+            variant="filter" active={activeFilter === key}
             onClick={() => setActiveFilter(key)}
         >
             {label}
-        </button>
+        </Button>
     );
 
     return (
@@ -106,29 +107,29 @@ export default function PublicNeedBoard() {
             {/* Nav */}
             <header className="w-full border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-10">
                 <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-                    <Link to="/" className="flex items-center gap-2">
+                    <ActionLink as={Link} to="/" variant="orgIntro">
                         <img src={logo} alt="해봉티켓" className="w-8 h-8" />
                         <span className="font-bold text-foreground">해봉티켓</span>
-                    </Link>
+                    </ActionLink>
                     <div className="flex items-center gap-1">
-                        <Link to="/guide" className="inline-flex items-center justify-center h-9 px-3 text-sm font-bold rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors">
+                        <ActionLink as={Link} to="/guide" variant="orgIntro2">
                             이동봉사 안내
-                        </Link>
+                        </ActionLink>
                         {user ? (
                             <>
                                 <span className="hidden sm:inline text-sm font-bold text-foreground px-2">{user.name}님</span>
-                                <Link to="/notifications" className="px-3 text-sm font-bold">알림 설정</Link>
-                                <button onClick={logout} className="inline-flex items-center justify-center h-9 px-3 text-sm font-bold rounded-lg text-foreground hover:bg-secondary transition-colors">
+                                <ActionLink as={Link} to="/notifications" variant="publicNeedBoard">알림 설정</ActionLink>
+                                <Button onClick={logout} variant="account">
                                     로그아웃
-                                </button>
-                                <button onClick={handleWithdraw} className="inline-flex items-center justify-center h-9 px-3 text-sm font-bold rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors">
+                                </Button>
+                                <Button onClick={handleWithdraw} variant="withdraw">
                                     탈퇴
-                                </button>
+                                </Button>
                             </>
                         ) : (
-                            <Link to="/login" className="inline-flex items-center justify-center h-9 px-4 text-sm font-bold rounded-lg text-foreground hover:bg-secondary transition-colors">
+                            <ActionLink as={Link} to="/login" variant="landing">
                                 로그인
-                            </Link>
+                            </ActionLink>
                         )}
                     </div>
                 </div>
@@ -138,14 +139,14 @@ export default function PublicNeedBoard() {
             <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <div className="space-y-1">
-                        <h1 className="text-2xl font-bold tracking-tight text-foreground">이동봉사 구해요</h1>
+                        <Heading as="h1" variant="page">이동봉사 구해요</Heading>
                         <p className="text-sm text-muted-foreground">도움이 필요한 이동봉사 일정을 확인하고, 함께해 주세요.</p>
                     </div>
                     <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs opacity-50">🔍</span>
-                        <input
+                        <Input
                             placeholder="공항 코드 또는 제목 검색..."
-                            className="flex h-10 w-full rounded-md border-2 border-border bg-background pl-9 pr-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-all focus:border-primary/50 sm:w-[260px]"
+                            variant="publicSearch"
                             value={searchText}
                             onChange={e => setSearchText(e.target.value)}
                         />
@@ -165,7 +166,7 @@ export default function PublicNeedBoard() {
                 <div className="flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-muted/20 p-5 text-center">
                     <div className="text-sm text-muted-foreground">
                         도움을 주실 수 있나요?{' '}
-                        <Link to="/apply" className="font-bold text-primary hover:underline">🎁 봉사 티켓 제출하기 →</Link>
+                        <ActionLink as={Link} to="/apply" variant="loginScreen2">🎁 봉사 티켓 제출하기 →</ActionLink>
                     </div>
                 </div>
             </main>

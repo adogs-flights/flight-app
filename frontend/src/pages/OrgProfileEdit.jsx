@@ -1,8 +1,9 @@
+import { ActionLink, Alert, Button, Card, FieldLabel, Heading, Input, Textarea } from '../components/ui/primitives.js';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
-const inputClass = "flex h-10 w-full rounded-lg border-2 border-border bg-background px-3 text-sm transition-all focus:border-primary/50 focus-visible:outline-none";
+
 
 export default function OrgProfileEdit() {
     const { user, apiClient, refreshUser } = useAuth();
@@ -23,7 +24,7 @@ export default function OrgProfileEdit() {
     if (!org) {
         return (
             <div className="space-y-6">
-                <h1 className="text-2xl font-bold tracking-tight text-foreground">단체 소개 관리</h1>
+                <Heading as="h1" variant="page">단체 소개 관리</Heading>
                 <div className="p-6 rounded-2xl bg-muted/20 border-2 border-dashed border-border text-center text-sm text-muted-foreground">
                     소속된 단체가 없어 소개를 편집할 수 없습니다.
                 </div>
@@ -83,22 +84,22 @@ export default function OrgProfileEdit() {
         <div className="space-y-6 max-w-2xl">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-1">
-                    <h1 className="text-2xl font-bold tracking-tight text-foreground">단체 소개 관리</h1>
+                    <Heading as="h1" variant="page">단체 소개 관리</Heading>
                     <p className="text-sm text-muted-foreground">공개 소개 페이지에 노출될 {org.name}의 정보를 편집합니다.</p>
                 </div>
                 {org.slug ? (
-                    <Link to={`/org/${org.slug}`} target="_blank" rel="noreferrer"
-                        className="shrink-0 inline-flex items-center justify-center h-9 px-4 text-xs font-bold rounded-lg border-2 border-border bg-card hover:border-primary/30 transition-all">
+                    <ActionLink as={Link} to={`/org/${org.slug}`} target="_blank" rel="noreferrer"
+                        variant="orgProfileEdit">
                         공개 페이지 미리보기 ↗
-                    </Link>
+                    </ActionLink>
                 ) : (
                     <span className="shrink-0 text-[11px] text-muted-foreground">공개 링크(슬러그)는 관리자가 설정합니다.</span>
                 )}
             </div>
 
             {/* 로고 */}
-            <div className="p-5 rounded-2xl bg-card border-2 border-border shadow-sm space-y-3">
-                <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">로고</label>
+            <Card variant="orgProfileEdit">
+                <FieldLabel variant="orgProfileEdit">로고</FieldLabel>
                 <div className="flex items-center gap-4">
                     <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-border bg-muted/30 flex items-center justify-center shrink-0">
                         {hasLogo ? (
@@ -108,50 +109,50 @@ export default function OrgProfileEdit() {
                         )}
                     </div>
                     <div className="flex flex-col gap-2">
-                        <input
+                        <Input
                             type="file"
                             accept="image/png,image/jpeg,image/webp"
                             disabled={logoBusy}
                             onChange={e => uploadLogo(e.target.files?.[0])}
-                            className="text-xs file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-[11px] file:font-bold file:bg-primary file:text-primary-foreground disabled:opacity-50"
+                            variant="logo"
                         />
                         {hasLogo && (
-                            <button onClick={removeLogo} disabled={logoBusy} className="text-left text-[11px] font-medium text-slate-400 hover:text-destructive underline underline-offset-4 disabled:opacity-50">
+                            <Button onClick={removeLogo} disabled={logoBusy} variant="removeFile">
                                 로고 삭제
-                            </button>
+                            </Button>
                         )}
                     </div>
                 </div>
-            </div>
+            </Card>
 
             {/* 소개글·링크 */}
-            <div className="p-5 rounded-2xl bg-card border-2 border-border shadow-sm space-y-4">
+            <Card variant="orgProfileEdit2">
                 <div className="space-y-1.5">
-                    <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">단체 소개글</label>
-                    <textarea
+                    <FieldLabel variant="orgProfileEdit">단체 소개글</FieldLabel>
+                    <Textarea
                         rows={6}
-                        className="w-full rounded-lg border-2 border-border bg-background px-3 py-2 text-sm leading-relaxed transition-all focus:border-primary/50 focus-visible:outline-none resize-y"
+                        variant="profile"
                         placeholder="단체의 미션과 활동을 소개해주세요."
                         value={form.description}
                         onChange={e => change('description', e.target.value)}
                     />
                 </div>
                 <div className="space-y-1.5">
-                    <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">홈페이지</label>
-                    <input className={inputClass} placeholder="https://example.org" value={form.homepage_url} onChange={e => change('homepage_url', e.target.value)} />
+                    <FieldLabel variant="orgProfileEdit">홈페이지</FieldLabel>
+                    <Input variant="compact" placeholder="https://example.org" value={form.homepage_url} onChange={e => change('homepage_url', e.target.value)} />
                 </div>
                 <div className="space-y-1.5">
-                    <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">인스타그램</label>
-                    <input className={inputClass} placeholder="https://instagram.com/..." value={form.instagram_url} onChange={e => change('instagram_url', e.target.value)} />
+                    <FieldLabel variant="orgProfileEdit">인스타그램</FieldLabel>
+                    <Input variant="compact" placeholder="https://instagram.com/..." value={form.instagram_url} onChange={e => change('instagram_url', e.target.value)} />
                 </div>
 
-                {error && <div className="px-3 py-2 text-xs font-medium text-destructive bg-destructive/10 border border-destructive/20 rounded-lg">{error}</div>}
+                {error && <Alert variant="generalSignup">{error}</Alert>}
                 {message && <div className="px-3 py-2 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg">{message}</div>}
 
-                <button onClick={saveProfile} disabled={saving} className="w-full h-10 text-sm font-bold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-all active:scale-[0.99]">
+                <Button onClick={saveProfile} disabled={saving} variant="saveProfile">
                     {saving ? '저장 중…' : '소개 정보 저장'}
-                </button>
-            </div>
+                </Button>
+            </Card>
         </div>
     );
 }

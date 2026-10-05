@@ -1,3 +1,4 @@
+import { ActionLink, Badge, Button, FieldLabel, Input, NativeSelect, Textarea } from '../ui/primitives.js';
 import { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
 import SelectField from '../ui/SelectField';
@@ -167,24 +168,24 @@ export default function GuestSubmissionReviewModal({ isOpen, onClose, submission
 
     const footer = (
         <div className="flex items-center justify-end w-full gap-2 flex-wrap">
-            <button
-                className="px-4 py-2 text-sm font-bold rounded-md bg-secondary text-secondary-foreground border border-border hover:bg-muted transition-colors"
+            <Button
+                variant="secondary"
                 onClick={onClose}
             >
                 취소
-            </button>
-            <button
-                className="px-4 py-2 text-sm font-bold rounded-md bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20 transition-all"
+            </Button>
+            <Button
+                variant="rejectSubmission"
                 onClick={() => setShowReject(v => !v)}
             >
                 반려 (자리 없음)
-            </button>
-            <button
-                className="px-6 py-2 text-sm font-bold transition-all rounded-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+            </Button>
+            <Button
+                variant="save"
                 onClick={handleApprove}
             >
                 승인 (예약 완료)
-            </button>
+            </Button>
         </div>
     );
 
@@ -206,11 +207,11 @@ export default function GuestSubmissionReviewModal({ isOpen, onClose, submission
                             <span className="font-bold">응답한 게시글:</span> 🐶 {submission.need_post.title}
                             {submission.need_post.airport_code && (
                                 <>
-                                    <span className="ml-2 inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md text-[10px] font-black border shadow-sm align-middle whitespace-nowrap"
+                                    <Badge variant="guestSubmissionReview"
                                         style={(() => { const c = getAirportColor(submission.need_post.airport_code, rawAirports); return { backgroundColor: c.bg, color: c.text, borderColor: c.bg }; })()}
                                     >
                                         ✈ {submission.need_post.airport_code}
-                                    </span>
+                                    </Badge>
                                     <span className="ml-1.5 text-xs text-muted-foreground">{getAirportLabel(submission.need_post.airport_code, airports)}</span>
                                 </>
                             )}
@@ -226,37 +227,37 @@ export default function GuestSubmissionReviewModal({ isOpen, onClose, submission
                                 <div className="text-xs font-bold text-green">🛫 출국 준비 서류 제출됨</div>
                                 {submission.dep_address && <div className="text-sm"><span className="font-bold">주소:</span> {submission.dep_address}</div>}
                                 <div className="flex flex-wrap gap-3 pt-1">
-                                    {passportUrl && <a href={passportUrl} target="_blank" rel="noreferrer" className="text-xs font-bold text-primary hover:underline">📄 여권 사본 보기</a>}
-                                    {seatConfirmUrl && <a href={seatConfirmUrl} target="_blank" rel="noreferrer" className="text-xs font-bold text-primary hover:underline">🎫 자리 확약 캡쳐 보기</a>}
+                                    {passportUrl && <ActionLink href={passportUrl} target="_blank" rel="noreferrer" variant="signupChoice2">📄 여권 사본 보기</ActionLink>}
+                                    {seatConfirmUrl && <ActionLink href={seatConfirmUrl} target="_blank" rel="noreferrer" variant="signupChoice2">🎫 자리 확약 캡쳐 보기</ActionLink>}
                                 </div>
-                                <button
+                                <Button
                                     type="button"
                                     onClick={handleDeleteDeparture}
-                                    className="text-[11px] font-medium text-slate-400 hover:text-destructive underline underline-offset-4 transition-colors pt-1"
+                                    variant="requestDetails"
                                 >
                                     출국 준비 개인정보 삭제
-                                </button>
+                                </Button>
                             </div>
                         )
                     )}
                     {submission.verification_method === 'eticket_image' ? (
                         <>
                             {imageUrl ? (
-                                <a href={imageUrl} target="_blank" rel="noreferrer">
+                                <ActionLink variant="plain" href={imageUrl} target="_blank" rel="noreferrer">
                                     <img src={imageUrl} alt="e티켓" className="max-h-64 rounded-lg border-2 border-border mt-2" />
-                                </a>
+                                </ActionLink>
                             ) : (
                                 <div className="text-xs text-muted-foreground">이미지를 불러오는 중...</div>
                             )}
                             {submission.eticket_drive_url && (
-                                <a
+                                <ActionLink
                                     href={submission.eticket_drive_url}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="inline-block text-xs font-bold text-primary hover:underline"
+                                    variant="generalHome"
                                 >
                                     📁 구글 드라이브 백업본 보기
-                                </a>
+                                </ActionLink>
                             )}
                         </>
                     ) : (
@@ -269,28 +270,28 @@ export default function GuestSubmissionReviewModal({ isOpen, onClose, submission
 
                 {showReject ? (
                     <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">반려 사유</label>
-                        <textarea
-                            className="flex min-h-[80px] w-full rounded-lg border-2 border-border bg-background px-4 py-3 text-sm transition-all focus:border-primary/50 focus-visible:outline-none"
+                        <FieldLabel variant="default">반려 사유</FieldLabel>
+                        <Textarea
+                            variant="short"
                             value={adminNote}
                             onChange={e => setAdminNote(e.target.value)}
                             placeholder="예: 해당 항공편에 반려동물 자리가 없습니다."
                         />
-                        <button
-                            className="w-full h-11 text-sm font-bold rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-all"
+                        <Button
+                            variant="confirmReject"
                             onClick={handleReject}
                         >
                             반려 확정
-                        </button>
+                        </Button>
                     </div>
                 ) : (
                     <>
                         <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">실제 항공편 정보 입력</div>
 
                         <div className="space-y-2">
-                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">티켓 제목 (미입력 시 자동 생성)</label>
-                            <input
-                                className="h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none"
+                            <FieldLabel variant="default">티켓 제목 (미입력 시 자동 생성)</FieldLabel>
+                            <Input
+                                variant="default"
                                 value={form.title}
                                 onChange={e => handleChange('title', e.target.value)}
                                 placeholder="예: JFK 4월 뉴욕행 이동봉사 (미입력 시 자동 생성)"
@@ -299,20 +300,20 @@ export default function GuestSubmissionReviewModal({ isOpen, onClose, submission
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">
+                                <FieldLabel variant="default">
                                     출발일<span className="text-destructive ml-0.5">*</span>
-                                </label>
-                                <input
-                                    className="h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none"
+                                </FieldLabel>
+                                <Input
+                                    variant="default"
                                     type="date"
                                     value={form.departureDate}
                                     onChange={e => handleChange('departureDate', e.target.value)}
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">출발 시간</label>
-                                <input
-                                    className="h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none"
+                                <FieldLabel variant="default">출발 시간</FieldLabel>
+                                <Input
+                                    variant="default"
                                     type="time"
                                     value={form.departureTime}
                                     onChange={e => handleChange('departureTime', e.target.value)}
@@ -322,20 +323,20 @@ export default function GuestSubmissionReviewModal({ isOpen, onClose, submission
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">
+                                <FieldLabel variant="default">
                                     도착일<span className="text-destructive ml-0.5">*</span>
-                                </label>
-                                <input
-                                    className="h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none"
+                                </FieldLabel>
+                                <Input
+                                    variant="default"
                                     type="date"
                                     value={form.arrivalDate}
                                     onChange={e => handleChange('arrivalDate', e.target.value)}
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">도착 시간</label>
-                                <input
-                                    className="h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none"
+                                <FieldLabel variant="default">도착 시간</FieldLabel>
+                                <Input
+                                    variant="default"
                                     type="time"
                                     value={form.arrivalTime}
                                     onChange={e => handleChange('arrivalTime', e.target.value)}
@@ -361,9 +362,9 @@ export default function GuestSubmissionReviewModal({ isOpen, onClose, submission
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">항공편 정보</label>
-                            <input
-                                className="h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none"
+                            <FieldLabel variant="default">항공편 정보</FieldLabel>
+                            <Input
+                                variant="default"
                                 value={form.flightInfo}
                                 onChange={e => handleChange('flightInfo', e.target.value)}
                                 placeholder="예: ICN → JFK KE081"
@@ -372,9 +373,9 @@ export default function GuestSubmissionReviewModal({ isOpen, onClose, submission
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">기내(마리)</label>
-                                <input
-                                    className="h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none"
+                                <FieldLabel variant="default">기내(마리)</FieldLabel>
+                                <Input
+                                    variant="default"
                                     type="number"
                                     min="0"
                                     value={form.cabinCapacity === 0 ? '' : form.cabinCapacity}
@@ -383,9 +384,9 @@ export default function GuestSubmissionReviewModal({ isOpen, onClose, submission
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">수하물(마리)</label>
-                                <input
-                                    className="h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none"
+                                <FieldLabel variant="default">수하물(마리)</FieldLabel>
+                                <Input
+                                    variant="default"
                                     type="number"
                                     min="0"
                                     value={form.cargoCapacity === 0 ? '' : form.cargoCapacity}
@@ -397,20 +398,20 @@ export default function GuestSubmissionReviewModal({ isOpen, onClose, submission
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">
+                                <FieldLabel variant="default">
                                     담당자명<span className="text-destructive ml-0.5">*</span>
-                                </label>
-                                <input
-                                    className="h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none"
+                                </FieldLabel>
+                                <Input
+                                    variant="default"
                                     value={form.managerName}
                                     onChange={e => handleChange('managerName', e.target.value)}
                                     placeholder="제출자 이름"
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">연락처</label>
-                                <input
-                                    className="h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none"
+                                <FieldLabel variant="default">연락처</FieldLabel>
+                                <Input
+                                    variant="default"
                                     value={form.contact}
                                     onChange={e => handleChange('contact', e.target.value)}
                                 />
@@ -418,9 +419,9 @@ export default function GuestSubmissionReviewModal({ isOpen, onClose, submission
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">소유 회원 지정 (선택)</label>
-                            <select
-                                className="h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none"
+                            <FieldLabel variant="default">소유 회원 지정 (선택)</FieldLabel>
+                            <NativeSelect
+                                variant="default"
                                 value={form.ownerUserId}
                                 onChange={e => handleChange('ownerUserId', e.target.value)}
                             >
@@ -428,13 +429,13 @@ export default function GuestSubmissionReviewModal({ isOpen, onClose, submission
                                 {users.map(u => (
                                     <option key={u.id} value={u.id}>{u.name} ({u.email}){u.organization?.name ? ` - ${u.organization.name}` : ''}</option>
                                 ))}
-                            </select>
+                            </NativeSelect>
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">메모</label>
-                            <textarea
-                                className="flex min-h-[80px] w-full rounded-lg border-2 border-border bg-background px-4 py-3 text-sm transition-all focus:border-primary/50 focus-visible:outline-none"
+                            <FieldLabel variant="default">메모</FieldLabel>
+                            <Textarea
+                                variant="short"
                                 value={form.memo}
                                 onChange={e => handleChange('memo', e.target.value)}
                                 placeholder="추가 정보..."

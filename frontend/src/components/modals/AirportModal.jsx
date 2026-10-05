@@ -1,3 +1,4 @@
+import { Alert, Badge, Button, FieldLabel, Input, NativeSelect } from '../ui/primitives.js';
 import { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
 
@@ -67,18 +68,18 @@ export default function AirportModal({ isOpen, onClose, airport, onSaved, apiCli
 
     const footer = (
         <div className="flex items-center justify-end w-full gap-2">
-            <button 
-                className="px-4 py-2 text-sm font-bold rounded-md bg-secondary text-secondary-foreground border border-border hover:bg-muted transition-colors" 
+            <Button
+                variant="secondary"
                 onClick={onClose}
             >
                 취소
-            </button>
-            <button 
-                className="px-6 py-2 text-sm font-bold transition-all rounded-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm" 
+            </Button>
+            <Button
+                variant="save"
                 onClick={handleSubmit}
             >
                 저장하기
-            </button>
+            </Button>
         </div>
     );
 
@@ -87,9 +88,9 @@ export default function AirportModal({ isOpen, onClose, airport, onSaved, apiCli
             <div className="space-y-6">
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">공항 코드 (IATA)</label>
-                        <input 
-                            className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none disabled:bg-muted disabled:text-muted-foreground" 
+                        <FieldLabel variant="default">공항 코드 (IATA)</FieldLabel>
+                        <Input
+                            variant="locked"
                             value={form.code} 
                             onChange={e => setForm({...form, code: e.target.value.toUpperCase()})} 
                             placeholder="JFK" 
@@ -97,23 +98,23 @@ export default function AirportModal({ isOpen, onClose, airport, onSaved, apiCli
                         />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">국가/지역</label>
-                        <select 
-                            className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none appearance-none" 
+                        <FieldLabel variant="default">국가/지역</FieldLabel>
+                        <NativeSelect
+                            variant="country"
                             value={form.country} 
                             onChange={e => setForm({...form, country: e.target.value})}
                         >
                             <option value="미국">미국</option>
                             <option value="캐나다">캐나다</option>
                             <option value="기타">기타</option>
-                        </select>
+                        </NativeSelect>
                     </div>
                 </div>
 
                 <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">공항명</label>
-                    <input 
-                        className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
+                    <FieldLabel variant="default">공항명</FieldLabel>
+                    <Input
+                        variant="flex"
                         value={form.name} 
                         onChange={e => setForm({...form, name: e.target.value})} 
                         placeholder="뉴욕 존 F. 케네디 국제공항" 
@@ -122,11 +123,11 @@ export default function AirportModal({ isOpen, onClose, airport, onSaved, apiCli
 
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">배경색</label>
+                        <FieldLabel variant="default">배경색</FieldLabel>
                         <div className="flex items-center gap-3 h-11 px-3 border-2 border-border rounded-lg bg-background">
-                            <input 
+                            <Input
                                 type="color" 
-                                className="w-8 h-8 rounded border-none cursor-pointer overflow-hidden bg-transparent p-0" 
+                                variant="color"
                                 value={form.bg_color} 
                                 onChange={e => setForm({...form, bg_color: e.target.value})} 
                             />
@@ -134,56 +135,56 @@ export default function AirportModal({ isOpen, onClose, airport, onSaved, apiCli
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">글자색</label>
+                        <FieldLabel variant="default">글자색</FieldLabel>
                         <div className="flex items-center gap-2 h-11 p-1 border-2 border-border rounded-lg bg-background">
-                            <input 
+                            <Input
                                 type="color" 
-                                className="w-8 h-8 rounded border-none cursor-pointer overflow-hidden bg-transparent p-0 ml-2" 
+                                variant="colorOffset"
                                 value={form.text_color} 
                                 onChange={e => setForm({...form, text_color: e.target.value})} 
                             />
-                            <button 
+                            <Button
                                 type="button" 
                                 onClick={applyRecommendedColor}
-                                className="ml-auto px-3 py-1 text-[10px] font-bold rounded-md bg-secondary text-secondary-foreground hover:bg-muted transition-colors border"
+                                variant="resetColor"
                             >
                                 대비 최적화
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 </div>
                 
                 <div className="p-6 rounded-xl border-2 border-border bg-muted/30 space-y-4">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70 block text-center">✨ 미리보기 가이드</label>
+                    <FieldLabel variant="airport">✨ 미리보기 가이드</FieldLabel>
                     <div className="flex flex-col items-center gap-3">
                         <div className="text-[11px] text-muted-foreground">앱 내 실제 노출 모습 (가독성을 확인하세요)</div>
-                        <span 
-                            className="px-4 py-1.5 rounded-full text-xs font-bold border shadow-sm transition-all" 
+                        <Badge
+                            variant="airport"
                             style={{ backgroundColor: form.bg_color, color: form.text_color, borderColor: form.bg_color }}
                         >
                             {form.code || 'CODE'}
-                        </span>
+                        </Badge>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-3 p-4 rounded-xl border-2 border-border bg-muted/30">
-                    <label className="relative inline-flex items-center cursor-pointer">
-                        <input 
+                    <FieldLabel variant="airline">
+                        <Input
                             type="checkbox" 
-                            className="sr-only peer" 
+                            variant="toggle"
                             checked={form.is_active} 
                             onChange={e => setForm({...form, is_active: e.target.checked})} 
                         />
                         <div className="w-11 h-6 bg-border rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                         <span className="ml-3 text-sm font-bold text-foreground">공항 활성화</span>
-                    </label>
+                    </FieldLabel>
                     <span className="text-[11px] text-muted-foreground ml-auto">(해제 시 목록에서 숨김)</span>
                 </div>
 
                 {error && (
-                    <div className="px-3 py-2 text-xs font-medium text-destructive bg-destructive/10 border border-destructive/20 rounded-lg">
+                    <Alert variant="generalSignup">
                         {error}
-                    </div>
+                    </Alert>
                 )}
             </div>
         </Modal>

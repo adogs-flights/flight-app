@@ -1,3 +1,4 @@
+import { FieldLabel } from './primitives.js';
 import React from 'react';
 import CreatableSelect from 'react-select/creatable';
 import Select from 'react-select';
@@ -102,7 +103,7 @@ export default function SelectField({
 
   return (
     <div className="flex flex-col gap-2">
-      {label && <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">{label}</label>}
+      {label && <FieldLabel variant="default">{label}</FieldLabel>}
       <SelectComponent
         isClearable
         isLoading={isLoading}

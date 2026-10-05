@@ -1,3 +1,4 @@
+import { ActionLink, Button, Heading } from '../components/ui/primitives.js';
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { pushApi } from '../utils/api';
@@ -65,8 +66,8 @@ export default function NotificationsView() {
     const permissionLabel = { default: '아직 요청하지 않음', granted: '허용', denied: '차단' };
     return (
         <main className="max-w-2xl mx-auto p-6 space-y-6">
-            <Link to="/" className="text-sm text-primary">해봉티켓으로 돌아가기</Link>
-            <h1 className="text-2xl font-black">알림 설정</h1>
+            <ActionLink as={Link} to="/" variant="notifications">해봉티켓으로 돌아가기</ActionLink>
+            <Heading as="h1" variant="notifications">알림 설정</Heading>
             <p className="text-muted-foreground">티켓 나눔 신청 결과와 내 티켓의 새 신청을 알려드립니다. 설정은 기기별로 적용됩니다.</p>
             <dl className="bg-card border rounded-2xl p-5 space-y-3">
                 <div>알림 지원: {supported ? '지원됨' : '현재 환경에서 지원되지 않음'}</div>
@@ -78,9 +79,9 @@ export default function NotificationsView() {
             {!standalone && <p className="text-sm text-muted-foreground">iPhone·iPad에서는 지원되는 OS에서 공유 메뉴의 ‘홈 화면에 추가’로 설치한 뒤, 홈 화면의 해봉티켓을 열어 알림을 켜 주세요.</p>}
             {!window.isSecureContext && <p>알림을 사용하려면 HTTPS 연결이 필요합니다.</p>}
             <div className="flex flex-wrap gap-3">
-                <button className="px-4 py-2 rounded-xl bg-primary text-primary-foreground disabled:opacity-40" onClick={enable} disabled={disabled || !supported || !state.enabled || state.permission === 'denied' || state.subscribed}>알림 받기</button>
-                <button className="px-4 py-2 rounded-xl border disabled:opacity-40" disabled={disabled || !state.local} onClick={() => run(async () => { await disablePush(); setNotice('이 브라우저의 알림을 껐습니다.'); })}>알림 끄기</button>
-                <button className="px-4 py-2 rounded-xl border disabled:opacity-40" disabled={disabled || !state.enabled || !state.subscribed || state.permission !== 'granted'} onClick={() => run(async () => { await pushApi.test(); setNotice('발송을 요청했습니다. 실제 도착 여부는 기기에서 확인해 주세요.'); })}>테스트 알림 보내기</button>
+                <Button variant="notificationPrimary" onClick={enable} disabled={disabled || !supported || !state.enabled || state.permission === 'denied' || state.subscribed}>알림 받기</Button>
+                <Button variant="notificationSecondary" disabled={disabled || !state.local} onClick={() => run(async () => { await disablePush(); setNotice('이 브라우저의 알림을 껐습니다.'); })}>알림 끄기</Button>
+                <Button variant="notificationSecondary" disabled={disabled || !state.enabled || !state.subscribed || state.permission !== 'granted'} onClick={() => run(async () => { await pushApi.test(); setNotice('발송을 요청했습니다. 실제 도착 여부는 기기에서 확인해 주세요.'); })}>테스트 알림 보내기</Button>
             </div>
             <p role="status" aria-live="polite">{notice}</p>
         </main>

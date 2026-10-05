@@ -1,3 +1,4 @@
+import { Alert, Badge, Button } from '../ui/primitives.js';
 import { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
 import { useAuth } from '../../hooks/useAuth';
@@ -21,23 +22,23 @@ const ApplicantItem = ({ application, onConfirm, onReject }) => {
             <div className="flex flex-col gap-2 shrink-0">
                 {application.status === 'pending' ? (
                     <>
-                        <button 
-                            className="px-3 py-1.5 text-[11px] font-bold rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-sm" 
+                        <Button
+                            variant="confirmApplicant"
                             onClick={() => onConfirm(application.id)}
                         >
                             확정
-                        </button>
-                        <button 
-                            className="px-3 py-1.5 text-[11px] font-bold rounded-md bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20 transition-all" 
+                        </Button>
+                        <Button
+                            variant="rejectApplicant"
                             onClick={() => onReject(application.id)}
                         >
                             거절
-                        </button>
+                        </Button>
                     </>
                 ) : (
-                    <span className={`px-2 py-1 rounded-full text-[10px] font-bold border ${application.status === 'confirmed' ? 'bg-green/10 text-green border-green/20' : 'bg-muted text-muted-foreground border-border'}`}>
+                    <Badge variant="applicantList" active={application.status === 'confirmed'}>
                         {application.status === 'confirmed' ? '✅ 확정' : '❌ 미선정'}
-                    </span>
+                    </Badge>
                 )}
             </div>
         </div>
@@ -76,7 +77,7 @@ export default function ApplicantListModal({ isOpen, onClose, ticket, onStatusCh
                 <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
             </div>
         );
-        if (error) return <div className="p-4 text-xs font-medium text-destructive bg-destructive/10 border border-destructive/20 rounded-lg">{error}</div>;
+        if (error) return <Alert variant="applicantList">{error}</Alert>;
         if (applications.length === 0) return (
             <div className="flex flex-col items-center justify-center py-12 text-center space-y-2">
                 <span className="text-3xl opacity-20">📭</span>
@@ -99,12 +100,12 @@ export default function ApplicantListModal({ isOpen, onClose, ticket, onStatusCh
     }
 
     const footer = (
-        <button 
-            className="px-4 py-2 text-sm font-bold rounded-md bg-secondary text-secondary-foreground border border-border hover:bg-muted transition-colors" 
+        <Button
+            variant="secondary"
             onClick={onClose}
         >
             닫기
-        </button>
+        </Button>
     );
 
     return (

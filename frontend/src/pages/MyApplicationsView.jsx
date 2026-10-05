@@ -1,16 +1,8 @@
+import { Card, Heading } from '../components/ui/primitives.js';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 
-const StatusBadge = ({ status }) => {
-    switch (status) {
-        case 'confirmed':
-            return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green text-green-foreground border border-green/20">✅ 확정</span>;
-        case 'rejected':
-            return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-muted text-muted-foreground border border-border">❌ 미선정</span>;
-        default:
-            return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-earth-foreground text-earth border border-earth/20">⏳ 대기중</span>;
-    }
-};
+import ApplicationStatusBadge from '../components/ui/ApplicationStatusBadge';
 
 export default function MyApplicationsView() {
     const { apiClient } = useAuth();
@@ -43,10 +35,10 @@ export default function MyApplicationsView() {
         if (appsState.data.length === 0) return <div className="empty"><div className="empty-text">신청 내역이 없습니다</div></div>;
 
         return appsState.data.map(app => (
-            <div key={app.id} className="group flex items-center justify-between p-5 bg-card rounded-xl border-2 border-border shadow-sm transition-all hover:border-primary/30 hover:shadow-md animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <Card key={app.id} variant="myApplications">
                 <div className="flex-1 min-w-0 space-y-3">
                     <div className="space-y-1">
-                        <h4 className="text-sm font-bold text-foreground truncate">{app.ticket?.title}</h4>
+                        <Heading as="h4" variant="myApplications">{app.ticket?.title}</Heading>
                         <div className="flex items-center gap-3 text-[11px] text-muted-foreground font-medium">
                             <span className="flex items-center gap-1">{app.ticket?.arrival_airport}</span>
                             <span className="flex items-center gap-1">{app.ticket?.departure_date?.split('T')[0]}</span>
@@ -57,16 +49,16 @@ export default function MyApplicationsView() {
                     </div>
                 </div>
                 <div className="ml-6 shrink-0">
-                    <StatusBadge status={app.status} />
+                    <ApplicationStatusBadge status={app.status} />
                 </div>
-            </div>
+            </Card>
         ));
     };
 
     return (
         <div className="space-y-6">
             <div className="flex flex-col gap-2">
-                <h1 className="text-2xl font-bold tracking-tight text-foreground">내 신청 현황</h1>
+                <Heading as="h1" variant="page">내 신청 현황</Heading>
                 <p className="text-sm text-muted-foreground">내가 신청한 이동봉사 티켓들의 처리 상태를 확인하세요.</p>
             </div>
             

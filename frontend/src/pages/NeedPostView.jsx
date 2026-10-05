@@ -1,3 +1,4 @@
+import { Button, Heading, Input } from '../components/ui/primitives.js';
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import NeedPostCard from '../components/NeedPostCard';
@@ -130,48 +131,48 @@ export default function NeedPostView() {
         <div className="space-y-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-1">
-                    <h1 className="text-2xl font-bold tracking-tight text-foreground">구해요 게시판</h1>
+                    <Heading as="h1" variant="page">구해요 게시판</Heading>
                     <p className="text-sm text-muted-foreground">도움이 필요한 일정을 확인하고 제안하세요.</p>
                 </div>
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                     <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs opacity-50">🔍</span>
-                        <input 
+                        <Input
                             placeholder="공항 코드 또는 제목 검색..." 
-                            className="flex h-10 w-full rounded-md border-2 border-border bg-background pl-9 pr-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all focus:border-primary/50 sm:w-[240px]"
+                            variant="search"
                             value={searchText} 
                             onChange={e => setSearchText(e.target.value)} 
                         />
                     </div>
-                    <button 
-                        className="inline-flex items-center justify-center px-4 py-2 text-sm font-bold transition-colors rounded-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm" 
+                    <Button
+                        variant="primary"
                         onClick={handleCreateClick}
                     >
                         + 구해요 등록
-                    </button>
+                    </Button>
                 </div>
             </div>
 
             <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                    <button
-                        className={`shrink-0 px-4 py-1.5 text-xs font-black rounded-full border-2 transition-all ${activeFilter === 'ALL' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-muted-foreground border-border hover:border-primary/30'}`}
+                    <Button
+                        variant="filter" active={activeFilter === 'ALL'}
                         onClick={() => setActiveFilter('ALL')}
                     >
                         전체
-                    </button>
-                    <button
-                        className={`shrink-0 px-4 py-1.5 text-xs font-black rounded-full border-2 transition-all ${activeFilter === 'THIS_MONTH' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-muted-foreground border-border hover:border-primary/30'}`}
+                    </Button>
+                    <Button
+                        variant="filter" active={activeFilter === 'THIS_MONTH'}
                         onClick={() => setActiveFilter('THIS_MONTH')}
                     >
                         이번 달
-                    </button>
-                    <button
-                        className={`shrink-0 px-4 py-1.5 text-xs font-black rounded-full border-2 transition-all ${activeFilter === 'AFTER_MONTH' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-muted-foreground border-border hover:border-primary/30'}`}
+                    </Button>
+                    <Button
+                        variant="filter" active={activeFilter === 'AFTER_MONTH'}
                         onClick={() => setActiveFilter('AFTER_MONTH')}
                     >
                         이번 달 이후
-                    </button>
+                    </Button>
                 </div>
                 {!postsState.loading && !postsState.error && (
                     <span className="shrink-0 text-xs font-bold text-muted-foreground whitespace-nowrap">총 {sortedPosts.length}건</span>

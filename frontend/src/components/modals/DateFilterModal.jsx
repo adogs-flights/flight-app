@@ -1,3 +1,4 @@
+import { Button, FieldLabel } from '../ui/primitives.js';
 import React, { useState } from 'react';
 import Modal from '../ui/Modal';
 
@@ -47,12 +48,12 @@ export default function DateFilterModal({ isOpen, onClose, selectedDate, onSelec
     };
 
     const footer = (
-        <button 
-            className="w-full h-11 text-sm font-bold text-primary hover:bg-primary/5 rounded-xl transition-colors"
+        <Button
+            variant="resetDate"
             onClick={handleReset}
         >
             전체 일정 보기 (필터 초기화)
-        </button>
+        </Button>
     );
 
     return (
@@ -60,20 +61,16 @@ export default function DateFilterModal({ isOpen, onClose, selectedDate, onSelec
             <div className="space-y-8">
                 {/* 월 선택 섹션 */}
                 <div className="space-y-3">
-                    <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground pl-1">빠른 월 선택</label>
+                    <FieldLabel variant="dateFilter">빠른 월 선택</FieldLabel>
                     <div className="grid grid-cols-3 gap-2">
                         {monthOptions.map((m) => (
-                            <button
+                            <Button
                                 key={m.value}
-                                className={`h-12 rounded-xl text-sm font-bold transition-all border-2 ${
-                                    selectedDate === m.value 
-                                    ? 'bg-primary border-primary text-primary-foreground shadow-md scale-[0.98]' 
-                                    : 'bg-background border-border text-foreground hover:border-primary/30 active:scale-95'
-                                }`}
+                                variant="dateFilter" active={selectedDate === m.value}
                                 onClick={() => handleMonthSelect(m.value)}
                             >
                                 {m.label}
-                            </button>
+                            </Button>
                         ))}
                     </div>
                 </div>
@@ -81,11 +78,11 @@ export default function DateFilterModal({ isOpen, onClose, selectedDate, onSelec
                 {/* 미니 달력 섹션 */}
                 <div className="space-y-3 pb-2">
                     <div className="flex items-center justify-between px-1">
-                        <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">날짜 선택</label>
+                        <FieldLabel variant="orgProfileEdit">날짜 선택</FieldLabel>
                         <div className="flex items-center gap-3">
-                            <button onClick={() => setViewDate(new Date(year, month - 1, 1))} className="text-muted-foreground hover:text-foreground">◀</button>
+                            <Button onClick={() => setViewDate(new Date(year, month - 1, 1))} variant="monthArrow">◀</Button>
                             <span className="text-xs font-black">{year}.{String(month + 1).padStart(2, '0')}</span>
-                            <button onClick={() => setViewDate(new Date(year, month + 1, 1))} className="text-muted-foreground hover:text-foreground">▶</button>
+                            <Button onClick={() => setViewDate(new Date(year, month + 1, 1))} variant="monthArrow">▶</Button>
                         </div>
                     </div>
                     
@@ -100,17 +97,14 @@ export default function DateFilterModal({ isOpen, onClose, selectedDate, onSelec
                                 const dateStr = day ? `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}` : null;
                                 const isSelected = selectedDate === dateStr;
                                 return (
-                                    <button
+                                    <Button
                                         key={i}
                                         disabled={!day}
                                         onClick={() => handleDaySelect(day)}
-                                        className={`h-8 w-full rounded-lg text-xs font-bold transition-all flex items-center justify-center ${
-                                            !day ? 'invisible' :
-                                            isSelected ? 'bg-primary text-primary-foreground shadow-sm' : 'hover:bg-primary/10 text-foreground'
-                                        }`}
+                                        variant="dateFilter2" active={!day} alternateActive={isSelected}
                                     >
                                         {day}
-                                    </button>
+                                    </Button>
                                 );
                             })}
                         </div>

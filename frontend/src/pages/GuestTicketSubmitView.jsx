@@ -1,3 +1,4 @@
+import { ActionLink, Alert, Button, Card, FieldLabel, Heading, Input } from '../components/ui/primitives.js';
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -145,12 +146,12 @@ export default function GuestTicketSubmitView() {
     return (
         <div className="min-h-screen flex flex-col bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-sky/10 via-background to-earth/5">
             <div className="flex-1 flex items-center justify-center p-3 sm:p-4">
-                <div className="w-full max-w-[480px] p-5 sm:p-8 space-y-6 sm:space-y-8 bg-card rounded-2xl border-2 border-border shadow-xl animate-in fade-in zoom-in-95 duration-500">
+                <Card variant="guestTicketSubmit">
                     <div className="flex flex-col items-center text-center space-y-2">
                         <div className="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-2xl text-primary-foreground text-2xl font-bold mb-2">
                             <img src={logo} alt="" />
                         </div>
-                        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">이동봉사 티켓 제공하기</h1>
+                        <Heading as="h1" variant="guestTicketSubmit">이동봉사 티켓 제공하기</Heading>
                         <p className="text-sm text-muted-foreground">강아지 자리 예약을 위한 정보를 남겨주세요.<br />아래 정보들은 항공사 예약 조회를 위해서만 사용됩니다.</p>
                     </div>
 
@@ -165,11 +166,11 @@ export default function GuestTicketSubmitView() {
 
                     {submitted ? (
                         <div className="space-y-4 animate-in fade-in duration-500">
-                            <div className="p-6 rounded-xl border-2 border-green/20 bg-green/5 text-center space-y-2">
+                            <Alert variant="guestTicketSubmit">
                                 <div className="text-2xl">✅</div>
                                 <div className="text-sm font-bold text-green">제출이 완료되었습니다!</div>
                                 <div className="text-xs text-muted-foreground">담당자 검토 후 진행됩니다.</div>
-                            </div>
+                            </Alert>
 
                             {statusUrl && (
                                 <div className="p-4 rounded-xl border-2 border-primary/20 bg-primary/5 space-y-3">
@@ -178,26 +179,26 @@ export default function GuestTicketSubmitView() {
                                         이 링크는 <strong>제출자 본인만</strong> 상태를 볼 수 있는 열쇠입니다. 꼭 저장해 두세요.
                                     </p>
                                     <div className="flex items-center gap-2">
-                                        <input
+                                        <Input
                                             readOnly
                                             value={statusUrl}
                                             onFocus={e => e.target.select()}
-                                            className="flex-1 h-10 rounded-lg border-2 border-border bg-background px-3 text-[11px] text-muted-foreground focus:outline-none"
+                                            variant="copy"
                                         />
-                                        <button
+                                        <Button
                                             type="button"
                                             onClick={handleCopy}
-                                            className="shrink-0 h-10 px-3 text-xs font-bold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                                            variant="copy"
                                         >
                                             {copied ? '복사됨!' : '복사'}
-                                        </button>
+                                        </Button>
                                     </div>
-                                    <a
+                                    <ActionLink
                                         href={statusUrl}
-                                        className="inline-block text-xs font-bold text-primary hover:underline"
+                                        variant="generalHome"
                                     >
                                         지금 상태 확인하기 →
-                                    </a>
+                                    </ActionLink>
                                 </div>
                             )}
                         </div>
@@ -212,11 +213,11 @@ export default function GuestTicketSubmitView() {
                             />
 
                             <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">
+                                <FieldLabel variant="default">
                                     e티켓 이미지<span className="text-destructive ml-0.5">*</span>
-                                </label>
-                                <input
-                                    className="flex w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-bold file:bg-primary file:text-primary-foreground"
+                                </FieldLabel>
+                                <Input
+                                    variant="file"
                                     type="file"
                                     accept="image/*,application/pdf"
                                     onChange={e => setImageFile(e.target.files?.[0] || null)}
@@ -225,11 +226,11 @@ export default function GuestTicketSubmitView() {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">
+                                <FieldLabel variant="default">
                                     전화번호<span className="text-destructive ml-0.5">*</span>
-                                </label>
-                                <input
-                                    className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none"
+                                </FieldLabel>
+                                <Input
+                                    variant="flex"
                                     value={form.phone}
                                     onChange={e => handleChange('phone', e.target.value)}
                                     placeholder="예약 시 남기신 전화번호"
@@ -237,11 +238,11 @@ export default function GuestTicketSubmitView() {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">
+                                <FieldLabel variant="default">
                                     카카오톡 아이디<span className="text-destructive ml-0.5">*</span>
-                                </label>
-                                <input
-                                    className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none"
+                                </FieldLabel>
+                                <Input
+                                    variant="flex"
                                     value={form.kakaoId}
                                     onChange={e => handleChange('kakaoId', e.target.value)}
                                     placeholder="담당자가 연락드릴 카카오톡 아이디"
@@ -250,7 +251,7 @@ export default function GuestTicketSubmitView() {
 
                             {lockedOrganization ? (
                                 <div className="space-y-2">
-                                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">신청 단체</label>
+                                    <FieldLabel variant="default">신청 단체</FieldLabel>
                                     <div className="flex items-center gap-2 h-11 px-4 rounded-lg border-2 border-primary/30 bg-primary/5 text-sm font-bold text-primary">
                                         🏢 {lockedOrganization.name}
                                     </div>
@@ -266,33 +267,33 @@ export default function GuestTicketSubmitView() {
                                         isCreatable={false}
                                     />
                                     {orgLookupFailed && (
-                                        <div className="px-3 py-2 text-[11px] font-medium text-destructive bg-destructive/10 border border-destructive/20 rounded-lg">
+                                        <Alert variant="guestTicketSubmit2">
                                             링크에 지정된 단체를 찾을 수 없어요. 직접 선택해주세요.
-                                        </div>
+                                        </Alert>
                                     )}
                                 </>
                             )}
 
                             {error && (
-                                <div className="px-3 py-2 text-xs font-medium text-destructive bg-destructive/10 border border-destructive/20 rounded-lg animate-in shake duration-300">
+                                <Alert variant="guestTicketSubmit3">
                                     {error}
-                                </div>
+                                </Alert>
                             )}
 
-                            <button
-                                className="w-full inline-flex items-center justify-center h-11 px-4 py-2 text-sm font-bold transition-all rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20 hover:scale-[0.99] active:scale-[0.97] disabled:opacity-50"
+                            <Button
+                                variant="submitDisabled"
                                 onClick={handleSubmit}
                                 disabled={submitting}
                             >
                                 {submitting ? '제출 중...' : '제출하기'}
-                            </button>
+                            </Button>
                         </div>
                     )}
 
                     <div className="text-center pt-2">
-                        <Link to="/" className="text-xs text-muted-foreground hover:text-foreground transition-colors">← 로그인 화면으로 돌아가기</Link>
+                        <ActionLink as={Link} to="/" variant="guestTicketSubmit">← 로그인 화면으로 돌아가기</ActionLink>
                     </div>
-                </div>
+                </Card>
             </div>
         </div>
     );

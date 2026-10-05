@@ -1,8 +1,9 @@
+import { ActionLink, Alert, Button, FieldLabel, Input } from '../ui/primitives.js';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 
-const inputClass = "flex h-10 w-full rounded-lg border-2 border-border bg-background px-3 text-sm transition-all focus:border-primary/50 focus-visible:outline-none";
-const fileClass = "flex w-full rounded-lg border-2 border-border bg-background px-3 py-1.5 text-xs file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[11px] file:font-bold file:bg-primary file:text-primary-foreground";
+
+
 
 // 티켓의 출국 준비 추가정보(주소·여권·자리확약). 소유자/관리자가 티켓 화면에서 직접 입력.
 export default function TicketDepartureSection({ ticket, canManage, onDone }) {
@@ -72,7 +73,7 @@ export default function TicketDepartureSection({ ticket, canManage, onDone }) {
 
     return (
         <div className="mt-4 pt-4 border-t-2 border-border/50 px-1">
-            <label className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground">출국 준비 추가정보</label>
+            <FieldLabel variant="ticketDeparture">출국 준비 추가정보</FieldLabel>
 
             {ticket.departure_submitted ? (
                 purged ? (
@@ -82,40 +83,40 @@ export default function TicketDepartureSection({ ticket, canManage, onDone }) {
                         {ticket.dep_address && <div className="text-sm"><span className="font-bold">주소:</span> {ticket.dep_address}</div>}
                         {ticket.dep_kakao_id && <div className="text-sm"><span className="font-bold">카카오톡 아이디:</span> {ticket.dep_kakao_id}</div>}
                         <div className="flex flex-wrap gap-3">
-                            {passportUrl && <a href={passportUrl} target="_blank" rel="noreferrer" className="text-xs font-bold text-primary hover:underline">📄 여권 사본</a>}
-                            {seatUrl && <a href={seatUrl} target="_blank" rel="noreferrer" className="text-xs font-bold text-primary hover:underline">🎫 자리 확약 캡쳐</a>}
+                            {passportUrl && <ActionLink href={passportUrl} target="_blank" rel="noreferrer" variant="signupChoice2">📄 여권 사본</ActionLink>}
+                            {seatUrl && <ActionLink href={seatUrl} target="_blank" rel="noreferrer" variant="signupChoice2">🎫 자리 확약 캡쳐</ActionLink>}
                         </div>
                     </div>
                 )
             ) : canManage ? (
                 <div className="mt-2 space-y-2">
-                    <input className={inputClass} value={address} onChange={e => setAddress(e.target.value)} placeholder="출국 준비 서류에 기재될 주소" />
-                    <input className={inputClass} value={kakaoId} onChange={e => setKakaoId(e.target.value)} placeholder="카카오톡 아이디" />
+                    <Input variant="compact" value={address} onChange={e => setAddress(e.target.value)} placeholder="출국 준비 서류에 기재될 주소" />
+                    <Input variant="compact" value={kakaoId} onChange={e => setKakaoId(e.target.value)} placeholder="카카오톡 아이디" />
                     <div className="flex flex-col gap-1">
                         <span className="text-[11px] text-muted-foreground">여권 사본</span>
-                        <input className={fileClass} type="file" accept="image/*,application/pdf" onChange={e => setPassport(e.target.files?.[0] || null)} />
+                        <Input variant="compactFile" type="file" accept="image/*,application/pdf" onChange={e => setPassport(e.target.files?.[0] || null)} />
                     </div>
                     <div className="flex flex-col gap-1">
                         <span className="text-[11px] text-muted-foreground">자리 확약 캡쳐</span>
-                        <input className={fileClass} type="file" accept="image/*,application/pdf" onChange={e => setSeatConfirm(e.target.files?.[0] || null)} />
+                        <Input variant="compactFile" type="file" accept="image/*,application/pdf" onChange={e => setSeatConfirm(e.target.files?.[0] || null)} />
                     </div>
                     <div className="flex flex-col gap-1">
                         <span className="text-[11px] text-muted-foreground">e티켓 사진{ticket.has_eticket && ' (이미 등록됨 · 교체 시에만 첨부)'}</span>
-                        <input className={fileClass} type="file" accept="image/*,application/pdf" onChange={e => setEticket(e.target.files?.[0] || null)} />
+                        <Input variant="compactFile" type="file" accept="image/*,application/pdf" onChange={e => setEticket(e.target.files?.[0] || null)} />
                     </div>
-                    {error && <div className="px-3 py-2 text-xs font-medium text-destructive bg-destructive/10 border border-destructive/20 rounded-lg">{error}</div>}
-                    <button onClick={submit} disabled={submitting} className="w-full h-10 text-sm font-bold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+                    {error && <Alert variant="generalSignup">{error}</Alert>}
+                    <Button onClick={submit} disabled={submitting} variant="saveDeparture">
                         {submitting ? '저장 중…' : '추가정보 저장'}
-                    </button>
+                    </Button>
                 </div>
             ) : (
                 <p className="mt-2 text-xs text-muted-foreground">아직 입력되지 않았습니다.</p>
             )}
 
             {canPurge && (
-                <button onClick={remove} className="mt-3 block text-[11px] font-medium text-slate-400 hover:text-destructive underline underline-offset-4">
+                <Button onClick={remove} variant="purgeDocuments">
                     제출 개인정보 삭제 (e티켓·여권 등)
-                </button>
+                </Button>
             )}
         </div>
     );

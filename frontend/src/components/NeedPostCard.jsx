@@ -1,3 +1,4 @@
+import { Badge, Button, Heading } from './ui/primitives.js';
 import { useAuth } from '../hooks/useAuth';
 import { getAirportColor } from '../utils/airportUtils';
 
@@ -13,10 +14,10 @@ const NeedPostCard = ({ post, onClick }) => {
     };
 
     return (
-        <button
+        <Button
             type="button"
             onClick={onClick}
-            className={`group text-left flex flex-col overflow-hidden rounded-2xl border-2 border-border bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 ${post.is_resolved ? 'opacity-60' : ''}`}
+            variant="needPostCard" active={post.is_resolved}
         >
             {/* 이미지 영역 */}
             <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
@@ -37,27 +38,27 @@ const NeedPostCard = ({ post, onClick }) => {
                 {/* 뱃지 오버레이 */}
                 <div className="absolute top-3 left-3 flex items-center gap-1.5">
                     {post.is_urgent && (
-                        <span className="px-2.5 py-1 rounded-lg text-[10px] font-black bg-destructive text-destructive-foreground shadow-lg animate-pulse">🚨 급구</span>
+                        <Badge variant="needPostCard">🚨 급구</Badge>
                     )}
                     {post.is_resolved && (
-                        <span className="px-2.5 py-1 rounded-lg text-[10px] font-black bg-slate-900/80 text-white shadow-lg">완료</span>
+                        <Badge variant="needPostCard2">완료</Badge>
                     )}
                 </div>
                 <div className="absolute top-3 right-3">
-                    <span
-                        className="px-2.5 py-1 rounded-lg text-[11px] font-black border shadow-sm"
+                    <Badge
+                        variant="needPostCard3"
                         style={{ backgroundColor: colors.bg, color: colors.text, borderColor: colors.bg }}
                     >
                         {post.airport_code}
-                    </span>
+                    </Badge>
                 </div>
             </div>
 
             {/* 본문 */}
             <div className="flex flex-col flex-1 p-4 gap-3">
-                <h3 className={`text-base font-black tracking-tight leading-snug line-clamp-2 ${post.is_resolved ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                <Heading as="h3" variant="needPostCard" active={post.is_resolved}>
                     {post.title}
-                </h3>
+                </Heading>
 
                 <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs font-bold text-muted-foreground">
                     <span className="flex items-center gap-1"><span className="opacity-70">📅</span> {formatDate(post.desired_date)}</span>
@@ -65,7 +66,7 @@ const NeedPostCard = ({ post, onClick }) => {
                     <span className="flex items-center gap-1"><span className="opacity-70">👤</span> {post.author?.name || '익명'}</span>
                 </div>
             </div>
-        </button>
+        </Button>
     );
 };
 

@@ -1,3 +1,4 @@
+import { Button, Heading, Input } from '../components/ui/primitives.js';
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import TicketCard from '../components/TicketCard';
@@ -134,14 +135,14 @@ export default function GiveView() {
         <div className="space-y-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-1">
-                    <h1 className="text-2xl font-bold tracking-tight text-foreground">나눔해요</h1>
+                    <Heading as="h1" variant="page">나눔해요</Heading>
                     <p className="text-sm text-muted-foreground">따뜻한 마음으로 나눔 중인 티켓들을 확인하세요.</p>
                 </div>
                 <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs opacity-50">🔍</span>
-                    <input 
+                    <Input
                         placeholder="티켓 제목 검색..." 
-                        className="flex h-10 w-full rounded-md border-2 border-border bg-background pl-9 pr-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all focus:border-primary/50 sm:w-[240px]"
+                        variant="search"
                         value={searchText} 
                         onChange={e => setSearchText(e.target.value)} 
                     />
@@ -151,19 +152,19 @@ export default function GiveView() {
             <div className="space-y-3">
                 {/* 공항 칩 필터 */}
                 <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                    <button
-                        className={`shrink-0 px-4 py-1.5 text-xs font-black rounded-full border-2 transition-all ${selectedAirport === '전체' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-muted-foreground border-border hover:border-primary/30'}`}
+                    <Button
+                        variant="filter" active={selectedAirport === '전체'}
                         onClick={() => setSelectedAirport('전체')}
                     >
                         전체
-                    </button>
+                    </Button>
                     {airports.map(airport => {
                         const colors = getAirportColor(airport.value, rawAirports);
                         const isActive = selectedAirport === airport.value;
                         return (
-                            <button
+                            <Button
                                 key={airport.value}
-                                className="shrink-0 px-4 py-1.5 text-xs font-black rounded-full border-2 transition-all"
+                                variant="airportChip"
                                 style={{ 
                                     backgroundColor: colors.bg, 
                                     color: colors.text, 
@@ -173,39 +174,35 @@ export default function GiveView() {
                                 onClick={() => setSelectedAirport(airport.value)}
                             >
                                 {airport.value}
-                            </button>
+                            </Button>
                         );
                     })}
-                    <button
-                        className={`shrink-0 px-4 py-1.5 text-xs font-black rounded-full border-2 transition-all ${selectedAirport === '기타' ? 'bg-secondary text-secondary-foreground border-secondary' : 'bg-background text-muted-foreground border-border hover:border-primary/30'}`}
+                    <Button
+                        variant="filter2" active={selectedAirport === '기타'}
                         onClick={() => setSelectedAirport('기타')}
                     >
                         기타
-                    </button>
+                    </Button>
                 </div>
 
                 {/* 날짜 필터 버튼 */}
                 <div className="flex items-center gap-2">
-                    <button 
+                    <Button
                         onClick={openDateModal}
-                        className={`inline-flex items-center gap-2 px-4 py-2 text-xs font-black rounded-xl border-2 transition-all shadow-sm active:scale-95 ${
-                            selectedDate 
-                            ? 'bg-primary/10 border-primary text-primary' 
-                            : 'bg-background border-border text-muted-foreground hover:bg-muted'
-                        }`}
+                        variant="give" active={selectedDate}
                     >
                         {getDateButtonLabel()}
                         <span className="text-[10px] opacity-50">▼</span>
-                    </button>
+                    </Button>
                     
                     {selectedDate && (
-                        <button 
+                        <Button
                             onClick={() => setSelectedDate(null)}
-                            className="p-2 text-muted-foreground hover:text-destructive transition-colors"
+                            variant="clearFilter"
                             title="날짜 필터 초기화"
                         >
                             ✕
-                        </button>
+                        </Button>
                     )}
                 </div>
             </div>

@@ -1,3 +1,4 @@
+import { Badge, Button, Heading, Input } from '../components/ui/primitives.js';
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import TicketCard from '../components/TicketCard';
@@ -89,12 +90,12 @@ function GoogleDriveSyncPanel({ onStatusUpdate }) {
                             📁
                         </div>
                         <div className="flex-1 min-w-0">
-                            <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                            <Heading as="h3" variant="myTickets">
                                 Google Drive 백업
                                 {status.is_connected && status.root_folder_id && (
-                                    <span className="bg-green-100 text-green-700 text-[10px] px-2 py-0.5 rounded-full font-black">연동중</span>
+                                    <Badge variant="myTickets">연동중</Badge>
                                 )}
-                            </h3>
+                            </Heading>
                             <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
                                 {!status.is_connected 
                                     ? '구글 계정을 연결하여 e티켓과 출국 준비 파일을 전용 폴더에 백업해보세요.'
@@ -107,47 +108,47 @@ function GoogleDriveSyncPanel({ onStatusUpdate }) {
                     
                     <div className="flex items-center gap-2 sm:ml-auto w-full sm:w-auto">
                         {!status.is_connected ? (
-                            <button 
+                            <Button
                                 onClick={handleConnect}
                                 disabled={actionLoading}
-                                className="w-full sm:w-auto bg-[#4285F4] hover:bg-[#3367D6] text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50"
+                                variant="googleDrive"
                             >
                                 {actionLoading ? '연결 중...' : '구글 계정 연결'}
-                            </button>
+                            </Button>
                         ) : !status.root_folder_id ? (
                             <div className="flex items-center gap-2 w-full sm:w-auto">
-                                <button 
+                                <Button
                                     onClick={openSelectModal}
                                     disabled={actionLoading}
-                                    className="flex-1 sm:flex-none bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold px-5 py-2.5 rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50 whitespace-nowrap"
+                                    variant="driveAction"
                                 >
                                     동기화 폴더 설정
-                                </button>
-                                <button 
+                                </Button>
+                                <Button
                                     onClick={handleDisconnect}
                                     disabled={actionLoading}
-                                    className="shrink-0 bg-destructive/10 hover:bg-destructive/20 text-destructive border-2 border-destructive/10 text-xs font-bold px-4 py-2.5 rounded-xl transition-all active:scale-95 disabled:opacity-50"
+                                    variant="driveDanger"
                                     title="연동 해제"
                                 >
                                     연동 해제
-                                </button>
+                                </Button>
                             </div>
                         ) : (
                             <div className="flex items-center gap-2 w-full sm:w-auto">
-                                <button
+                                <Button
                                     onClick={openSelectModal}
                                     disabled={actionLoading}
-                                    className="flex-1 sm:flex-none bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold px-5 py-2.5 rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50 whitespace-nowrap"
+                                    variant="driveAction"
                                 >
                                     전용 폴더 설정
-                                </button>
-                                <button
+                                </Button>
+                                <Button
                                     onClick={handleDisconnect}
                                     disabled={actionLoading}
-                                    className="shrink-0 bg-destructive/10 hover:bg-destructive/20 text-destructive border-2 border-destructive/10 text-xs font-bold px-4 py-2.5 rounded-xl transition-all active:scale-95 disabled:opacity-50"
+                                    variant="driveDanger"
                                 >
                                     연동 해제
-                                </button>
+                                </Button>
                             </div>
                         )}
                     </div>
@@ -327,30 +328,30 @@ export default function MyTicketsView() {
         <div className="space-y-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-1">
-                    <h1 className="text-2xl font-bold tracking-tight text-foreground">내 티켓</h1>
+                    <Heading as="h1" variant="page">내 티켓</Heading>
                     <p className="text-sm text-muted-foreground">내가 등록하고 관리하는 티켓 목록입니다.</p>
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="inline-flex items-center p-1 rounded-lg bg-secondary/50 border border-border">
-                        <button 
-                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${activeTab === 'upcoming' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                        <Button
+                            variant="segmented2" active={activeTab === 'upcoming'}
                             onClick={() => setActiveTab('upcoming')}
                         >
                             예정된 일정
-                        </button>
-                        <button 
-                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${activeTab === 'past' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                        </Button>
+                        <Button
+                            variant="segmented2" active={activeTab === 'past'}
                             onClick={() => setActiveTab('past')}
                         >
                             지난 일정
-                        </button>
+                        </Button>
                     </div>
-                    <button 
-                        className="inline-flex items-center justify-center px-4 py-2 text-sm font-bold transition-colors rounded-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm" 
+                    <Button
+                        variant="primary"
                         onClick={handleCreateClick}
                     >
                         + 티켓 등록
-                    </button>
+                    </Button>
                 </div>
             </div>
 
@@ -358,19 +359,19 @@ export default function MyTicketsView() {
 
             <div className="space-y-3">
                 <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                    <button
-                        className={`shrink-0 px-4 py-1.5 text-xs font-black rounded-full border-2 transition-all ${selectedAirport === '전체' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-muted-foreground border-border hover:border-primary/30'}`}
+                    <Button
+                        variant="filter" active={selectedAirport === '전체'}
                         onClick={() => setSelectedAirport('전체')}
                     >
                         전체
-                    </button>
+                    </Button>
                     {airports.map(airport => {
                         const colors = getAirportColor(airport.value, rawAirports);
                         const isActive = selectedAirport === airport.value;
                         return (
-                            <button
+                            <Button
                                 key={airport.value}
-                                className="shrink-0 px-4 py-1.5 text-xs font-black rounded-full border-2 transition-all"
+                                variant="airportChip"
                                 style={{ 
                                     backgroundColor: colors.bg, 
                                     color: colors.text, 
@@ -380,47 +381,43 @@ export default function MyTicketsView() {
                                 onClick={() => setSelectedAirport(airport.value)}
                             >
                                 {airport.value}
-                            </button>
+                            </Button>
                         );
                     })}
-                    <button
-                        className={`shrink-0 px-4 py-1.5 text-xs font-black rounded-full border-2 transition-all ${selectedAirport === '기타' ? 'bg-secondary text-secondary-foreground border-secondary' : 'bg-background text-muted-foreground border-border hover:border-primary/30'}`}
+                    <Button
+                        variant="filter2" active={selectedAirport === '기타'}
                         onClick={() => setSelectedAirport('기타')}
                     >
                         기타
-                    </button>
+                    </Button>
                 </div>
 
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-2">
-                        <button 
+                        <Button
                             onClick={openDateModal}
-                            className={`inline-flex items-center gap-2 px-4 py-2 text-xs font-black rounded-xl border-2 transition-all shadow-sm active:scale-95 ${
-                                selectedDate 
-                                ? 'bg-primary/10 border-primary text-primary' 
-                                : 'bg-background border-border text-muted-foreground hover:bg-muted'
-                            }`}
+                            variant="give" active={selectedDate}
                         >
                             {getDateButtonLabel()}
                             <span className="text-[10px] opacity-50">▼</span>
-                        </button>
+                        </Button>
                         
                         {selectedDate && (
-                            <button 
+                            <Button
                                 onClick={() => setSelectedDate(null)}
-                                className="p-2 text-muted-foreground hover:text-destructive transition-colors"
+                                variant="clearFilter"
                                 title="날짜 필터 초기화"
                             >
                                 ✕
-                            </button>
+                            </Button>
                         )}
                     </div>
 
                     <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs opacity-50">🔍</span>
-                        <input 
+                        <Input
                             placeholder="티켓 제목 검색..." 
-                            className="flex h-10 w-full rounded-md border-2 border-border bg-background pl-9 pr-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none transition-all focus:border-primary/50 sm:w-[240px]"
+                            variant="ticketSearch"
                             value={searchText} 
                             onChange={e => setSearchText(e.target.value)} 
                         />

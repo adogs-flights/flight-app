@@ -1,3 +1,4 @@
+import { ActionLink, Alert, Button, Card, Heading } from '../components/ui/primitives.js';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -20,12 +21,12 @@ export default function GeneralSignup() {
     return (
         <div className="min-h-screen flex flex-col bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-sky/10 via-background to-earth/5">
             <div className="flex-1 flex items-center justify-center p-4">
-                <div className="w-full max-w-[400px] p-8 space-y-8 bg-card rounded-2xl border-2 border-border shadow-xl animate-in fade-in zoom-in-95 duration-500">
+                <Card variant="generalHome">
                     <div className="flex flex-col items-center text-center space-y-2">
-                        <Link to="/" className="flex items-center justify-center w-14 h-14 rounded-2xl mb-2">
+                        <ActionLink as={Link} to="/" variant="generalSignup">
                             <img src={logo} alt="" />
-                        </Link>
-                        <h1 className="text-2xl font-bold tracking-tight text-foreground">일반 회원가입</h1>
+                        </ActionLink>
+                        <Heading as="h1" variant="page">일반 회원가입</Heading>
                         <p className="text-sm text-muted-foreground">봉사자님, 카카오로 간편하게 시작하세요</p>
                     </div>
 
@@ -35,29 +36,29 @@ export default function GeneralSignup() {
                     </div>
 
                     {error && (
-                        <div className="px-3 py-2 text-xs font-medium text-destructive bg-destructive/10 border border-destructive/20 rounded-lg">
+                        <Alert variant="generalSignup">
                             {error}
-                        </div>
+                        </Alert>
                     )}
 
-                    <button
+                    <Button
                         type="button"
                         onClick={handleKakao}
-                        className="w-full inline-flex items-center justify-center h-12 px-4 py-2 text-sm font-bold transition-all rounded-lg shadow-sm hover:scale-[0.99] active:scale-[0.97]"
-                        style={{ backgroundColor: '#FEE500', color: '#191600' }}
+                        variant="kakaoSignup"
+
                     >
                         카카오로 가입하기
-                    </button>
+                    </Button>
 
                     <div className="text-center space-y-2 pt-2">
-                        <Link to="/signup" className="block text-xs font-bold text-primary hover:underline">
+                        <ActionLink as={Link} to="/signup" variant="generalSignup2">
                             ← 가입 유형 다시 선택
-                        </Link>
-                        <Link to="/login" className="block text-xs text-muted-foreground hover:underline">
+                        </ActionLink>
+                        <ActionLink as={Link} to="/login" variant="generalSignup3">
                             이미 계정이 있으신가요? 로그인
-                        </Link>
+                        </ActionLink>
                     </div>
-                </div>
+                </Card>
             </div>
             <Footer />
         </div>

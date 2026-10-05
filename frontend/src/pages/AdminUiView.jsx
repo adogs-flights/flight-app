@@ -1,3 +1,4 @@
+import { ActionLink, Button, Card, FieldLabel, Heading, Input, Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from '../components/ui/primitives.js';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -8,8 +9,13 @@ import SelectField from '../components/ui/SelectField';
 import Modal from '../components/ui/Modal';
 import DateFilterModal from '../components/modals/DateFilterModal';
 import DayTicketsModal from '../components/modals/DayTicketsModal';
+import UiVariantCatalog from '../components/ui/UiVariantCatalog';
+import UserRoleBadge from '../components/ui/UserRoleBadge';
+import ApplicationStatusBadge from '../components/ui/ApplicationStatusBadge';
+import BusinessComponentCatalog from '../components/ui/BusinessComponentCatalog';
 
 const SECTIONS = [
+    ['component-library', '공통 컴포넌트'],
     ['tokens', '색상·글꼴'],
     ['actions', '버튼·배지'],
     ['forms', '입력·선택'],
@@ -31,16 +37,11 @@ const AIRPORT_OPTIONS = [
     { value: 'YVR', label: '밴쿠버 (YVR)' },
 ];
 
-// 기본 HTML 컨트롤은 기존 AdminView / TicketFormModal의 스타일을 그대로 보여준다.
-const PRIMARY_BUTTON = 'inline-flex items-center justify-center px-4 py-2 text-sm font-bold transition-colors rounded-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm';
-const SECONDARY_BUTTON = 'px-4 py-2 text-sm font-bold rounded-md bg-secondary text-secondary-foreground border border-border hover:bg-muted transition-colors';
-const INPUT = 'h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none';
-
 function Section({ id, title, description, children }) {
     return (
         <section id={id} aria-labelledby={`${id}-heading`} className="scroll-mt-24 space-y-4 border-t border-border pt-6">
             <div className="space-y-1">
-                <h2 id={`${id}-heading`} className="text-lg font-bold text-foreground">{title}</h2>
+                <Heading as="h2" id={`${id}-heading`} variant="adminUi">{title}</Heading>
                 <p className="text-sm text-muted-foreground">{description}</p>
             </div>
             {children}
@@ -50,10 +51,10 @@ function Section({ id, title, description, children }) {
 
 function Preview({ title, children }) {
     return (
-        <div className="min-w-0 space-y-3 rounded-xl border-2 border-border bg-card p-4 sm:p-5">
-            <h3 className="text-sm font-bold text-foreground">{title}</h3>
+        <Card variant="adminUi">
+            <Heading as="h3" variant="adminUi2">{title}</Heading>
             {children}
-        </div>
+        </Card>
     );
 }
 
@@ -92,10 +93,10 @@ export default function AdminUiView() {
         <div className="space-y-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-1">
-                    <h1 className="text-2xl font-bold tracking-tight text-foreground">UI 컴포넌트</h1>
-                    <p className="text-sm text-muted-foreground">해봉티켓 화면에서 사용하는 디자인과 컴포넌트를 확인합니다.</p>
+                    <Heading as="h1" variant="page">UI 컴포넌트</Heading>
+                    <p className="text-sm text-muted-foreground">실제 페이지와 같은 공통 컴포넌트를 확인합니다. 공통 코드를 수정하면 사용 중인 화면에도 함께 반영됩니다.</p>
                 </div>
-                <Link to="/admin" className={`${SECONDARY_BUTTON} shrink-0 text-center`}>관리자 페이지로</Link>
+                <ActionLink as={Link} to="/admin" variant="adminUi">관리자 페이지로</ActionLink>
             </div>
 
             <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-primary">
@@ -104,9 +105,13 @@ export default function AdminUiView() {
 
             <nav aria-label="UI 컴포넌트 목차" className="flex flex-wrap gap-2">
                 {SECTIONS.map(([id, title]) => (
-                    <a key={id} href={`#${id}`} className="rounded-full border-2 border-border px-3 py-1.5 text-xs font-bold text-muted-foreground hover:border-primary/30 hover:text-primary focus-visible:outline-2 focus-visible:outline-primary">{title}</a>
+                    <ActionLink key={id} href={`#${id}`} variant="adminUi2">{title}</ActionLink>
                 ))}
             </nav>
+
+            <Section id="component-library" title="공통 컴포넌트" description="사용 중인 컴포넌트와 스타일을 선택해 확인하세요. 표시된 공통 소스를 수정하면 미리보기와 실제 화면이 함께 바뀝니다.">
+                <UiVariantCatalog />
+            </Section>
 
             <Section id="tokens" title="색상·글꼴" description="현재 공통 스타일의 색상 토큰과 Pretendard 글꼴입니다.">
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -121,9 +126,9 @@ export default function AdminUiView() {
                     ))}
                 </div>
                 <Preview title="화면의 글자 계층">
-                    <p className="text-2xl font-bold tracking-tight">페이지 제목 · 24px</p>
-                    <p className="text-lg font-bold">영역 제목 · 18px</p>
-                    <p className="text-base font-bold">카드 제목 · 16px</p>
+                    <Heading as="p" variant="page">페이지 제목 · 24px</Heading>
+                    <Heading as="p" variant="adminUi">영역 제목 · 18px</Heading>
+                    <Heading as="p" variant="ticketCard">카드 제목 · 16px</Heading>
                     <p className="text-sm">본문 · 14px · 이동봉사로 새로운 가족을 만나는 여정에 함께해요.</p>
                     <p className="text-xs text-muted-foreground">보조 설명 · 12px · 항공편과 출발 일정을 확인해주세요.</p>
                 </Preview>
@@ -132,11 +137,11 @@ export default function AdminUiView() {
             <Section id="actions" title="버튼·배지" description="관리자 화면의 동작 버튼과 TicketCard의 실제 상태 배지입니다.">
                 <Preview title="동작과 비활성 상태">
                     <div className="flex flex-wrap items-center gap-2">
-                        <button type="button" className={PRIMARY_BUTTON} onClick={() => previewAction('등록')}>+ 등록</button>
-                        <button type="button" className={SECONDARY_BUTTON} onClick={() => previewAction('취소')}>취소</button>
-                        <button type="button" className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-green/10 text-green border border-green/20 hover:bg-green/20 transition-all active:scale-95" onClick={() => previewAction('승인')}>승인</button>
-                        <button type="button" className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20 transition-all active:scale-95" onClick={() => previewAction('삭제')}>삭제</button>
-                        <button type="button" className={`${PRIMARY_BUTTON} disabled:opacity-50 disabled:cursor-not-allowed`} disabled>저장 중...</button>
+                        <Button type="button" variant="primary" onClick={() => previewAction('등록')}>+ 등록</Button>
+                        <Button type="button" variant="secondary" onClick={() => previewAction('취소')}>취소</Button>
+                        <Button type="button" variant="approveSmall" onClick={() => previewAction('승인')}>승인</Button>
+                        <Button type="button" variant="dangerSmall" onClick={() => previewAction('삭제')}>삭제</Button>
+                        <Button type="button" variant="primaryDisabled" disabled>저장 중...</Button>
                     </div>
                     <p role="status" className="text-xs text-muted-foreground">{notice}</p>
                 </Preview>
@@ -145,31 +150,37 @@ export default function AdminUiView() {
                         {['sharing', 'shared', 'owned'].map(status => <TicketStatusBadge key={status} status={status} />)}
                     </div>
                 </Preview>
+                <Preview title="회원 권한과 신청 상태">
+                    <div className="flex flex-wrap gap-3">
+                        {['admin', 'org', 'general'].map(role => <UserRoleBadge key={role} role={role} />)}
+                        {['pending', 'confirmed', 'rejected'].map(status => <ApplicationStatusBadge key={status} status={status} />)}
+                    </div>
+                </Preview>
             </Section>
 
             <Section id="forms" title="입력·선택" description="티켓 등록 폼의 입력 스타일과 검색·직접 입력을 지원하는 SelectField입니다.">
                 <div className="grid gap-4 sm:grid-cols-2">
                     <Preview title="기본 입력">
-                        <label className="flex flex-col gap-2 text-xs font-bold text-muted-foreground">
+                        <FieldLabel variant="adminUi">
                             티켓 제목
-                            <input className={INPUT} placeholder="예: 뉴욕행 티켓 나눔합니다" />
-                        </label>
-                        <label className="flex flex-col gap-2 text-xs font-bold text-muted-foreground">
+                            <Input variant="default" placeholder="예: 뉴욕행 티켓 나눔합니다" />
+                        </FieldLabel>
+                        <FieldLabel variant="adminUi">
                             출발일
-                            <input className={INPUT} type="date" />
-                        </label>
-                        <label className="flex flex-col gap-2 text-xs font-bold text-muted-foreground">
+                            <Input variant="default" type="date" />
+                        </FieldLabel>
+                        <FieldLabel variant="adminUi">
                             비활성 입력
-                            <input className={`${INPUT} disabled:opacity-50 disabled:cursor-not-allowed`} value="수정할 수 없는 예시" disabled />
-                        </label>
+                            <Input variant="disabled" value="수정할 수 없는 예시" disabled />
+                        </FieldLabel>
                     </Preview>
                     <Preview title="검색과 직접 입력">
                         <SelectField label="도착 공항" options={AIRPORT_OPTIONS} value={airport} onChange={setAirport} placeholder="공항 검색 또는 직접 입력" error={showFieldError ? '도착 공항을 선택해주세요. (오류 표시 예시)' : ''} />
                         <SelectField label="항공사 (목록에서 선택)" options={[{ value: 'KE', label: '대한항공' }, { value: 'AC', label: '에어캐나다' }]} value={airline} onChange={setAirline} isCreatable={false} />
-                        <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <input type="checkbox" checked={showFieldError} onChange={event => setShowFieldError(event.target.checked)} />
+                        <FieldLabel variant="adminUi2">
+                            <Input variant="plain" type="checkbox" checked={showFieldError} onChange={event => setShowFieldError(event.target.checked)} />
                             오류 메시지 보기
-                        </label>
+                        </FieldLabel>
                         <p className="text-xs text-muted-foreground">선택값: {airport || '없음'} / {airline || '없음'}</p>
                     </Preview>
                 </div>
@@ -194,41 +205,42 @@ export default function AdminUiView() {
             </Section>
 
             <Section id="overlays" title="모달" description="공통 Modal, 일정 필터 DateFilterModal, 날짜별 일정 DayTicketsModal을 열어 확인합니다.">
+                <BusinessComponentCatalog />
                 <div className="flex flex-wrap gap-2">
-                    <button type="button" className={SECONDARY_BUTTON} onClick={() => setModal({ type: 'basic' })}>기본 모달</button>
-                    <button type="button" className={SECONDARY_BUTTON} onClick={() => setModal({ type: 'error' })}>오류 모달</button>
-                    <button type="button" className={SECONDARY_BUTTON} onClick={() => setModal({ type: 'date' })}>일정 필터</button>
-                    <button type="button" className={SECONDARY_BUTTON} onClick={() => setModal({ type: 'day', tickets, date: sampleDate })}>날짜별 일정</button>
+                    <Button type="button" variant="secondary" onClick={() => setModal({ type: 'basic' })}>기본 모달</Button>
+                    <Button type="button" variant="secondary" onClick={() => setModal({ type: 'error' })}>오류 모달</Button>
+                    <Button type="button" variant="secondary" onClick={() => setModal({ type: 'date' })}>일정 필터</Button>
+                    <Button type="button" variant="secondary" onClick={() => setModal({ type: 'day', tickets, date: sampleDate })}>날짜별 일정</Button>
                 </div>
                 <p className="text-xs text-muted-foreground">선택한 일정: {selectedDate || '전체 일정'}</p>
             </Section>
 
             <Section id="feedback" title="표·상태 안내" description="관리자 목록의 표 스타일과 로딩·오류·빈 목록 상태입니다.">
-                <div className="overflow-x-auto rounded-xl border-2 border-border bg-card">
-                    <table className="w-full text-sm text-left border-collapse">
+                <Card variant="adminUi2">
+                    <Table variant="default">
                         <caption className="sr-only">예시 티켓 목록</caption>
-                        <thead>
-                            <tr className="bg-muted/50 border-b text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                                <th scope="col" className="px-4 py-4">티켓</th>
-                                <th scope="col" className="px-4 py-4">공항</th>
-                                <th scope="col" className="px-4 py-4">상태</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border/50">
+                        <TableHead variant="plain">
+                            <TableRow variant="adminUi">
+                                <TableHeaderCell scope="col" variant="adminUi">티켓</TableHeaderCell>
+                                <TableHeaderCell scope="col" variant="adminUi">공항</TableHeaderCell>
+                                <TableHeaderCell scope="col" variant="adminUi">상태</TableHeaderCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody variant="adminUi">
                             {tickets.map(ticket => (
-                                <tr key={ticket.id} className="hover:bg-muted/30 transition-colors">
-                                    <td className="px-4 py-4 font-semibold">{ticket.title}</td>
-                                    <td className="px-4 py-4 text-muted-foreground">{ticket.arrival_airport}</td>
-                                    <td className="px-4 py-4 whitespace-nowrap"><TicketStatusBadge status={ticket.status} /></td>
-                                </tr>
+                                <TableRow key={ticket.id} variant="adminUi2">
+                                    <TableCell variant="adminUi">{ticket.title}</TableCell>
+                                    <TableCell variant="adminUi2">{ticket.arrival_airport}</TableCell>
+                                    <TableCell variant="adminUi3"><TicketStatusBadge status={ticket.status} /></TableCell>
+                                </TableRow>
                             ))}
-                        </tbody>
-                    </table>
-                </div>
+                        </TableBody>
+                    </Table>
+                </Card>
                 <Preview title="목록의 상태">
                     <div className="flex flex-wrap gap-2" role="group" aria-label="목록 상태 선택">
                         {[['empty', '빈 목록'], ['loading', '불러오는 중'], ['error', '오류']].map(([value, label]) => (
-                            <button key={value} type="button" aria-pressed={feedback === value} onClick={() => setFeedback(value)} className={feedback === value ? PRIMARY_BUTTON : SECONDARY_BUTTON}>{label}</button>
+                            <Button key={value} type="button" aria-pressed={feedback === value} onClick={() => setFeedback(value)} variant="segmented" active={feedback === value}>{label}</Button>
                         ))}
                     </div>
                     <div className="flex min-h-[160px] flex-col items-center justify-center gap-2 text-center text-sm text-muted-foreground" role="status">
@@ -246,7 +258,7 @@ export default function AdminUiView() {
                 <Modal isOpen onClose={closeModal}
                     title={modal.ticket?.title || modal.post?.title || '공통 모달 미리보기'}
                     error={modal.type === 'error' ? '입력 내용을 확인해주세요. (오류 표시 예시)' : ''}
-                    footer={<button type="button" className={SECONDARY_BUTTON} onClick={closeModal}>닫기</button>}>
+                    footer={<Button type="button" variant="secondary" onClick={closeModal}>닫기</Button>}>
                     <div className="space-y-4 text-sm">
                         <p>샘플 데이터를 확인하는 미리보기입니다.</p>
                         {modal.ticket && <><p>{modal.ticket.departure_date} · {modal.ticket.flight_info}</p><TicketStatusBadge status={modal.ticket.status} /></>}

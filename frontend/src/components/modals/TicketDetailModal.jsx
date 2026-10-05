@@ -1,14 +1,14 @@
+import { Badge, Button, FieldLabel, Heading } from '../ui/primitives.js';
 import React, { useRef, useState } from 'react';
 import Modal from '../ui/Modal';
 import { useAuth } from '../../hooks/useAuth';
 import { getAirportColor } from '../../utils/airportUtils';
 import { toBlob } from 'html-to-image';
-import apiClient from '../../utils/api';
 import TicketDepartureSection from './TicketDepartureSection';
 import TicketEticketSection from './TicketEticketSection';
 
 export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick, onDeleteClick, onUpdate }) {
-    const { user, rawAirports } = useAuth();
+    const { user, rawAirports, apiClient } = useAuth();
     const [isSharingImage, setIsSharingImage] = useState(false);
     const contentRef = useRef(null);
 
@@ -174,8 +174,8 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick
         <div className="flex flex-col w-full gap-5 border-t border-slate-100">
             <div className="flex items-center justify-between w-full gap-2">
                 <div className="flex items-center gap-2">
-                    <button 
-                        className="flex items-center justify-center gap-2 h-10 px-5 text-[13px] font-bold rounded-lg bg-slate-100 text-slate-900 hover:bg-slate-200 transition-all duration-200 active:scale-[0.96] shadow-sm" 
+                    <Button
+                        variant="detailCopy"
                         onClick={handleShareImage}
                         disabled={isSharingImage}
                     >
@@ -184,15 +184,11 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick
                         ) : (
                             <div>공유</div>
                         )}
-                    </button>
+                    </Button>
                     
                     {isOwner && (ticket.status === 'owned' || ticket.status === 'sharing' || ticket.status === 'regular') && (
-                        <button 
-                            className={`flex items-center justify-center gap-2 h-10 px-5 text-[13px] font-bold rounded-lg transition-all duration-200 active:scale-[0.96] ${
-                                ticket.status === 'sharing' 
-                                ? 'bg-red-50 text-red-600 hover:bg-red-100' 
-                                : 'bg-primary text-primary-foreground hover:bg-primary/90'
-                            }`}
+                        <Button
+                            variant="ticketDetail" active={ticket.status === 'sharing'}
                             onClick={handleToggleStatus}
                         >
                             {ticket.status === 'sharing' ? (
@@ -200,36 +196,36 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick
                             ) : (
                                 <div>나눔</div>
                             )}
-                        </button>
+                        </Button>
                     )}
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <button 
-                        className="h-10 px-5 text-[13px] font-bold rounded-lg bg-slate-100 text-slate-900 hover:bg-slate-200 transition-all duration-200 active:scale-[0.96]" 
+                    <Button
+                        variant="detailClose"
                         onClick={onClose}
                     >
                         닫기
-                    </button>
+                    </Button>
                     {canEdit && (
-                        <button 
-                            className="h-10 px-5 text-[13px] font-bold rounded-lg bg-slate-100 text-slate-900 hover:bg-slate-200 transition-all duration-200 active:scale-[0.96]" 
+                        <Button
+                            variant="detailClose"
                             onClick={() => { onClose(); onEditClick(ticket); }}
                         >
                             수정
-                        </button>
+                        </Button>
                     )}
                 </div>
             </div>
 
             <div className="flex justify-start px-1">
                 {canDelete && (
-                    <button 
-                        className="text-[11px] font-medium text-slate-400 hover:text-destructive underline underline-offset-4 transition-all duration-200" 
+                    <Button
+                        variant="deleteText"
                         onClick={handleDelete}
                     >
                         이 티켓을 삭제할까요?
-                    </button>
+                    </Button>
                 )}
             </div>
         </div>
@@ -241,27 +237,27 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick
                 {/* 공유 이미지에만 포함될 제목 (평소에는 숨김) */}
                 <div className="share-title-only" style={{ display: 'none' }}>
                     <div className="px-2 pb-4 mb-4 border-b-2 border-slate-900">
-                        <h2 className="text-2xl font-black text-slate-900">{ticket.title}</h2>
+                        <Heading as="h2" variant="ticketDetail">{ticket.title}</Heading>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-6 px-2">
                     <div className="space-y-1.5">
-                        <label className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground">상태</label>
+                        <FieldLabel variant="ticketDeparture">상태</FieldLabel>
                         <div className="text-m font-semibold text-foreground">{statusLabel}</div>
                     </div>
                     <div className="space-y-1.5">
-                        <label className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground">도착 공항</label>
+                        <FieldLabel variant="ticketDeparture">도착 공항</FieldLabel>
                         <div className="flex items-center gap-2">
                             {(() => {
                                 const colors = getAirportColor(ticket.arrival_airport, rawAirports);
                                 return (
-                                    <span 
-                                        className="px-2 py-0.5 rounded-full text-[12px] font-bold border" 
+                                    <Badge
+                                        variant="ticketDetail"
                                         style={{ backgroundColor: colors.bg, color: colors.text, borderColor: colors.bg }}
                                     >
                                         {ticket.arrival_airport}
-                                    </span>
+                                    </Badge>
                                 );
                             })()}
                         </div>
@@ -269,7 +265,7 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick
                     <div className="col-span-2 pt-2 pb-2 border-y border-slate-100/50">
                         <div className="flex items-center justify-between gap-4">
                             <div className="flex flex-col items-start justify-center space-y-1.5 flex-1">
-                                <label className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground whitespace-nowrap">출발 정보</label>
+                                <FieldLabel variant="ticketDetail">출발 정보</FieldLabel>
                                 <div className="flex flex-col">
                                     <span className="text-4xl font-black text-foreground tracking-tighter">
                                         {ticket.departure_time || '-'}
@@ -283,7 +279,7 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick
                             <div className="h-10 w-px bg-slate-100/80" />
 
                             <div className="flex flex-col items-start justify-center space-y-1.5 flex-1">
-                                <label className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground whitespace-nowrap">도착 정보</label>
+                                <FieldLabel variant="ticketDetail">도착 정보</FieldLabel>
                                 <div className="flex flex-col">
                                     <span className="text-4xl font-black text-foreground tracking-tighter">
                                         {ticket.arrival_time || '-'}
@@ -299,37 +295,37 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick
 
                 <div className="grid grid-cols-2 gap-4 p-4 rounded-xl bg-muted/30 border-2 border-border/50">
                     <div className="space-y-1">
-                        <label className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground/70">항공사</label>
+                        <FieldLabel variant="ticketDetail2">항공사</FieldLabel>
                         <div className="text-s font-semibold text-foreground">{ticket.airline || '-'}</div>
                     </div>
                     <div className="space-y-1 text-right">
-                        <label className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground/70">항공편</label>
+                        <FieldLabel variant="ticketDetail2">항공편</FieldLabel>
                         <div className="text-s font-semibold text-foreground">{ticket.flight_info || '-'}</div>
                     </div>
                     <div className="space-y-1">
-                        <label className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground/70">기내</label>
+                        <FieldLabel variant="ticketDetail2">기내</FieldLabel>
                         <div className="text-s font-semibold text-foreground">{Number(ticket.cabin_capacity || 0)} 석</div>
                     </div>
                     <div className="space-y-1 text-right">
-                        <label className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground/70">수하물</label>
+                        <FieldLabel variant="ticketDetail2">수하물</FieldLabel>
                         <div className="text-s font-semibold text-foreground">{Number(ticket.cargo_capacity || 0)} 석</div>
                     </div>
                 </div>
 
                 <div className="flex flex-col gap-3 pt-2 px-2">
                     <div className="space-y-1.5">
-                        <label className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground">소유자</label>
+                        <FieldLabel variant="ticketDeparture">소유자</FieldLabel>
                         <div className="text-m font-semibold text-foreground">{ticket.owner?.name || ticket.manager_name || '-'}</div>
                     </div>
                     <div className="space-y-1.5">
-                        <label className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground">연락처</label>
+                        <FieldLabel variant="ticketDeparture">연락처</FieldLabel>
                         <div className="text-m font-semibold text-foreground truncate share-email-target">{ticket.owner?.email || ticket.contact || '-'}</div>
                     </div>
                 </div>
 
                 {ticket.memo && (
                     <div className="space-y-1.5 pt-2 px-1">
-                        <label className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground pl-1">메모</label>
+                        <FieldLabel variant="ticketDetail3">메모</FieldLabel>
                         <div className="text-sm leading-relaxed text-muted-foreground bg-accent/30 p-3 rounded-lg border border-border/50 whitespace-pre-wrap">
                             {ticket.memo}
                         </div>

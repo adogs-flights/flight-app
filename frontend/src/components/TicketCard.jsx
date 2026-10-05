@@ -1,14 +1,15 @@
+import { Badge, Button, Card, Heading } from './ui/primitives.js';
 import { useAuth } from '../hooks/useAuth';
 import { getAirportColor } from '../utils/airportUtils';
 
 export const TicketStatusBadge = ({ status }) => {
     switch (status) {
         case 'sharing':
-            return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green/10 text-green border border-green/20">🟢 나눔중</span>;
+            return <Badge variant="ticketCard">🟢 나눔중</Badge>;
         case 'shared':
-            return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-muted text-muted-foreground border border-border">✅ 나눔완료</span>;
+            return <Badge variant="ticketCard2">✅ 나눔완료</Badge>;
         case 'owned':
-            return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary border border-primary/20">🔒 소유중</span>;
+            return <Badge variant="ticketCard3">🔒 소유중</Badge>;
         default:
             return null;
     }
@@ -39,8 +40,8 @@ const TicketCard = ({ ticket, onEditClick, onDeleteClick, onApplyClick, onViewAp
     const handleViewApplicants = (e) => { e.stopPropagation(); onViewApplicantsClick && onViewApplicantsClick(ticket); };
 
     return (
-        <div 
-            className="group relative flex flex-col justify-between p-5 border-2 rounded-xl transition-all cursor-pointer hover:shadow-md overflow-hidden bg-card" 
+        <Card
+            variant="ticketCard"
             style={{ borderColor: colors.bg }}
             onClick={onClick}
         >
@@ -51,19 +52,19 @@ const TicketCard = ({ ticket, onEditClick, onDeleteClick, onApplyClick, onViewAp
 
             <div className="space-y-3">
                 <div className="flex items-start justify-between gap-3">
-                    <h3 className="text-base font-bold leading-snug text-foreground line-clamp-2">
+                    <Heading as="h3" variant="ticketCard">
                         {ticket.title || '제목 없음'}
-                    </h3>
+                    </Heading>
                     <div className="flex flex-wrap items-center justify-end flex-shrink-0 gap-1.5">
-                        <span 
-                            className="px-2 py-0.5 rounded-full text-[10px] font-bold border" 
+                        <Badge
+                            variant="ticketCard4"
                             style={{ backgroundColor: colors.bg, color: colors.text, borderColor: colors.bg }}
                         >
                             {ticket.arrival_airport || '미지정'}
-                        </span>
+                        </Badge>
                         <TicketStatusBadge status={ticket.status} />
                         {isOwner && (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-secondary text-secondary-foreground border border-border">👤 내 등록</span>
+                            <Badge variant="ticketCard5">👤 내 등록</Badge>
                         )}
                     </div>
                 </div>
@@ -89,39 +90,39 @@ const TicketCard = ({ ticket, onEditClick, onDeleteClick, onApplyClick, onViewAp
                 <div className="flex items-center gap-2 flex-shrink-0">
                     {isOwner && (
                         <>
-                            <button 
-                                className="px-3 py-1 text-[11px] font-semibold rounded-md bg-secondary text-secondary-foreground border border-border hover:bg-muted transition-colors" 
+                            <Button
+                                variant="ticketEdit"
                                 onClick={handleEdit}
                             >
                                 수정
-                            </button>
-                            <button 
-                                className="px-3 py-1 text-[11px] font-semibold rounded-md bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20 transition-colors" 
+                            </Button>
+                            <Button
+                                variant="ticketDelete"
                                 onClick={handleDelete}
                             >
                                 삭제
-                            </button>
+                            </Button>
                         </>
                     )}
                     {isOwner && ticket.status === 'sharing' && (
-                        <button 
-                            className="px-3 py-1 text-[11px] font-semibold rounded-md bg-sky text-sky-foreground hover:bg-sky/90 transition-colors" 
+                        <Button
+                            variant="ticketApplicants"
                             onClick={handleViewApplicants}
                         >
                             📋 신청자
-                        </button>
+                        </Button>
                     )}
                     {!isOwner && ticket.status === 'sharing' && (
-                        <button 
-                            className="px-3 py-1 text-[11px] font-semibold rounded-md bg-green text-green-foreground hover:bg-green/90 transition-colors" 
+                        <Button
+                            variant="ticketApply"
                             onClick={handleApply}
                         >
                             🎁 신청
-                        </button>
+                        </Button>
                     )}
                 </div>
             </div>
-        </div>
+        </Card>
     );
 };
 

@@ -1,3 +1,4 @@
+import { Badge, Button, Heading } from '../ui/primitives.js';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useSidebarActivity } from '../../hooks/useSidebarActivity';
@@ -20,9 +21,9 @@ function NavItem({ to, icon, children, count }) {
                     <span className={`text-base transition-transform ${isActive ? 'scale-110' : 'group-hover:scale-110 opacity-70'}`}>{icon}</span>
                     <span className="flex-1">{children}</span>
                     {count > 0 && (
-                        <span className={`ml-auto px-2 py-0.5 rounded-full text-[10px] font-black border ${isActive ? 'bg-primary-foreground/20 border-primary-foreground/30 text-primary-foreground' : 'bg-primary/10 border-primary/20 text-primary'}`}>
+                        <Badge variant="sidebar" active={isActive}>
                             {count}
-                        </span>
+                        </Badge>
                     )}
                 </>
             )}
@@ -52,20 +53,20 @@ export default function Sidebar({ isOpen, onClose, onPwChangeClick }) {
                             </div>
                             <span className="text-xl font-black tracking-tighter text-foreground">해봉티켓</span>
                         </div>
-                        <button 
-                            className="p-2 rounded-lg text-muted-foreground hover:bg-muted transition-colors" 
+                        <Button
+                            variant="sidebarClose"
                             onClick={onClose}
                         >
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                                 <line x1="18" y1="6" x2="6" y2="18"></line>
                                 <line x1="6" y1="6" x2="18" y2="18"></line>
                             </svg>
-                        </button>
+                        </Button>
                     </div>
 
                     <div className="space-y-8 sm:space-y-6">
                         <div className="space-y-2">
-                            <h4 className="px-3 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/50 mb-3 ml-1">Main Menu</h4>
+                            <Heading as="h4" variant="sidebar">Main Menu</Heading>
                             <nav className="flex flex-col gap-1.5">
                                 <NavItem to="/schedules" icon="">일정 관리</NavItem>
                                 <NavItem to="/needs" icon="">구해요 게시판</NavItem>
@@ -79,12 +80,12 @@ export default function Sidebar({ isOpen, onClose, onPwChangeClick }) {
 
                                 <hr></hr>
                                 
-                                <button 
-                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-muted-foreground hover:bg-muted hover:text-foreground sm:hidden transition-all text-left w-full mt-2" 
+                                <Button
+                                    variant="sidebarPassword"
                                     onClick={onPwChangeClick}
                                 >
                                     <span className="text-base opacity-70"></span> 비밀번호 변경
-                                </button>
+                                </Button>
                             </nav>
                         </div>
 
