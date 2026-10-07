@@ -1,3 +1,4 @@
+import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import { Card, Heading } from '../components/ui/primitives.js';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
@@ -30,7 +31,7 @@ export default function MyApplicationsView() {
     }, [apiClient]);
 
     const renderContent = () => {
-        if (appsState.loading) return <div className="empty"><div>Loading...</div></div>;
+        if (appsState.loading) return <LoadingSkeleton variant="applications" />;
         if (appsState.error) return <div className="empty"><div className="text-red-500">{appsState.error}</div></div>;
         if (appsState.data.length === 0) return <div className="empty"><div className="empty-text">신청 내역이 없습니다</div></div>;
 

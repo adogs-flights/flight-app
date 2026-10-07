@@ -1,3 +1,4 @@
+import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import { ActionLink, Alert, Badge, Button, Card, Heading, Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from '../components/ui/primitives.js';
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
@@ -564,9 +565,7 @@ export default function AdminView() {
                     )}
                     
                     {loading ? (
-                        <div className="flex items-center justify-center h-[200px] text-sm text-muted-foreground">
-                            데이터를 불러오는 중...
-                        </div>
+                        <LoadingSkeleton variant="table" columns={{ users: 6, pending: 5, airports: 6, airlines: 4, organizations: 3, submissions: 6 }[activeTab]} />
                     ) : (
                         activeTab === 'users' ? renderUsers() :
                         activeTab === 'pending' ? renderPending() :

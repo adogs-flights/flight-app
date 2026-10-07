@@ -1,3 +1,4 @@
+import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import { ActionLink, Alert, Button, Card, FieldLabel, Heading, Input } from '../components/ui/primitives.js';
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -104,7 +105,7 @@ export default function SubmissionStatusView() {
     useEffect(() => { fetchStatus(); }, [fetchStatus]);
 
     const renderBody = () => {
-        if (loading) return <p className="text-center text-sm text-muted-foreground py-8">불러오는 중...</p>;
+        if (loading) return <LoadingSkeleton variant="status" />;
         if (error) return <Alert variant="submissionStatus">{error}</Alert>;
 
         if (data.status === 'pending') {

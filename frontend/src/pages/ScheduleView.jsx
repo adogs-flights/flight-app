@@ -1,3 +1,4 @@
+import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import { Button, Heading } from '../components/ui/primitives.js';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { toBlob } from 'html-to-image';
@@ -118,7 +119,7 @@ export default function ScheduleView() {
     });
 
     const renderListContent = () => {
-        if (ticketsState.loading) return <div className="empty"><div>Loading...</div></div>;
+        if (ticketsState.loading) return <LoadingSkeleton variant="tickets" />;
         if (ticketsState.error) return <div className="empty"><div className="text-red-500">{ticketsState.error}</div></div>;
         
         const today = new Date();
@@ -278,7 +279,11 @@ export default function ScheduleView() {
             </div>
             
             <div className="min-h-[400px]">
-                {view === 'cal' ? (
+                {view === 'cal' && ticketsState.loading ? (
+                    <LoadingSkeleton variant="calendar" />
+                ) : view === 'cal' && ticketsState.error ? (
+                    <div className="empty"><div className="text-red-500">{ticketsState.error}</div></div>
+                ) : view === 'cal' ? (
                     <div className="flex flex-col">
                         <CalendarView tickets={filteredTickets} onTicketClick={handleTicketClick} onMoreClick={handleDayMoreClick} currentDate={currentDate} setCurrentDate={setCurrentDate} calendarRef={calendarRef} isSaving={isSaving} />
                         <div className="flex flex-col sm:flex-row gap-2 py-4">

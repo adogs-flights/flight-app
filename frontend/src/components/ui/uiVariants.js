@@ -2,6 +2,107 @@
 // 클래스나 상태별 스타일은 이 파일에서 수정합니다. 페이지에는 업무 상태와 이벤트만 전달합니다.
 
 export const uiVariants = {
+    Skeleton: {
+        text: {
+            className: "min-w-0 max-w-full bg-border/70 motion-safe:animate-pulse rounded-md h-3 w-full",
+            usedBy: ["src/components/ui/LoadingSkeleton.jsx"],
+        },
+        title: {
+            className: "min-w-0 max-w-full bg-border/70 motion-safe:animate-pulse rounded-md h-6 w-2/3",
+            usedBy: ["src/components/ui/LoadingSkeleton.jsx"],
+        },
+        badge: {
+            className: "min-w-0 max-w-full bg-border/70 motion-safe:animate-pulse rounded-md h-5 w-16 rounded-full",
+            usedBy: ["src/components/ui/LoadingSkeleton.jsx"],
+        },
+        avatar: {
+            className: "min-w-0 max-w-full bg-border/70 motion-safe:animate-pulse rounded-md h-12 w-12 shrink-0 rounded-xl",
+            usedBy: ["src/components/ui/LoadingSkeleton.jsx"],
+        },
+        logo: {
+            className: "min-w-0 max-w-full bg-border/70 motion-safe:animate-pulse rounded-md h-24 w-24 rounded-2xl",
+            usedBy: ["src/components/ui/LoadingSkeleton.jsx"],
+        },
+        button: {
+            className: "min-w-0 max-w-full bg-border/70 motion-safe:animate-pulse rounded-md h-10 w-28 rounded-lg",
+            usedBy: ["src/components/ui/LoadingSkeleton.jsx"],
+        },
+        image: {
+            className: "min-w-0 max-w-full bg-border/70 motion-safe:animate-pulse rounded-md aspect-[4/3] w-full rounded-none",
+            usedBy: ["src/components/ui/LoadingSkeleton.jsx"],
+        },
+        field: {
+            className: "min-w-0 max-w-full bg-border/70 motion-safe:animate-pulse rounded-md h-11 w-full rounded-lg",
+            usedBy: ["src/components/ui/LoadingSkeleton.jsx"],
+        },
+    },
+    LoadingSkeleton: {
+        tickets: {
+            label: "티켓 목록",
+            className: "col-span-full min-w-0 w-full robust-grid",
+            usedBy: ["src/pages/ScheduleView.jsx", "src/pages/GiveView.jsx", "src/pages/MyTicketsView.jsx"],
+        },
+        needs: {
+            label: "구해요 게시글",
+            className: "col-span-full min-w-0 w-full grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3",
+            usedBy: ["src/pages/NeedPostView.jsx", "src/pages/PublicNeedBoard.jsx"],
+        },
+        calendar: {
+            label: "일정 달력",
+            className: "col-span-full min-w-0 w-full ",
+            usedBy: ["src/pages/ScheduleView.jsx"],
+        },
+        table: {
+            label: "관리자 목록",
+            className: "col-span-full min-w-0 w-full ",
+            usedBy: ["src/pages/AdminView.jsx", "src/pages/SubmissionReviewView.jsx", "src/pages/AdminUiView.jsx"],
+        },
+        applications: {
+            label: "신청 내역",
+            className: "col-span-full min-w-0 w-full grid gap-4",
+            usedBy: ["src/pages/MyApplicationsView.jsx", "src/components/modals/ApplicantListModal.jsx"],
+        },
+        organization: {
+            label: "단체 소개",
+            className: "col-span-full min-w-0 w-full space-y-8",
+            usedBy: ["src/pages/OrgIntroView.jsx"],
+        },
+        status: {
+            label: "제출 진행 상태",
+            className: "col-span-full min-w-0 w-full space-y-5 py-6",
+            usedBy: ["src/pages/SubmissionStatusView.jsx"],
+        },
+        sync: {
+            label: "구글 드라이브 연동",
+            className: "col-span-full min-w-0 w-full mb-8",
+            usedBy: ["src/pages/MyTicketsView.jsx"],
+        },
+        notifications: {
+            label: "알림 설정",
+            className: "col-span-full min-w-0 w-full ",
+            usedBy: ["src/pages/NotificationsView.jsx"],
+        },
+        page: {
+            label: "페이지",
+            className: "col-span-full min-w-0 w-full space-y-6",
+            usedBy: ["src/App.jsx"],
+        },
+        app: {
+            label: "화면",
+            className: "col-span-full min-w-0 w-full min-h-screen bg-background p-4 sm:p-8",
+            usedBy: ["src/App.jsx"],
+        },
+        image: {
+            label: "첨부 이미지",
+            className: "col-span-full min-w-0 w-full mt-2 max-w-sm overflow-hidden rounded-lg",
+            usedBy: ["src/components/modals/TicketEticketSection.jsx", "src/components/modals/GuestSubmissionReviewModal.jsx"],
+        },
+        field: {
+            label: "신청 단체",
+            className: "col-span-full min-w-0 w-full space-y-2",
+            usedBy: ["src/pages/GuestTicketSubmitView.jsx"],
+        },
+    },
     Heading: {
         adminUi: {
             className: "text-lg font-bold text-foreground",
@@ -107,6 +208,22 @@ export const uiVariants = {
         },
     },
     Card: {
+        skeleton: {
+            className: "min-w-0 space-y-4 rounded-xl border-2 border-border bg-card p-5",
+            usedBy: ["src/components/ui/LoadingSkeleton.jsx"],
+        },
+        skeletonNeed: {
+            className: "min-w-0 overflow-hidden rounded-2xl border-2 border-border bg-card",
+            usedBy: ["src/components/ui/LoadingSkeleton.jsx"],
+        },
+        skeletonPanel: {
+            className: "min-w-0 rounded-2xl border border-border bg-card p-5",
+            usedBy: ["src/components/ui/LoadingSkeleton.jsx"],
+        },
+        skeletonIntro: {
+            className: "min-w-0 space-y-4 rounded-2xl border-2 border-border bg-card p-6",
+            usedBy: ["src/components/ui/LoadingSkeleton.jsx"],
+        },
         adminUi: {
             className: "min-w-0 space-y-3 rounded-xl border-2 border-border bg-card p-4 sm:p-5",
             usedBy: ["src/pages/AdminUiView.jsx"],
@@ -165,7 +282,7 @@ export const uiVariants = {
         },
         calendar: {
             className: "calendar-view bg-card rounded-xl border-2 border-border overflow-hidden flex flex-col",
-            usedBy: ["src/components/CalendarView.jsx"],
+            usedBy: ["src/components/CalendarView.jsx","src/components/ui/LoadingSkeleton.jsx"],
         },
         ticketCard: {
             className: "group relative flex flex-col justify-between p-5 border-2 rounded-xl transition-all cursor-pointer hover:shadow-md overflow-hidden bg-card",

@@ -83,3 +83,8 @@ export function TableHeaderCell({ variant, ...props }) {
 export function TableCell({ variant, ...props }) {
     return renderUi('TableCell', 'td', { variant, ...props });
 }
+
+// Decorative blocks are hidden; LoadingSkeleton supplies one accessible status.
+export function Skeleton({ variant = 'text', ...props }) {
+    return renderUi('Skeleton', 'div', { ...props, variant, 'aria-hidden': true });
+}

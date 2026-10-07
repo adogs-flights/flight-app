@@ -1,3 +1,4 @@
+import LoadingSkeleton from '../ui/LoadingSkeleton';
 import { ActionLink, Badge, Button, FieldLabel, Input, NativeSelect, Textarea } from '../ui/primitives.js';
 import { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
@@ -29,6 +30,7 @@ export default function GuestSubmissionReviewModal({ isOpen, onClose, submission
     const [form, setForm] = useState(emptyForm);
     const [users, setUsers] = useState([]);
     const [imageUrl, setImageUrl] = useState('');
+    const [imageFailed, setImageFailed] = useState(false);
     const [showReject, setShowReject] = useState(false);
     const [adminNote, setAdminNote] = useState('');
     const [passportUrl, setPassportUrl] = useState('');
@@ -36,6 +38,9 @@ export default function GuestSubmissionReviewModal({ isOpen, onClose, submission
     const [error, setError] = useState('');
 
     useEffect(() => {
+        let active = true;
+        setImageUrl('');
+        setImageFailed(false);
         if (!isOpen || !submission) {
             setForm(emptyForm);
             setShowReject(false);
@@ -58,8 +63,8 @@ export default function GuestSubmissionReviewModal({ isOpen, onClose, submission
 
         if (submission.verification_method === 'eticket_image') {
             apiClient.get(`/guest-submissions/${submission.id}/image`, { responseType: 'blob' })
-                .then(res => setImageUrl(URL.createObjectURL(res.data)))
-                .catch(() => setImageUrl(''));
+                .then(res => { if (active) setImageUrl(URL.createObjectURL(res.data)); })
+                .catch(() => { if (active) setImageFailed(true); });
         } else {
             setImageUrl('');
         }
@@ -79,6 +84,7 @@ export default function GuestSubmissionReviewModal({ isOpen, onClose, submission
         } else {
             setSeatConfirmUrl('');
         }
+        return () => { active = false; };
     }, [isOpen, submission, apiClient]);
 
     useEffect(() => () => { if (imageUrl) URL.revokeObjectURL(imageUrl); }, [imageUrl]);
@@ -242,12 +248,14 @@ export default function GuestSubmissionReviewModal({ isOpen, onClose, submission
                     )}
                     {submission.verification_method === 'eticket_image' ? (
                         <>
-                            {imageUrl ? (
+                            {imageFailed ? (
+                                <p className="text-xs text-muted-foreground">이미지를 불러오지 못했습니다.</p>
+                            ) : imageUrl ? (
                                 <ActionLink variant="plain" href={imageUrl} target="_blank" rel="noreferrer">
                                     <img src={imageUrl} alt="e티켓" className="max-h-64 rounded-lg border-2 border-border mt-2" />
                                 </ActionLink>
                             ) : (
-                                <div className="text-xs text-muted-foreground">이미지를 불러오는 중...</div>
+                                <LoadingSkeleton variant="image" label="e티켓 이미지를 불러오는 중입니다." />
                             )}
                             {submission.eticket_drive_url && (
                                 <ActionLink

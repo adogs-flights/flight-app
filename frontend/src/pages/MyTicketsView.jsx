@@ -1,3 +1,4 @@
+import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import { Badge, Button, Heading, Input } from '../components/ui/primitives.js';
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../hooks/useAuth';
@@ -79,7 +80,7 @@ function GoogleDriveSyncPanel({ onStatusUpdate }) {
         }
     };
 
-    if (status.loading) return null;
+    if (status.loading) return <LoadingSkeleton variant="sync" />;
 
     return (
         <>
@@ -299,7 +300,7 @@ export default function MyTicketsView() {
     };
 
     const renderListContent = () => {
-        if (ticketsState.loading) return <div className="empty"><div>Loading...</div></div>;
+        if (ticketsState.loading) return <LoadingSkeleton variant="tickets" />;
         if (ticketsState.error) return <div className="empty"><div className="text-red-500">{ticketsState.error}</div></div>;
         if (filteredTickets.length === 0) {
             return (

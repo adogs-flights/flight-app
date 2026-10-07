@@ -1,3 +1,4 @@
+import LoadingSkeleton from '../ui/LoadingSkeleton';
 import { Alert, Badge, Button } from '../ui/primitives.js';
 import { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
@@ -73,9 +74,7 @@ export default function ApplicantListModal({ isOpen, onClose, ticket, onStatusCh
 
     const renderContent = () => {
         if (loading) return (
-            <div className="flex items-center justify-center py-12">
-                <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-            </div>
+            <LoadingSkeleton variant="applications" label="신청자 목록을 불러오는 중입니다." />
         );
         if (error) return <Alert variant="applicantList">{error}</Alert>;
         if (applications.length === 0) return (

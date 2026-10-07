@@ -1,3 +1,4 @@
+import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import { ActionLink, Button, Card, FieldLabel, Heading, Input, Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from '../components/ui/primitives.js';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -245,7 +246,7 @@ export default function AdminUiView() {
                     </div>
                     <div className="flex min-h-[160px] flex-col items-center justify-center gap-2 text-center text-sm text-muted-foreground" role="status">
                         {feedback === 'empty' && <><span className="text-3xl" aria-hidden="true">📭</span><p>표시할 예정된 일정이 없습니다</p></>}
-                        {feedback === 'loading' && <p>데이터를 불러오는 중...</p>}
+                        {feedback === 'loading' && <LoadingSkeleton variant="table" />}
                         {feedback === 'error' && <p className="text-destructive">데이터를 불러오는데 실패했습니다.</p>}
                     </div>
                 </Preview>

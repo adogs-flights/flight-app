@@ -1,3 +1,4 @@
+import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import { ActionLink, Button, Heading } from '../components/ui/primitives.js';
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -69,12 +70,12 @@ export default function NotificationsView() {
             <ActionLink as={Link} to="/" variant="notifications">해봉티켓으로 돌아가기</ActionLink>
             <Heading as="h1" variant="notifications">알림 설정</Heading>
             <p className="text-muted-foreground">티켓 나눔 신청 결과와 내 티켓의 새 신청을 알려드립니다. 설정은 기기별로 적용됩니다.</p>
-            <dl className="bg-card border rounded-2xl p-5 space-y-3">
+            {state.loading ? <LoadingSkeleton variant="notifications" /> : <dl className="bg-card border rounded-2xl p-5 space-y-3">
                 <div>알림 지원: {supported ? '지원됨' : '현재 환경에서 지원되지 않음'}</div>
                 <div>권한 상태: {permissionLabel[state.permission]}</div>
-                <div>현재 브라우저 구독: {state.loading ? '확인 중' : state.subscribed ? '현재 계정에 등록됨' : state.local ? '브라우저 구독 있음 · 현재 계정에 등록 필요' : '미등록'}</div>
-                <div>서버 알림: {state.loading ? '확인 중' : state.enabled ? '사용 가능' : '설정되지 않음'}</div>
-            </dl>
+                <div>현재 브라우저 구독: {state.subscribed ? '현재 계정에 등록됨' : state.local ? '브라우저 구독 있음 · 현재 계정에 등록 필요' : '미등록'}</div>
+                <div>서버 알림: {state.enabled ? '사용 가능' : '설정되지 않음'}</div>
+            </dl>}
             {state.permission === 'denied' && <p>알림이 차단되어 있습니다. 브라우저 또는 기기 설정에서 이 사이트의 알림을 허용한 뒤 다시 시도해 주세요.</p>}
             {!standalone && <p className="text-sm text-muted-foreground">iPhone·iPad에서는 지원되는 OS에서 공유 메뉴의 ‘홈 화면에 추가’로 설치한 뒤, 홈 화면의 해봉티켓을 열어 알림을 켜 주세요.</p>}
             {!window.isSecureContext && <p>알림을 사용하려면 HTTPS 연결이 필요합니다.</p>}

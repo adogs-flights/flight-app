@@ -1,3 +1,4 @@
+import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import { Button, Heading, Input } from '../components/ui/primitives.js';
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../hooks/useAuth';
@@ -114,7 +115,7 @@ export default function GiveView() {
     };
 
     const renderListContent = () => {
-        if (ticketsState.loading) return <div className="empty"><div>Loading...</div></div>;
+        if (ticketsState.loading) return <LoadingSkeleton variant="tickets" />;
         if (ticketsState.error) return <div className="empty"><div className="text-red-500">{ticketsState.error}</div></div>;
         if (filteredTickets.length === 0) {
             return <div className="empty"><div className="empty-icon">🔍</div><div className="empty-text">조건에 맞는 티켓이 없습니다</div></div>;

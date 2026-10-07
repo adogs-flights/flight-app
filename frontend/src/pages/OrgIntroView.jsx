@@ -1,3 +1,4 @@
+import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import { ActionLink, Card, Heading } from '../components/ui/primitives.js';
 import { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
@@ -44,7 +45,7 @@ export default function OrgIntroView() {
 
             <main className="flex-1 w-full max-w-3xl mx-auto px-4 sm:px-6 py-10">
                 {loading ? (
-                    <div className="flex items-center justify-center py-24 text-sm text-muted-foreground">불러오는 중...</div>
+                    <LoadingSkeleton variant="organization" />
                 ) : notFound || !org ? (
                     <div className="flex flex-col items-center justify-center py-24 gap-3 text-center">
                         <span className="text-4xl">🔍</span>

@@ -18,3 +18,17 @@
 버튼의 `type`, 입력의 `name`·`required`·`ref`, 라우터 링크와 이벤트는 그대로 전달됩니다. 새로운 컴포넌트도 HTML의 폼 동작과 접근성 속성을 유지해야 합니다.
 
 검증: `node --test tests/*.test.mjs`, `npm run lint`, `npm run build`.
+
+## 로딩 스켈레톤
+
+`primitives.js`의 `Skeleton`은 장식용 기본 블록이며, `LoadingSkeleton.jsx`는 실제 화면에 맞춘 공통 로딩 레이아웃이다. 스타일과 사용처는 `uiVariants.js`의 `Skeleton`, `LoadingSkeleton`, `Card.skeleton*`에서 관리한다. `/admin/ui` → 공통 컴포넌트 → 화면별 스켈레톤에서 같은 컴포넌트를 선택해 확인한다.
+
+```jsx
+<LoadingSkeleton variant="tickets" />
+<LoadingSkeleton variant="calendar" />
+<LoadingSkeleton variant="table" columns={7} />
+```
+
+지원 형태: `tickets`, `needs`, `calendar`, `table`, `applications`, `organization`, `status`, `sync`, `notifications`, `page`, `app`, `image`, `field`. `count`는 목록 개수, `columns`는 표 열 수, `label`은 스크린리더 안내를 조정한다.
+
+조회 중인 콘텐츠 영역만 대체하고 제목·검색·필터는 유지한다. 오류나 빈 결과에는 기존 안내를 표시하며 저장·업로드 진행에는 기존 버튼 상태를 유지한다. 스켈레톤은 데이터나 권한을 조회하지 않고, 한 개의 `role="status"`와 장식 영역의 `aria-hidden`을 사용한다. 애니메이션은 `motion-safe`로 동작 줄이기 설정을 따른다. 별도 타이머로 로딩 시간을 늘리지 않는다.

@@ -1,8 +1,10 @@
 import { createElement, useState } from 'react';
+import LoadingSkeleton from './LoadingSkeleton';
 import * as UI from './primitives.js';
 import { uiVariants } from './uiVariants.js';
 
 const LABELS = {
+    Skeleton: '스켈레톤 기본 요소', LoadingSkeleton: '화면별 스켈레톤',
     Button: '버튼', Input: '입력', Textarea: '여러 줄 입력', NativeSelect: '기본 선택',
     FieldLabel: '입력 라벨', ActionLink: '링크', Heading: '제목', Badge: '배지',
     Card: '카드', Alert: '상태 안내', Table: '표', TableHead: '표 머리글',
@@ -11,7 +13,8 @@ const LABELS = {
 
 function Sample({ component, variant, states, disabled, onAction }) {
     const props = { variant, ...states };
-    const Component = UI[component];
+    const Component = component === 'LoadingSkeleton' ? LoadingSkeleton : UI[component];
+    if (component === 'Skeleton' || component === 'LoadingSkeleton') return <Component {...props} />;
     if (component === 'Button') return <Component {...props} type="button" disabled={disabled} onClick={onAction}>동작 확인</Component>;
     if (component === 'Input') {
         const type = /color/i.test(variant) ? 'color'
@@ -87,7 +90,7 @@ export default function UiVariantCatalog() {
             <p role="status" className="text-xs text-muted-foreground">{notice}</p>
             <div className="space-y-2 rounded-lg bg-muted/40 p-4 text-xs">
                 <p className="font-bold">공통 코드 수정 위치</p>
-                <code className="block break-all">src/components/ui/primitives.js · {component}</code>
+                <code className="block break-all">src/components/ui/{component === 'LoadingSkeleton' ? 'LoadingSkeleton.jsx' : 'primitives.js'} · {component}</code>
                 <code className="block break-all">src/components/ui/uiVariants.js · {component}.{variant}</code>
                 <p className="pt-2 font-bold">현재 사용처</p>
                 <ul className="space-y-1 text-muted-foreground">

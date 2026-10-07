@@ -1,3 +1,4 @@
+import LoadingSkeleton from '../ui/LoadingSkeleton';
 import { ActionLink, FieldLabel } from '../ui/primitives.js';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
@@ -31,7 +32,7 @@ export default function TicketEticketSection({ ticket }) {
             {failed ? (
                 <p className="mt-2 text-xs text-muted-foreground">e티켓을 불러오지 못했습니다.</p>
             ) : !url ? (
-                <p className="mt-2 text-xs text-muted-foreground">불러오는 중…</p>
+                <LoadingSkeleton variant="image" label="e티켓을 불러오는 중입니다." />
             ) : isPdf ? (
                 <ActionLink href={url} target="_blank" rel="noreferrer" variant="ticketEticket">
                     📄 e티켓 (PDF) 보기

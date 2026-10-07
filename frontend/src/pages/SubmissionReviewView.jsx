@@ -1,3 +1,4 @@
+import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import { Alert, Badge, Button, Card, Heading, Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from '../components/ui/primitives.js';
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../hooks/useAuth';
@@ -74,7 +75,7 @@ export default function SubmissionReviewView() {
     };
 
     const renderRows = () => {
-        if (loading) return <div className="flex items-center justify-center h-[200px] text-sm text-muted-foreground">불러오는 중...</div>;
+        if (loading) return <LoadingSkeleton variant="table" columns={7} label="제출 내역을 불러오는 중입니다." />;
         if (error) return <Alert variant="admin">{error}</Alert>;
         if (submissions.length === 0) {
             return (

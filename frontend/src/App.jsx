@@ -1,3 +1,4 @@
+import LoadingSkeleton from './components/ui/LoadingSkeleton';
 import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
@@ -38,7 +39,7 @@ function AppContent() {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>Loading...</div>;
+    return <LoadingSkeleton variant="app" label="화면을 준비하고 있습니다." />;
   }
 
   return (
@@ -87,7 +88,7 @@ function AppContent() {
             <>
               <Route path="admin" element={<AdminView />} />
               <Route path="admin/ui" element={
-                <Suspense fallback={<p className="py-12 text-center text-sm text-muted-foreground" role="status">UI 컴포넌트를 불러오는 중...</p>}>
+                <Suspense fallback={<LoadingSkeleton variant="page" label="UI 컴포넌트를 불러오는 중입니다." />}>
                   <AdminUiView />
                 </Suspense>
               } />

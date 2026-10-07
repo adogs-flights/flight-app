@@ -1,3 +1,4 @@
+import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import { ActionLink, Alert, Button, Card, FieldLabel, Heading, Input } from '../components/ui/primitives.js';
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -48,6 +49,7 @@ export default function GuestTicketSubmitView() {
     const [organizations, setOrganizations] = useState([]);
     const [lockedOrganization, setLockedOrganization] = useState(null); // slug로 고정된 단체
     const [orgLookupFailed, setOrgLookupFailed] = useState(false);
+    const [orgLoading, setOrgLoading] = useState(Boolean(orgSlug) || !orgIdParam);
     const [form, setForm] = useState({
         phone: '',
         kakaoId: '',
@@ -62,22 +64,28 @@ export default function GuestTicketSubmitView() {
     const [copied, setCopied] = useState(false);
 
     useEffect(() => {
+        let active = true;
+        setOrgLoading(Boolean(orgSlug) || !orgIdParam);
         if (orgSlug) {
             apiClient.get(`/organizations/by-slug/${orgSlug}`)
                 .then(res => {
+                    if (!active) return;
                     setLockedOrganization(res.data);
                     setForm(prev => ({ ...prev, organizationId: String(res.data.id) }));
                 })
-                .catch(() => setOrgLookupFailed(true));
+                .catch(() => { if (active) setOrgLookupFailed(true); })
+                .finally(() => { if (active) setOrgLoading(false); });
         } else if (orgIdParam) {
             // 게시글에서 넘어온 단체는 id/이름을 그대로 고정한다(추가 조회 불필요).
             setLockedOrganization({ id: Number(orgIdParam), name: orgNameParam || '지정 단체' });
             setForm(prev => ({ ...prev, organizationId: orgIdParam }));
         } else {
             apiClient.get('/organizations/with-accounts')
-                .then(res => setOrganizations(res.data))
-                .catch(() => setOrganizations([]));
+                .then(res => { if (active) setOrganizations(res.data); })
+                .catch(() => { if (active) setOrganizations([]); })
+                .finally(() => { if (active) setOrgLoading(false); });
         }
+        return () => { active = false; };
     }, [apiClient, orgSlug, orgIdParam, orgNameParam]);
 
     const handleChange = (field, value) => {
@@ -249,7 +257,7 @@ export default function GuestTicketSubmitView() {
                                 />
                             </div>
 
-                            {lockedOrganization ? (
+                            {orgLoading ? <LoadingSkeleton variant="field" /> : lockedOrganization ? (
                                 <div className="space-y-2">
                                     <FieldLabel variant="default">신청 단체</FieldLabel>
                                     <div className="flex items-center gap-2 h-11 px-4 rounded-lg border-2 border-primary/30 bg-primary/5 text-sm font-bold text-primary">

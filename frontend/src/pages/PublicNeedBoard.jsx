@@ -1,3 +1,4 @@
+import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import { ActionLink, Button, Heading, Input } from '../components/ui/primitives.js';
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
@@ -71,7 +72,7 @@ export default function PublicNeedBoard() {
 
     const renderContent = () => {
         if (postsState.loading) {
-            return <div className="flex items-center justify-center py-20 text-sm text-muted-foreground">불러오는 중...</div>;
+            return <LoadingSkeleton variant="needs" />;
         }
         if (postsState.error) {
             return <div className="flex items-center justify-center py-20 text-sm text-destructive">{postsState.error}</div>;
