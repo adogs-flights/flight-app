@@ -11,7 +11,9 @@ def test_single_head_and_upgrade_downgrade(tmp_path, monkeypatch):
     monkeypatch.setenv('DATABASE_URL', url)
     monkeypatch.setattr('database.SQLALCHEMY_DATABASE_URL', url)
     config = Config('alembic.ini')
-    assert ScriptDirectory.from_config(config).get_heads() == ['018']
+    # 뒤에 마이그레이션이 쌓여도 head는 하나여야 한다. 특정 리비전 번호를
+    # 박아두면 새 마이그레이션마다 깨지므로 갈래가 없다는 것만 확인한다.
+    assert len(ScriptDirectory.from_config(config).get_heads()) == 1
     command.upgrade(config, '017')
     engine = create_engine(url)
     assert 'push_subscriptions' not in inspect(engine).get_table_names()

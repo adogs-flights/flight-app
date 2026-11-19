@@ -8,6 +8,7 @@ import LoginScreen from './pages/LoginScreen';
 import MainLayout from './components/layout/MainLayout';
 import ScheduleView from './pages/ScheduleView';
 import NeedPostView from './pages/NeedPostView';
+import RescueDogView from './pages/RescueDogView';
 import GiveView from './pages/GiveView';
 import MyTicketsView from './pages/MyTicketsView';
 import MyApplicationsView from './pages/MyApplicationsView';
@@ -78,6 +79,7 @@ function AppContent() {
           <Route index element={<Navigate to="/schedules" />} />
           <Route path="schedules" element={<ScheduleView />} />
           <Route path="needs" element={<NeedPostView />} />
+          <Route path="rescueadog" element={<RescueDogView />} />
           <Route path="give" element={<GiveView />} />
           <Route path="mytickets" element={<MyTicketsView />} />
           <Route path="myapplications" element={<MyApplicationsView />} />

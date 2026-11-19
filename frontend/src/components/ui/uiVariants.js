@@ -104,6 +104,19 @@ export const uiVariants = {
         },
     },
     Heading: {
+        rescueDogCard: {
+            className: "text-base font-black tracking-tight text-foreground",
+            usedBy: ["src/components/RescueDogCard.jsx"],
+        },
+        rescueDogSection: {
+            className: "text-sm font-black text-foreground",
+            usedBy: [
+                "src/components/RescueDogExpensePanel.jsx",
+                "src/components/RescueDogRecordPanel.jsx",
+                "src/components/modals/RescueDogDetailModal.jsx",
+                "src/components/modals/RescueDogFormModal.jsx",
+            ],
+        },
         adminUi: {
             className: "text-lg font-bold text-foreground",
             usedBy: ["src/pages/AdminUiView.jsx","src/pages/LandingPage.jsx","src/pages/OrgSignup.jsx"],
@@ -437,6 +450,52 @@ export const uiVariants = {
         },
     },
     Button: {
+        rescueRecordSave: {
+            className: "px-4 py-1.5 text-xs font-bold rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-60",
+            usedBy: [
+                "src/components/RescueDogExpensePanel.jsx",
+                "src/components/RescueDogRecordPanel.jsx",
+            ],
+        },
+        rescueRecordCancel: {
+            className: "px-3 py-1.5 text-xs font-bold rounded-md bg-secondary text-secondary-foreground border border-border hover:bg-muted transition-colors",
+            usedBy: [
+                "src/components/RescueDogExpensePanel.jsx",
+                "src/components/RescueDogRecordPanel.jsx",
+            ],
+        },
+        rescueRecordAdd: {
+            className: "w-full py-2 text-xs font-bold rounded-xl border-2 border-dashed border-border text-muted-foreground hover:border-primary/40 hover:text-foreground transition-all",
+            usedBy: [
+                "src/components/RescueDogExpensePanel.jsx",
+                "src/components/RescueDogRecordPanel.jsx",
+            ],
+        },
+        rescueRowAction: {
+            className: "px-2 py-1 text-[11px] font-bold rounded-md text-muted-foreground border border-border hover:bg-muted transition-colors",
+            usedBy: [
+                "src/components/RescueDogExpensePanel.jsx",
+                "src/components/RescueDogRecordPanel.jsx",
+            ],
+        },
+        rescueRowConfirm: {
+            className: "px-2 py-1 text-[11px] font-bold rounded-md text-emerald-700 border border-emerald-200 hover:bg-emerald-50 transition-colors",
+            usedBy: [
+                "src/components/RescueDogExpensePanel.jsx",
+                "src/components/RescueDogRecordPanel.jsx",
+            ],
+        },
+        rescueRowDanger: {
+            className: "px-2 py-1 text-[11px] font-bold rounded-md text-destructive border border-destructive/30 hover:bg-destructive/10 transition-colors",
+            usedBy: [
+                "src/components/RescueDogExpensePanel.jsx",
+                "src/components/RescueDogRecordPanel.jsx",
+            ],
+        },
+        rescueDogDelete: {
+            className: "px-4 py-2 text-sm font-bold rounded-md text-destructive border border-destructive/30 hover:bg-destructive/10 transition-colors",
+            usedBy: ["src/components/modals/RescueDogDetailModal.jsx"],
+        },
         primary: {
             className: "inline-flex items-center justify-center px-4 py-2 text-sm font-bold transition-colors rounded-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm",
             usedBy: ["src/pages/AdminUiView.jsx","src/pages/AdminView.jsx","src/pages/MyTicketsView.jsx","src/pages/NeedPostView.jsx","src/pages/ScheduleView.jsx"],
@@ -600,7 +659,7 @@ export const uiVariants = {
         needPostCard: {
             className: ({ active }) => `group text-left flex flex-col overflow-hidden rounded-2xl border-2 border-border bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 ${(active ? "opacity-60" : "")}`,
             states: ["active"],
-            usedBy: ["src/components/NeedPostCard.jsx"],
+            usedBy: ["src/components/NeedPostCard.jsx", "src/components/RescueDogCard.jsx"],
         },
         ticketEdit: {
             className: "px-3 py-1 text-[11px] font-semibold rounded-md bg-secondary text-secondary-foreground border border-border hover:bg-muted transition-colors",
@@ -766,6 +825,28 @@ export const uiVariants = {
         },
     },
     FieldLabel: {
+        rescueDogMini: {
+            className: "text-[10px] font-black uppercase tracking-wider text-muted-foreground ml-0.5",
+            usedBy: [
+                "src/components/RescueDogExpensePanel.jsx",
+                "src/components/RescueDogRecordPanel.jsx",
+            ],
+        },
+        rescueDogCheckbox: {
+            className: "flex items-center gap-2 text-xs font-bold text-muted-foreground cursor-pointer",
+            usedBy: [
+                "src/components/RescueDogExpensePanel.jsx",
+                "src/pages/RescueDogView.jsx",
+            ],
+        },
+        rescueDogPhoto: {
+            className: "flex flex-col items-center justify-center gap-2 w-full h-40 rounded-xl border-2 border-dashed border-border bg-muted/20 cursor-pointer hover:border-primary/40 hover:bg-muted/40 transition-all",
+            usedBy: ["src/components/modals/RescueDogFormModal.jsx"],
+        },
+        rescueDogPhotoChange: {
+            className: "px-3 py-1.5 text-xs font-bold rounded-lg bg-white text-slate-900 cursor-pointer hover:bg-slate-100",
+            usedBy: ["src/components/modals/RescueDogFormModal.jsx"],
+        },
         adminUi: {
             className: "flex flex-col gap-2 text-xs font-bold text-muted-foreground",
             usedBy: ["src/pages/AdminUiView.jsx"],
@@ -828,6 +909,13 @@ export const uiVariants = {
         },
     },
     Input: {
+        rescueDogCheckbox: {
+            className: "w-4 h-4 rounded border-border accent-primary",
+            usedBy: [
+                "src/components/RescueDogExpensePanel.jsx",
+                "src/pages/RescueDogView.jsx",
+            ],
+        },
         default: {
             className: "h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none",
             usedBy: ["src/pages/AdminUiView.jsx","src/components/modals/GuestSubmissionReviewModal.jsx","src/components/modals/NeedPostFormModal.jsx","src/components/modals/TicketFormModal.jsx"],
@@ -1006,6 +1094,20 @@ export const uiVariants = {
         },
     },
     Badge: {
+        rescueDogCard: {
+            className: "px-2.5 py-1 rounded-lg text-[10px] font-black border shadow-sm",
+            usedBy: [
+                "src/components/RescueDogCard.jsx",
+                "src/components/modals/RescueDogDetailModal.jsx",
+            ],
+        },
+        rescueDogRecord: {
+            className: "px-2 py-0.5 rounded-md text-[10px] font-black",
+            usedBy: [
+                "src/components/RescueDogExpensePanel.jsx",
+                "src/components/RescueDogRecordPanel.jsx",
+            ],
+        },
         admin: {
             className: "px-2 py-0.5 rounded-md text-[10px] font-black border shadow-sm",
             usedBy: ["src/pages/AdminView.jsx"],
