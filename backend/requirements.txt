@@ -1,6 +1,6 @@
 fastapi
 uvicorn
-sqlalchemy
+sqlalchemy==2.0.54
 alembic
 pydantic
 python-dateutil
@@ -19,6 +19,7 @@ minio
 pytest
 httpx
 requests
+pywebpush
 
 opentelemetry-distro
 opentelemetry-exporter-otlp

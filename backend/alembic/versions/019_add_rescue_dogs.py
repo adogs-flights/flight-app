@@ -1,7 +1,7 @@
 """add rescue_dogs table
 
-Revision ID: 018
-Revises: 017
+Revision ID: 019
+Revises: 018
 
 구조견 관리 대장(/rescueadog). 구글 시트의 "구조견 정보 / 임보 / 입양"
 3개 블록을 한 테이블로 모은다. 임보자·입양자 개인정보는 담당 단체만
@@ -13,8 +13,8 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = "018"
-down_revision = "017"
+revision = "019"
+down_revision = "018"
 branch_labels = None
 depends_on = None
 

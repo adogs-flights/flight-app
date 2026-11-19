@@ -1,11 +1,12 @@
+import { ActionLink, Alert, Button, Card, FieldLabel, Heading, Input } from '../components/ui/primitives.js';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import logo from '../assets/flight-app.PNG';
 import Footer from '../components/layout/Footer';
 
-const inputClass = "flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none";
-const labelClass = "text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1";
+
+
 
 export default function OrgSignup() {
     const { registerOrg } = useAuth();
@@ -62,12 +63,12 @@ export default function OrgSignup() {
     return (
         <div className="min-h-screen flex flex-col bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-sky/10 via-background to-earth/5">
             <div className="flex-1 flex items-center justify-center p-4">
-                <div className="w-full max-w-[440px] p-8 space-y-6 bg-card rounded-2xl border-2 border-border shadow-xl animate-in fade-in zoom-in-95 duration-500">
+                <Card variant="orgSignup">
                     <div className="flex flex-col items-center text-center space-y-2">
-                        <Link to="/" className="flex items-center justify-center w-14 h-14 rounded-2xl mb-2">
+                        <ActionLink as={Link} to="/" variant="generalSignup">
                             <img src={logo} alt="" />
-                        </Link>
-                        <h1 className="text-2xl font-bold tracking-tight text-foreground">단체 회원가입</h1>
+                        </ActionLink>
+                        <Heading as="h1" variant="page">단체 회원가입</Heading>
                         <p className="text-sm text-muted-foreground">구조 단체 담당자 계정을 신청합니다</p>
                     </div>
 
@@ -75,7 +76,7 @@ export default function OrgSignup() {
                         <div className="space-y-6 text-center animate-in fade-in duration-300">
                             <div className="text-5xl">📨</div>
                             <div className="space-y-2">
-                                <h2 className="text-lg font-bold text-foreground">가입 신청이 접수되었습니다</h2>
+                                <Heading as="h2" variant="adminUi">가입 신청이 접수되었습니다</Heading>
                                 <p className="text-sm text-muted-foreground leading-relaxed">
                                     <strong>{organizationName.trim()}</strong> 단체로 가입 신청이 완료되었습니다.<br />
                                     관리자 승인 후 로그인할 수 있습니다.
@@ -84,20 +85,20 @@ export default function OrgSignup() {
                             <div className="px-4 py-3 text-xs font-medium text-sky bg-sky-light border border-sky/20 rounded-xl">
                                 승인이 완료되면 등록하신 이메일로 안내될 예정입니다.
                             </div>
-                            <Link to="/login" className="inline-block text-xs font-bold text-primary hover:underline">
+                            <ActionLink as={Link} to="/login" variant="generalHome">
                                 로그인 화면으로 →
-                            </Link>
+                            </ActionLink>
                         </div>
                     ) : (
                         <form className="space-y-4" onSubmit={handleSubmit}>
                             <div className="space-y-2">
-                                <label className={labelClass}>단체명</label>
-                                <input className={inputClass} value={organizationName} onChange={e => setOrganizationName(e.target.value)} placeholder="예) 사단법인 어독스" />
+                                <FieldLabel variant="default">단체명</FieldLabel>
+                                <Input variant="flex" value={organizationName} onChange={e => setOrganizationName(e.target.value)} placeholder="예) 사단법인 어독스" />
                             </div>
                             <div className="space-y-2">
-                                <label className={labelClass}>공개 링크 주소</label>
-                                <input
-                                    className={inputClass}
+                                <FieldLabel variant="default">공개 링크 주소</FieldLabel>
+                                <Input
+                                    variant="flex"
                                     value={slug}
                                     onChange={e => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
                                     placeholder="예) adogs"
@@ -111,16 +112,16 @@ export default function OrgSignup() {
                                 </p>
                             </div>
                             <div className="space-y-2">
-                                <label className={labelClass}>담당자 이름</label>
-                                <input className={inputClass} value={name} onChange={e => setName(e.target.value)} placeholder="홍길동" />
+                                <FieldLabel variant="default">담당자 이름</FieldLabel>
+                                <Input variant="flex" value={name} onChange={e => setName(e.target.value)} placeholder="홍길동" />
                             </div>
                             <div className="space-y-2">
-                                <label className={labelClass}>아이디 (이메일)</label>
-                                <input className={inputClass} type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="manager@org.kr" />
+                                <FieldLabel variant="default">아이디 (이메일)</FieldLabel>
+                                <Input variant="flex" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="manager@org.kr" />
                             </div>
                             <div className="space-y-2">
-                                <label className={labelClass}>비밀번호</label>
-                                <input className={inputClass} type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="8자 이상, 영문·숫자·특수문자 포함" />
+                                <FieldLabel variant="default">비밀번호</FieldLabel>
+                                <Input variant="flex" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="8자 이상, 영문·숫자·특수문자 포함" />
                             </div>
 
                             <div className="px-3 py-2 text-[11px] font-medium text-muted-foreground bg-muted/50 border border-border rounded-lg leading-relaxed">
@@ -129,27 +130,27 @@ export default function OrgSignup() {
                             </div>
 
                             {error && (
-                                <div className="px-3 py-2 text-xs font-medium text-destructive bg-destructive/10 border border-destructive/20 rounded-lg">
+                                <Alert variant="generalSignup">
                                     {error}
-                                </div>
+                                </Alert>
                             )}
 
-                            <button
+                            <Button
                                 type="submit"
                                 disabled={!canSubmit}
-                                className="w-full inline-flex items-center justify-center h-11 px-4 py-2 text-sm font-bold transition-all rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20 hover:scale-[0.99] active:scale-[0.97] disabled:opacity-50 disabled:grayscale disabled:hover:scale-100"
+                                variant="signup"
                             >
                                 {submitting ? '신청 중…' : '가입 신청하기'}
-                            </button>
+                            </Button>
 
                             <div className="text-center space-y-2 pt-1">
-                                <Link to="/signup" className="block text-xs font-bold text-primary hover:underline">
+                                <ActionLink as={Link} to="/signup" variant="generalSignup2">
                                     ← 가입 유형 다시 선택
-                                </Link>
+                                </ActionLink>
                             </div>
                         </form>
                     )}
-                </div>
+                </Card>
             </div>
             <Footer />
         </div>

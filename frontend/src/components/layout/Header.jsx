@@ -1,3 +1,4 @@
+import { ActionLink, Badge, Button } from '../ui/primitives.js';
 import { useAuth } from '../../hooks/useAuth';
 import { Link } from 'react-router-dom';
 import logo from '../../assets/flight-app.PNG'
@@ -18,8 +19,8 @@ export default function Header({ onMenuClick, onPwChangeClick }) {
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="container flex items-center justify-between h-16 max-w-7xl px-4 mx-auto sm:px-6 lg:px-8">
                 <div className="flex items-center">
-                    <button 
-                        className="inline-flex items-center justify-center py-2 pr-2 rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground sm:hidden transition-colors" 
+                    <Button
+                        variant="menu"
                         onClick={onMenuClick}
                     >
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -27,8 +28,8 @@ export default function Header({ onMenuClick, onPwChangeClick }) {
                             <line x1="3" y1="6" x2="21" y2="6"></line>
                             <line x1="3" y1="18" x2="21" y2="18"></line>
                         </svg>
-                    </button>
-                    <Link to="/" className="flex items-center gap-2 group transition-opacity hover:opacity-90">
+                    </Button>
+                    <ActionLink as={Link} to="/" variant="header">
                         <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-background text-primary-foreground font-bold">
                             <img src={logo} alt=''></img>
                         </div>
@@ -36,7 +37,7 @@ export default function Header({ onMenuClick, onPwChangeClick }) {
                             <span className="text-2xl font-bold tracking-tight text-foreground">해봉티켓</span>
                             <span className="hidden text-[12px] font-medium text-muted-foreground sm:block">해외이동봉사 일정 관리</span>
                         </div>
-                    </Link>
+                    </ActionLink>
                 </div>
                 
                 <div className="flex items-center gap-2 sm:gap-4">
@@ -49,29 +50,29 @@ export default function Header({ onMenuClick, onPwChangeClick }) {
                                     </div>
                                     <span className="hidden text-sm font-medium text-foreground lg:block">{user.name}</span>
                                     {user.role === 'admin' && (
-                                        <span className="hidden px-2 py-0.5 rounded-full text-[10px] font-bold bg-earth-foreground text-earth border border-earth/20 sm:block">관리자</span>
+                                        <Badge variant="header">관리자</Badge>
                                     )}
                                 </div>
                             </div>
                             <div className="flex items-center gap-1 sm:gap-2">
-                                <button 
-                                    className="hidden px-3 py-1.5 text-xs font-medium rounded-md hover:bg-accent hover:text-accent-foreground transition-colors sm:flex items-center gap-1.5 text-muted-foreground" 
+                                <Button
+                                    variant="headerPassword"
                                     onClick={onPwChangeClick}
                                 >
                                     <span>🔑</span> 비밀번호 변경
-                                </button>
-                                <button
-                                    className="px-3 py-1.5 text-xs font-medium rounded-md bg-secondary text-secondary-foreground hover:bg-muted transition-colors border border-border"
+                                </Button>
+                                <Button
+                                    variant="logout"
                                     onClick={logout}
                                 >
                                     로그아웃
-                                </button>
-                                <button
-                                    className="hidden sm:flex px-3 py-1.5 text-xs font-medium rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors items-center"
+                                </Button>
+                                <Button
+                                    variant="headerWithdraw"
                                     onClick={handleWithdraw}
                                 >
                                     회원 탈퇴
-                                </button>
+                                </Button>
                             </div>
                         </>
                     )}

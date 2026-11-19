@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 import models
 from alembic import command
 from database import engine, get_db
+from runtime_secrets import secret_value
 from routers import (
     activity,
     auth,
@@ -20,13 +21,14 @@ from routers import (
     master,
     need_posts,
     organizations,
+    push,
     rescue_dogs,
     ticket_applications,
     tickets,
 )
 
 # --- 🔒 필수 환경변수 검증 ---
-SECRET_KEY = os.environ.get("SECRET_KEY")
+SECRET_KEY = secret_value("SECRET_KEY")
 if not SECRET_KEY:
     if os.environ.get("ENV") == "production":
         print("CRITICAL: SECRET_KEY environment variable is NOT SET in production!")
@@ -96,7 +98,8 @@ def run_migrations() -> None:
 
 
 # 마이그레이션 실행
-run_migrations()
+if "FLIGHT_SECRET_DIRECTORY" not in os.environ:
+    run_migrations()
 
 # 초기 데이터 시딩 실행
 with Session(engine) as db:
@@ -139,6 +142,7 @@ app.include_router(master.router)
 app.include_router(organizations.router)
 app.include_router(guest_submissions.router)
 app.include_router(activity.router)
+app.include_router(push.router)
 
 
 # --- Annotated types ---

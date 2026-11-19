@@ -1,3 +1,4 @@
+import { ActionLink, Button, Card, Heading } from '../components/ui/primitives.js';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import logo from '../assets/flight-app.PNG';
@@ -12,12 +13,12 @@ export default function GeneralHome() {
     return (
         <div className="min-h-screen flex flex-col bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-sky/10 via-background to-earth/5">
             <div className="flex-1 flex items-center justify-center p-4">
-                <div className="w-full max-w-[400px] p-8 space-y-8 bg-card rounded-2xl border-2 border-border shadow-xl animate-in fade-in zoom-in-95 duration-500">
+                <Card variant="generalHome">
                     <div className="flex flex-col items-center text-center space-y-2">
                         <div className="flex items-center justify-center w-14 h-14 rounded-2xl text-primary-foreground text-2xl font-bold mb-2">
                             <img src={logo} alt="" />
                         </div>
-                        <h1 className="text-2xl font-bold tracking-tight text-foreground">해봉티켓</h1>
+                        <Heading as="h1" variant="page">해봉티켓</Heading>
                         <p className="text-sm text-muted-foreground">
                             <span className="font-bold text-foreground">{user?.name}</span>님, 로그인되었습니다.
                         </p>
@@ -28,19 +29,19 @@ export default function GeneralHome() {
                             신청 내역 페이지는 준비 중입니다.<br />
                             준비되는 대로 이곳에서 진행 상황을 확인하실 수 있습니다.
                         </p>
-                        <Link to="/apply" className="inline-block text-xs font-bold text-primary hover:underline">
+                        <ActionLink as={Link} to="/apply" variant="generalHome">
                             🎁 봉사 티켓을 제출하러 가기 →
-                        </Link>
+                        </ActionLink>
                     </div>
 
-                    <button
+                    <Button
                         type="button"
                         onClick={logout}
-                        className="w-full inline-flex items-center justify-center h-11 px-4 py-2 text-sm font-bold transition-all rounded-lg border-2 border-border bg-background text-foreground hover:bg-muted hover:scale-[0.99] active:scale-[0.97]"
+                        variant="outlineFull"
                     >
                         로그아웃
-                    </button>
-                </div>
+                    </Button>
+                </Card>
             </div>
             <Footer />
         </div>

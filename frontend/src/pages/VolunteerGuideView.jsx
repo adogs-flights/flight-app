@@ -1,3 +1,4 @@
+import { Badge, Card, Heading } from '../components/ui/primitives.js';
 import logo from '../assets/flight-app.PNG';
 import Footer from '../components/layout/Footer';
 import Reveal from '../components/ui/Reveal';
@@ -83,9 +84,9 @@ export default function VolunteerGuideView() {
                         <img src={logo} alt="" className="w-9 h-9" />
                         <span className="text-lg font-bold tracking-tight text-primary">해봉티켓</span>
                     </div>
-                    <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both" style={{ animationDelay: '100ms' }}>
+                    <Heading as="h1" variant="volunteerGuide" >
                         해외 이동 봉사 안내문
-                    </h1>
+                    </Heading>
                     <p className="text-sm sm:text-base text-muted-foreground leading-relaxed max-w-xl animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both" style={{ animationDelay: '200ms' }}>
                         안녕하세요, 봉사자님! 해외 이동 봉사를 신청해주셔서 정말 감사드립니다.<br />
                         소중한 시간과 민감한 개인정보를 공유해주시는 만큼, 저희도 최선을 다해 불편함 없도록 준비하겠습니다.
@@ -97,15 +98,15 @@ export default function VolunteerGuideView() {
                 {/* Checklist */}
                 <section className="space-y-6">
                     <Reveal>
-                        <h2 className="text-xl sm:text-2xl font-bold text-foreground">신청 전 꼭 확인해주세요</h2>
+                        <Heading as="h2" variant="volunteerGuide2">신청 전 꼭 확인해주세요</Heading>
                     </Reveal>
                     <div className="space-y-3">
                         {CHECKLIST.map((item, i) => (
                             <Reveal key={i} delay={i * 80}>
-                                <div className="flex items-start gap-3 p-4 bg-card rounded-xl border-2 border-border transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 hover:border-primary/30">
+                                <Card variant="volunteerGuide">
                                     <CheckIcon />
                                     <p className="text-sm text-muted-foreground leading-relaxed">{item}</p>
-                                </div>
+                                </Card>
                             </Reveal>
                         ))}
                     </div>
@@ -114,16 +115,16 @@ export default function VolunteerGuideView() {
                 {/* Timeline */}
                 <section className="space-y-6">
                     <Reveal>
-                        <h2 className="text-xl sm:text-2xl font-bold text-foreground">진행 프로세스</h2>
+                        <Heading as="h2" variant="volunteerGuide2">진행 프로세스</Heading>
                     </Reveal>
                     <ol className="relative border-l-2 border-border ml-4">
                         {STEPS.map((s, i) => (
                             <Reveal as="li" key={s.title} delay={i * 80} className={`ml-6 relative ${i !== STEPS.length - 1 ? 'mb-6' : ''}`}>
-                                <span className="absolute flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-bold -left-10 ring-4 ring-background">
+                                <Badge variant="volunteerGuide">
                                     {i + 1}
-                                </span>
+                                </Badge>
                                 <div className="p-4 sm:p-5 bg-muted/50 rounded-xl shadow-sm transition-all duration-300 hover:shadow-md hover:bg-muted/70">
-                                    <h3 className="mb-2 text-base sm:text-lg font-bold text-foreground">{s.title}</h3>
+                                    <Heading as="h3" variant="volunteerGuide3">{s.title}</Heading>
                                     <div className="text-sm text-muted-foreground leading-relaxed space-y-1.5">
                                         {s.desc}
                                     </div>

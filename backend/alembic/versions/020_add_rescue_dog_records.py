@@ -1,7 +1,7 @@
 """add rescue_dog_records table
 
-Revision ID: 019
-Revises: 018
+Revision ID: 020
+Revises: 019
 
 구조견의 접종·검진·모니터링 이력. 셋 다 "예정일 → 완료일 + 내용"이라는
 같은 모양이라 kind로 구분해 한 테이블에 담는다.
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = "019"
-down_revision = "018"
+revision = "020"
+down_revision = "019"
 branch_labels = None
 depends_on = None
 

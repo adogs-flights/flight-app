@@ -1,3 +1,4 @@
+import { Alert, Button, Card, Heading } from './primitives.js';
 import { useEffect } from 'react';
 
 export default function Modal({ isOpen, onClose, title, children, footer, error }) {
@@ -30,8 +31,8 @@ export default function Modal({ isOpen, onClose, title, children, footer, error 
             className="fixed inset-0 z-[1000] flex items-end justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300 sm:items-center sm:p-6"
             onClick={onClose}
         >
-            <div
-                className="w-full max-w-[520px] max-h-[92vh] sm:max-h-[90vh] flex flex-col relative bg-card rounded-t-2xl sm:rounded-2xl border-2 border-border shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 overflow-hidden"
+            <Card
+                variant="modal"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Mobile drag handle */}
@@ -42,23 +43,23 @@ export default function Modal({ isOpen, onClose, title, children, footer, error 
                 {/* Toast Error Message */}
                 {error && (
                     <div className="absolute top-[68px] left-1/2 -translate-x-1/2 z-[1010] w-[90%] animate-in slide-in-from-top-4 duration-300 pointer-events-none">
-                        <div className="px-4 py-3 text-sm font-bold text-white bg-destructive/80 backdrop-blur-md rounded-xl shadow-xl flex items-center justify-center gap-2 border border-white/20">
+                        <Alert variant="modal">
                             {error}
-                        </div>
+                        </Alert>
                     </div>
                 )}
 
                 <div className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 border-b bg-background/50">
-                    <h3 className="text-base sm:text-lg font-bold text-foreground">{title}</h3>
-                    <button
-                        className="inline-flex items-center justify-center w-8 h-8 rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                    <Heading as="h3" variant="usageGuide2">{title}</Heading>
+                    <Button
+                        variant="modalClose"
                         onClick={onClose}
                     >
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                             <line x1="18" y1="6" x2="6" y2="18"></line>
                             <line x1="6" y1="6" x2="18" y2="18"></line>
                         </svg>
-                    </button>
+                    </Button>
                 </div>
 
                 <div className="flex-1 px-4 py-5 sm:px-6 sm:py-6 overflow-y-auto scrollbar-hide">
@@ -70,7 +71,7 @@ export default function Modal({ isOpen, onClose, title, children, footer, error 
                         {footer}
                     </div>
                 )}
-            </div>
+            </Card>
         </div>
     );
 }

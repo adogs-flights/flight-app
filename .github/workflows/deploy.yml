@@ -8,6 +8,10 @@ permissions:
   contents: read
   packages: write
 
+concurrency:
+  group: flight-app-production
+  cancel-in-progress: false
+
 jobs:
   # 변경 사항 감지 (Path-based filtering)
   changes:
@@ -28,6 +32,9 @@ jobs:
               - 'backend/**'
             config:
               - 'docker-compose.yml'
+              - 'nginx/**'
+              - 'scripts/prune-deployment-images.sh'
+              - 'scripts/deploy-vault.sh'
               - '.github/workflows/deploy.yml'
 
   # 프론트엔드 빌드 (병렬 실행 & 캐싱 적용)
@@ -61,7 +68,7 @@ jobs:
   # 백엔드 빌드 (병렬 실행 & 캐싱 적용)
   build-backend:
     needs: changes
-    if: needs.changes.outputs.backend == 'true'
+    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.config == 'true'
     # aarch64(arm64) 서버에 배포하므로 네이티브 ARM64 러너에서 빌드한다.
     # 예전엔 amd64 러너 + QEMU 에뮬레이션으로 arm64를 빌드해 느렸다.
     runs-on: ubuntu-24.04-arm
@@ -82,7 +89,9 @@ jobs:
           file: ./backend/Dockerfile
           platforms: linux/arm64
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/flight-backend:latest
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/flight-backend:latest
+            ghcr.io/${{ github.repository_owner }}/flight-backend:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -91,14 +100,18 @@ jobs:
     needs: [changes, build-frontend, build-backend]
     if: |
       always() &&
-      (needs.build-frontend.result == 'success' || needs.build-backend.result == 'success' || 
-       (needs.changes.outputs.config == 'true' && needs.build-frontend.result != 'failure' && needs.build-backend.result != 'failure'))
+      needs.build-backend.result == 'success' &&
+      (needs.build-frontend.result == 'success' || needs.build-frontend.result == 'skipped')
     runs-on: ubuntu-latest
     env:
       IMAGE_NAME_FRONTEND: ghcr.io/${{ github.repository_owner }}/flight-frontend
       IMAGE_NAME_BACKEND: ghcr.io/${{ github.repository_owner }}/flight-backend
     steps:
       - uses: actions/checkout@v4
+      - name: Test scoped image cleanup
+        run: bash scripts/prune-deployment-images.test.sh
+      - name: Test Vault deployment failure boundaries
+        run: node --test scripts/deploy-vault.test.mjs
       - name: Copy deployment files
         uses: appleboy/scp-action@master
         with:
@@ -106,7 +119,7 @@ jobs:
           username: ${{ secrets.ORACLE_USER }}
           key: ${{ secrets.ORACLE_KEY }}
           port: ${{ secrets.ORACLE_PORT }}
-          source: "docker-compose.yml,frontend/public/privacy.html,frontend/public/terms.html"
+          source: "docker-compose.yml,nginx,frontend/public/privacy.html,frontend/public/terms.html,scripts/prune-deployment-images.sh,scripts/deploy-vault.sh"
           target: "/home/ubuntu/flight-app"
 
       - name: Deploy via SSH (Robust)
@@ -118,34 +131,61 @@ jobs:
           port: ${{ secrets.ORACLE_PORT }}
           envs: IMAGE_NAME_FRONTEND, IMAGE_NAME_BACKEND
           script: |
-            set -e  # 에러 발생 시 즉시 중단
+            set -euo pipefail
             
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
             cd /home/ubuntu/flight-app
             
-            # .env 파일 생성
-            cat << 'EOF' > .env
-            ${{ secrets.ENV_FILE }}
-            EOF
+            # Host .env contains non-secret configuration only; never restore ENV_FILE.
+            test -f .env
+            export FLIGHT_BACKEND_TAG='${{ github.sha }}'
+            export FLIGHT_RUNTIME_GID
+            FLIGHT_RUNTIME_GID=$(getent group flight-runtime | cut -d: -f3)
+            [[ "$FLIGHT_RUNTIME_GID" =~ ^[0-9]+$ ]]
             
             # 환경 변수 명시적 전달 및 이미지 갱신
             export IMAGE_NAME_FRONTEND=$IMAGE_NAME_FRONTEND
             export IMAGE_NAME_BACKEND=$IMAGE_NAME_BACKEND
 
-            # Nginx가 직접 제공하는 공개 정책 문서를 현재 소스와 동기화한다.
-            install -m 0644 frontend/public/privacy.html /home/ubuntu/nginx/flight-privacy.html
-            install -m 0644 frontend/public/terms.html /home/ubuntu/nginx/flight-terms.html
-            
-            docker compose pull
+            docker network inspect shared-infra >/dev/null
 
-            # DB가 healthy가 될 때까지 기다린 뒤 마이그레이션을 먼저 적용한다.
-            # main.py도 기동 시 alembic upgrade를 돌리지만 그쪽은 예외를 삼켜서
-            # 실패해도 앱이 그대로 뜬다. 여기서 돌려야 set -e로 배포가 멈춘다.
-            docker compose up -d flight-db
-            docker compose run --rm flight-backend alembic upgrade head
+            FRONTEND_CONTAINER=$(docker compose ps -q flight-frontend)
+            BACKEND_CONTAINER=$(docker compose ps -q flight-backend)
+            if [ -n "$FRONTEND_CONTAINER" ] && [ -n "$BACKEND_CONTAINER" ]; then
+              bash scripts/prune-deployment-images.sh snapshot \
+                .deploy-image-state.tsv \
+                "$IMAGE_NAME_FRONTEND=$FRONTEND_CONTAINER" \
+                "$IMAGE_NAME_BACKEND=$BACKEND_CONTAINER"
+            else
+              rm -f .deploy-image-state.tsv
+              echo 'One or more previous service containers are absent; image cleanup state was not created.'
+            fi
 
-            docker compose up -d --remove-orphans
-            
-            # 사용하지 않는 이미지 정리 (선택 사항)
-            docker image prune -f
+            bash scripts/deploy-vault.sh "$FLIGHT_BACKEND_TAG"
+
+            for attempt in $(seq 1 30); do
+              if curl --fail --silent --show-error -H 'Host: adogs-ticket.shop' http://127.0.0.1:18091/ >/dev/null; then
+                break
+              fi
+              if [ "$attempt" -eq 30 ]; then
+                docker compose ps
+                exit 1
+              fi
+              sleep 2
+            done
+
+            curl --fail --silent --show-error --location --max-redirs 3 \
+              --retry 10 --retry-delay 3 \
+              https://adogs-ticket.shop/ >/dev/null
+
+            if [ -f .deploy-image-state.tsv ]; then
+              FRONTEND_CONTAINER=$(docker compose ps -q flight-frontend)
+              BACKEND_CONTAINER=$(docker compose ps -q flight-backend)
+              bash scripts/prune-deployment-images.sh cleanup \
+                .deploy-image-state.tsv \
+                "$IMAGE_NAME_FRONTEND=$FRONTEND_CONTAINER" \
+                "$IMAGE_NAME_BACKEND=$BACKEND_CONTAINER"
+            else
+              echo 'Image cleanup skipped: no previous deployment state.'
+            fi

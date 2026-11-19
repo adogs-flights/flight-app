@@ -1,3 +1,4 @@
+import { ActionLink, Badge, Button, Card, Heading } from './ui/primitives.js';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Reveal from './ui/Reveal';
@@ -56,7 +57,7 @@ const ROLES = {
                 where: '해외 이동 봉사 안내문',
                 desc: (
                     <>
-                        <p>매칭 이후의 실제 진행 과정(항공사 제한, 공항 도착 시간, 출국 서류 준비, D-7·D-5 안내, 당일 절차 등)은 <Link to="/guide" className="text-primary font-bold hover:underline">해외 이동 봉사 안내문</Link>에 자세히 정리돼 있어요.</p>
+                        <p>매칭 이후의 실제 진행 과정(항공사 제한, 공항 도착 시간, 출국 서류 준비, D-7·D-5 안내, 당일 절차 등)은 <ActionLink as={Link} to="/guide" variant="loginScreen2">해외 이동 봉사 안내문</ActionLink>에 자세히 정리돼 있어요.</p>
                     </>
                 ),
             },
@@ -167,64 +168,60 @@ export default function UsageGuideSection() {
             <div className="max-w-3xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-16">
                 {/* Section header */}
                 <Reveal className="text-center mb-10 space-y-3">
-                    <h2 className="text-2xl sm:text-3xl font-bold text-foreground">서비스 사용 가이드</h2>
+                    <Heading as="h2" variant="landing3">서비스 사용 가이드</Heading>
                     <p className="text-sm sm:text-base text-muted-foreground">
                         나에게 맞는 역할을 선택하면 그에 맞는 사용 방법을 순서대로 안내해드려요.
                     </p>
                     {/* Role toggle */}
-                    <div className="inline-flex p-1 rounded-2xl border-2 border-border bg-card shadow-sm">
+                    <Card variant="usageGuide">
                         {Object.values(ROLES).map(r => {
                             const isActive = r.key === activeRole;
                             return (
-                                <button
+                                <Button
                                     key={r.key}
                                     type="button"
                                     onClick={() => setActiveRole(r.key)}
-                                    className={`flex items-center gap-2 px-5 sm:px-7 h-12 rounded-xl text-sm font-bold transition-all ${
-                                        isActive
-                                            ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20'
-                                            : 'text-muted-foreground hover:text-foreground'
-                                    }`}
+                                    variant="usageGuide" active={isActive}
                                 >
                                     <span className="text-base">{r.emoji}</span>
                                     <span className="flex flex-col items-start leading-tight">
                                         <span>{r.label}</span>
                                         <span className={`text-[10px] font-medium ${isActive ? 'text-primary-foreground/80' : 'text-muted-foreground/70'}`}>{r.sub}</span>
                                     </span>
-                                </button>
+                                </Button>
                             );
                         })}
-                    </div>
+                    </Card>
                 </Reveal>
 
                 {/* Role content: key remounts so animations replay on switch */}
                 <div key={role.key} className="space-y-14 animate-in fade-in duration-500">
                     {/* Intro card */}
                     <Reveal>
-                        <div className="flex items-start gap-4 p-5 sm:p-6 bg-card rounded-2xl border-2 border-border">
+                        <Card variant="usageGuide2">
                             <span className="text-3xl shrink-0">{role.emoji}</span>
                             <div className="space-y-1.5">
-                                <h3 className="text-lg sm:text-xl font-bold text-foreground">{role.headline}</h3>
+                                <Heading as="h3" variant="usageGuide">{role.headline}</Heading>
                                 <p className="text-sm text-muted-foreground leading-relaxed">{role.intro}</p>
                             </div>
-                        </div>
+                        </Card>
                     </Reveal>
 
                     {/* Steps timeline */}
                     <div className="space-y-6">
                         <Reveal>
-                            <h3 className="text-xl sm:text-2xl font-bold text-foreground">이렇게 사용하세요</h3>
+                            <Heading as="h3" variant="volunteerGuide2">이렇게 사용하세요</Heading>
                         </Reveal>
                         <ol className="relative border-l-2 border-border ml-4">
                             {role.steps.map((s, i) => (
                                 <Reveal as="li" key={s.title} delay={i * 70} className={`ml-6 relative ${i !== role.steps.length - 1 ? 'mb-6' : ''}`}>
-                                    <span className="absolute flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-bold -left-10 ring-4 ring-background">
+                                    <Badge variant="volunteerGuide">
                                         {i + 1}
-                                    </span>
+                                    </Badge>
                                     <div className="p-4 sm:p-5 bg-muted/50 rounded-xl shadow-sm transition-all duration-300 hover:shadow-md hover:bg-muted/70">
                                         <div className="flex items-start gap-2 mb-1">
                                             <StepIcon />
-                                            <h4 className="text-base sm:text-lg font-bold text-foreground">{s.title}</h4>
+                                            <Heading as="h4" variant="usageGuide2">{s.title}</Heading>
                                         </div>
                                         {s.where && (
                                             <p className="ml-7 mb-2 inline-block text-[11px] font-bold text-primary bg-primary/10 rounded-md px-2 py-0.5">
@@ -264,21 +261,21 @@ export default function UsageGuideSection() {
                     <Reveal className="flex flex-col sm:flex-row gap-3 justify-center">
                         {activeRole === 'volunteer' ? (
                             <>
-                                <Link to="/apply" className="inline-flex items-center justify-center h-12 px-8 text-sm font-bold rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:scale-[0.99] active:scale-[0.97]">
+                                <ActionLink as={Link} to="/apply" variant="usageGuide">
                                     🎁 봉사 티켓 제출하기
-                                </Link>
-                                <Link to="/board" className="inline-flex items-center justify-center h-12 px-8 text-sm font-bold rounded-xl border-2 border-border bg-card text-foreground hover:bg-secondary transition-all">
+                                </ActionLink>
+                                <ActionLink as={Link} to="/board" variant="usageGuide2">
                                     🐶 이동 기다리는 아이들 보기
-                                </Link>
+                                </ActionLink>
                             </>
                         ) : (
                             <>
-                                <Link to="/signup/org" className="inline-flex items-center justify-center h-12 px-8 text-sm font-bold rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:scale-[0.99] active:scale-[0.97]">
+                                <ActionLink as={Link} to="/signup/org" variant="usageGuide">
                                     🏢 단체 회원가입 신청
-                                </Link>
-                                <Link to="/login" className="inline-flex items-center justify-center h-12 px-8 text-sm font-bold rounded-xl border-2 border-border bg-card text-foreground hover:bg-secondary transition-all">
+                                </ActionLink>
+                                <ActionLink as={Link} to="/login" variant="usageGuide2">
                                     단체 로그인 →
-                                </Link>
+                                </ActionLink>
                             </>
                         )}
                     </Reveal>

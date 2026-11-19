@@ -1,3 +1,4 @@
+import { ActionLink } from '../ui/primitives.js';
 import React from 'react';
 
 export default function Footer() {
@@ -12,18 +13,18 @@ export default function Footer() {
                     </div>
                     
                     <nav className="flex flex-wrap justify-center gap-6">
-                        <a 
+                        <ActionLink
                             href="/privacy" 
-                            className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+                            variant="footer"
                         >
                             개인정보 처리방침
-                        </a>
-                        <a 
+                        </ActionLink>
+                        <ActionLink
                             href="/terms" 
-                            className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+                            variant="footer"
                         >
                             이용약관
-                        </a>
+                        </ActionLink>
                     </nav>
                 </div>
             </div>

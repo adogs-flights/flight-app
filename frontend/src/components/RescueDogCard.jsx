@@ -1,3 +1,4 @@
+import { Badge, Button, Heading } from './ui/primitives.js';
 import {
     formatDogAge,
     formatDogDate,
@@ -11,10 +12,10 @@ const RescueDogCard = ({ dog, onClick }) => {
     const age = formatDogAge(dog.birth_on);
 
     return (
-        <button
+        <Button
             type="button"
             onClick={onClick}
-            className="group text-left flex flex-col overflow-hidden rounded-2xl border-2 border-border bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+            variant="needPostCard"
         >
             {/* 사진 영역 */}
             <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
@@ -33,21 +34,21 @@ const RescueDogCard = ({ dog, onClick }) => {
                 )}
 
                 <div className="absolute top-3 left-3">
-                    <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black border shadow-sm ${getStatusStyle(dog.status)}`}>
+                    <Badge variant="rescueDogCard" className={getStatusStyle(dog.status)}>
                         {getStatusLabel(dog.status)}
-                    </span>
+                    </Badge>
                 </div>
                 <div className="absolute top-3 right-3 flex items-center gap-1.5">
                     {/* 예정일이 지난 접종·검진이 있으면 카드에서 바로 보이게 한다. */}
                     {dog.overdue_count > 0 && (
-                        <span className="px-2.5 py-1 rounded-lg text-[10px] font-black bg-destructive text-destructive-foreground shadow-sm">
+                        <Badge variant="rescueDogCard" className="bg-destructive text-destructive-foreground border-transparent">
                             ⚠️ 지연 {dog.overdue_count}
-                        </span>
+                        </Badge>
                     )}
                     {!dog.is_neutered && (
-                        <span className="px-2.5 py-1 rounded-lg text-[10px] font-black bg-slate-900/75 text-white shadow-sm">
+                        <Badge variant="rescueDogCard" className="bg-slate-900/75 text-white border-transparent">
                             중성화 미완
-                        </span>
+                        </Badge>
                     )}
                 </div>
             </div>
@@ -55,7 +56,7 @@ const RescueDogCard = ({ dog, onClick }) => {
             {/* 본문 */}
             <div className="flex flex-col flex-1 p-4 gap-2">
                 <div className="flex items-baseline gap-2">
-                    <h3 className="text-base font-black tracking-tight text-foreground">{dog.name}</h3>
+                    <Heading as="h3" variant="rescueDogCard">{dog.name}</Heading>
                     <span className="text-xs font-bold text-muted-foreground">
                         {getSexLabel(dog.sex)}{age ? ` · ${age}` : ''}
                     </span>
@@ -82,7 +83,7 @@ const RescueDogCard = ({ dog, onClick }) => {
                     <span className="text-[11px] font-bold text-primary/80">{dog.organization.name}</span>
                 )}
             </div>
-        </button>
+        </Button>
     );
 };
 

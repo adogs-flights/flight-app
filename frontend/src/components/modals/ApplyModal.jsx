@@ -1,3 +1,4 @@
+import { Alert, Button, FieldLabel, Input, Textarea } from '../ui/primitives.js';
 import { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
 import { useAuth } from '../../hooks/useAuth';
@@ -37,18 +38,18 @@ export default function ApplyModal({ isOpen, onClose, ticket, onApplicationSaved
 
     const footer = (
         <div className="flex items-center justify-end w-full gap-2">
-            <button 
-                className="px-4 py-2 text-sm font-bold rounded-md bg-secondary text-secondary-foreground border border-border hover:bg-muted transition-colors" 
+            <Button
+                variant="secondary"
                 onClick={onClose}
             >
                 취소
-            </button>
-            <button 
-                className="px-6 py-2 text-sm font-bold transition-all rounded-md bg-green text-green-foreground hover:bg-green/90 shadow-sm" 
+            </Button>
+            <Button
+                variant="apply"
                 onClick={handleSubmit}
             >
                 🎁 신청하기
-            </button>
+            </Button>
         </div>
     );
 
@@ -66,18 +67,18 @@ export default function ApplyModal({ isOpen, onClose, ticket, onApplicationSaved
                 
                 <div className="space-y-4">
                     <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">신청 메시지</label>
-                        <textarea 
-                            className="flex min-h-[120px] w-full rounded-lg border-2 border-border bg-background px-4 py-3 text-sm transition-all focus:border-green/50 focus-visible:outline-none" 
+                        <FieldLabel variant="default">신청 메시지</FieldLabel>
+                        <Textarea
+                            variant="application"
                             value={message} 
                             onChange={e => setMessage(e.target.value)} 
                             placeholder="소속 단체, 봉사 목적 등을 간단히 적어주세요..."
                         />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">연락처</label>
-                        <input 
-                            className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-green/50 focus-visible:outline-none" 
+                        <FieldLabel variant="default">연락처</FieldLabel>
+                        <Input
+                            variant="success"
                             value={contact} 
                             onChange={e => setContact(e.target.value)} 
                             placeholder="연락받을 이메일 또는 전화번호" 
@@ -86,9 +87,9 @@ export default function ApplyModal({ isOpen, onClose, ticket, onApplicationSaved
                 </div>
 
                 {error && (
-                    <div className="px-3 py-2 text-xs font-medium text-destructive bg-destructive/10 border border-destructive/20 rounded-lg">
+                    <Alert variant="generalSignup">
                         {error}
-                    </div>
+                    </Alert>
                 )}
             </div>
         </Modal>

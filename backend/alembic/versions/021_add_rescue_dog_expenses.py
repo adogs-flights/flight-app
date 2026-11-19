@@ -1,7 +1,7 @@
 """add rescue_dog_expenses table
 
-Revision ID: 020
-Revises: 019
+Revision ID: 021
+Revises: 020
 
 시트의 "비용/정산" 탭. 임보자가 먼저 부담한 병원비 등을 단체가 돌려주는
 흐름이라 부담자(payer_name)와 정산 여부(is_settled)를 함께 둔다.
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = "020"
-down_revision = "019"
+revision = "021"
+down_revision = "020"
 branch_labels = None
 depends_on = None
 

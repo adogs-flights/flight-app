@@ -1,3 +1,5 @@
+import LoadingSkeleton from './components/ui/LoadingSkeleton';
+import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { useAuth } from './hooks/useAuth';
@@ -22,6 +24,9 @@ import PublicNeedBoard from './pages/PublicNeedBoard';
 import SubmissionStatusView from './pages/SubmissionStatusView';
 import OrgIntroView from './pages/OrgIntroView';
 import OrgProfileEdit from './pages/OrgProfileEdit';
+import NotificationsView from './pages/NotificationsView';
+
+const AdminUiView = lazy(() => import('./pages/AdminUiView'));
 
 function App() {
   return (
@@ -35,7 +40,7 @@ function AppContent() {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>Loading...</div>;
+    return <LoadingSkeleton variant="app" label="화면을 준비하고 있습니다." />;
   }
 
   return (
@@ -65,7 +70,10 @@ function AppContent() {
         // 카카오로 셀프 가입한 일반 사용자는 단체 업무 화면에 들어오면 안 된다.
         // ScheduleView/NeedPostView 등이 게스트 전화번호와 담당자 정보를 노출한다.
         // 기본 화면은 연락처를 가린 공개 "구해요" 게시판이다.
-        <Route path="*" element={<Navigate to="/board" replace />} />
+        <>
+          <Route path="/notifications" element={<NotificationsView />} />
+          <Route path="*" element={<Navigate to="/board" replace />} />
+        </>
       ) : (
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Navigate to="/schedules" />} />
@@ -77,7 +85,17 @@ function AppContent() {
           <Route path="myapplications" element={<MyApplicationsView />} />
           <Route path="submissions" element={<SubmissionReviewView />} />
           <Route path="org-settings" element={<OrgProfileEdit />} />
-          {user.role === 'admin' && <Route path="admin" element={<AdminView />} />}
+          <Route path="notifications" element={<NotificationsView />} />
+          {user.role === 'admin' && (
+            <>
+              <Route path="admin" element={<AdminView />} />
+              <Route path="admin/ui" element={
+                <Suspense fallback={<LoadingSkeleton variant="page" label="UI 컴포넌트를 불러오는 중입니다." />}>
+                  <AdminUiView />
+                </Suspense>
+              } />
+            </>
+          )}
           <Route path="*" element={<Navigate to="/" />} />
         </Route>
       )}

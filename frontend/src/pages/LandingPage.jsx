@@ -1,3 +1,4 @@
+import { ActionLink, Badge, Heading } from '../components/ui/primitives.js';
 import { Link } from 'react-router-dom';
 import logo from '../assets/flight-app.PNG';
 import Footer from '../components/layout/Footer';
@@ -33,12 +34,12 @@ export default function LandingPage() {
                         <span className="font-bold text-foreground">해봉티켓</span>
                     </div>
                     <div className="flex items-center gap-1">
-                        <Link
+                        <ActionLink as={Link}
                             to="/login"
-                            className="inline-flex items-center justify-center h-9 px-4 text-sm font-bold rounded-lg text-foreground hover:bg-secondary transition-colors"
+                            variant="landing"
                         >
                             로그인
-                        </Link>
+                        </ActionLink>
                     </div>
                 </div>
             </header>
@@ -52,11 +53,11 @@ export default function LandingPage() {
                     <img src={logo} alt="" className="w-20 h-20 sm:w-24 sm:h-24 animate-in fade-in zoom-in-95 duration-500" />
                     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both" style={{ animationDelay: '100ms' }}>
                         <p className="text-sm sm:text-base font-black tracking-[0.2em] text-primary uppercase">해외이동봉사 매칭 서비스</p>
-                        <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-foreground">해봉티켓</h1>
-                        <h2 className="text-xl sm:text-3xl font-bold tracking-tight text-foreground">
+                        <Heading as="h1" variant="landing">해봉티켓</Heading>
+                        <Heading as="h2" variant="landing2">
                             강아지의 해외 이동,<br />
                             <span className="text-primary">함께 봉사해요</span>
-                        </h2>
+                        </Heading>
                         <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
                             <span className="font-bold text-foreground">해봉티켓</span>은 출국을 앞둔 항공권 소유자와
                             이동봉사가 필요한 유기견 구조 단체를 연결해, 구조된 강아지의 해외 입양·이동을 돕는
@@ -64,27 +65,27 @@ export default function LandingPage() {
                         </p>
                     </div>
                     <div className="flex flex-col sm:flex-row gap-3 animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both" style={{ animationDelay: '200ms' }}>
-                        <Link
+                        <ActionLink as={Link}
                             to="/board"
-                            className="group inline-flex items-center justify-center gap-2 h-14 px-10 text-base font-black rounded-xl bg-primary text-primary-foreground shadow-xl shadow-primary/30 transition-all hover:scale-[1.02] hover:shadow-2xl hover:shadow-primary/40 active:scale-[0.98]"
+                            variant="landing2"
                         >
                             🐶 이동 기다리는 아이들 보기
                             <span className="transition-transform group-hover:translate-x-1">→</span>
-                        </Link>
-                        <Link
+                        </ActionLink>
+                        <ActionLink as={Link}
                             to="/apply"
-                            className="inline-flex items-center justify-center h-14 px-8 text-sm font-bold rounded-xl border-2 border-border bg-card text-foreground hover:bg-secondary transition-all hover:scale-[0.99] active:scale-[0.97]"
+                            variant="landing3"
                         >
                             🎁 봉사 티켓 제출하기
-                        </Link>
+                        </ActionLink>
                     </div>
-                    <Link
+                    <ActionLink as={Link}
                         to="/login"
-                        className="text-sm font-bold text-muted-foreground hover:text-foreground underline underline-offset-4 transition-colors animate-in fade-in duration-700 fill-mode-both"
-                        style={{ animationDelay: '300ms' }}
+                        variant="landing4"
+
                     >
                         단체·관리자 로그인 →
-                    </Link>
+                    </ActionLink>
                 </div>
             </section>
 
@@ -92,7 +93,7 @@ export default function LandingPage() {
             <section className="w-full bg-card border-t border-border">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
                     <Reveal className="text-center mb-12 space-y-2">
-                        <h2 className="text-2xl sm:text-3xl font-bold text-foreground">이렇게 진행돼요</h2>
+                        <Heading as="h2" variant="landing3">이렇게 진행돼요</Heading>
                         <p className="text-sm sm:text-base text-muted-foreground">세 단계로 간단하게 매칭을 완료할 수 있어요</p>
                     </Reveal>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -102,18 +103,18 @@ export default function LandingPage() {
                                 delay={i * 100}
                                 className="p-6 space-y-3 bg-background rounded-2xl border-2 border-border transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-primary/30"
                             >
-                                <span className="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-primary/10 text-primary text-sm font-bold">
+                                <Badge variant="landing">
                                     {step}
-                                </span>
-                                <h3 className="text-lg font-bold text-foreground">{title}</h3>
+                                </Badge>
+                                <Heading as="h3" variant="adminUi">{title}</Heading>
                                 <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
                             </Reveal>
                         ))}
                     </div>
                     <Reveal className="mt-10 text-center">
-                        <Link to="/guide" className="inline-flex items-center gap-1 text-sm font-bold text-primary hover:underline">
+                        <ActionLink as={Link} to="/guide" variant="landing5">
                             해외이동봉사 안내문 보러가기 →
-                        </Link>
+                        </ActionLink>
                     </Reveal>
                 </div>
             </section>

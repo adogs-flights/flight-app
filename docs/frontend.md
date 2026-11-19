@@ -24,3 +24,7 @@
 ### 4. 코드 품질
 - **Lint**: 수정 직후 `npm run lint`를 실행한다.
 - **OAuth Callback**: `window.location.search`를 통해 전달된 인증 결과 파라미터를 감지하고 처리한 후에는 `window.history.replaceState`를 사용해 URL을 정돈한다.
+
+## 주의 사항: 조회 스켈레톤 (UI-CATALOG)
+- 페이지와 관리자 카탈로그는 `components/ui/LoadingSkeleton.jsx` 및 `uiVariants.js`의 공통 정의를 사용한다. 조회 시작·성공·실패를 구분하고 실패 시 스켈레톤을 끝낸다. 특히 이미지 URL이 비었다는 조건만으로 로딩 여부를 판단하면 조회 실패 후 무한 로딩이 남으므로 오류 상태를 함께 관리한다.
+- 반응형 카드 목록의 최소 열 너비는 컨테이너보다 넓어지지 않도록 제한한다. 스켈레톤에서도 실제 콘텐츠와 동일한 열 배치를 사용한다.

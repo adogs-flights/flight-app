@@ -1,12 +1,13 @@
+import { Alert, Button, FieldLabel, Input, NativeSelect } from '../ui/primitives.js';
 import { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
 import { useAuth } from '../../hooks/useAuth';
 
 const CheckItem = ({ label, passed }) => (
-    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border-2 transition-all text-[11px] font-bold ${passed ? 'bg-green/5 border-green text-green' : 'bg-background border-border text-muted-foreground/50'}`}>
+    <Alert variant="registerUser" active={passed}>
         <span>{passed ? '✅' : '○'}</span>
         <span>{label}</span>
-    </div>
+    </Alert>
 );
 
 export default function RegisterUserModal({ isOpen, onClose, onUserRegistered }) {
@@ -80,19 +81,19 @@ export default function RegisterUserModal({ isOpen, onClose, onUserRegistered })
                 <span className="text-lg">📩</span> 이메일로 계정 정보 발송
             </div>
             <div className="flex items-center gap-2">
-                <button 
-                    className="px-4 py-2 text-sm font-bold rounded-md bg-secondary text-secondary-foreground border border-border hover:bg-muted transition-colors" 
+                <Button
+                    variant="secondary"
                     onClick={onClose}
                 >
                     취소
-                </button>
-                <button 
-                    className="px-6 py-2 text-sm font-bold transition-all rounded-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm disabled:opacity-50 disabled:grayscale" 
+                </Button>
+                <Button
+                    variant="saveDisabled"
                     onClick={handleSubmit}
                     disabled={!isAllPassed || !name || !email || (role === 'org' && !organizationId)}
                 >
                     등록하기
-                </button>
+                </Button>
             </div>
         </div>
     );
@@ -107,18 +108,18 @@ export default function RegisterUserModal({ isOpen, onClose, onUserRegistered })
 
                 <div className="space-y-4">
                     <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">이름</label>
-                        <input 
-                            className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
+                        <FieldLabel variant="default">이름</FieldLabel>
+                        <Input
+                            variant="flex"
                             value={name} 
                             onChange={e => setName(e.target.value)} 
                             placeholder="홍길동" 
                         />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">아이디 (이메일)</label>
-                        <input 
-                            className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
+                        <FieldLabel variant="default">아이디 (이메일)</FieldLabel>
+                        <Input
+                            variant="flex"
                             type="email" 
                             value={email} 
                             onChange={e => setEmail(e.target.value)} 
@@ -127,15 +128,15 @@ export default function RegisterUserModal({ isOpen, onClose, onUserRegistered })
                     </div>
                     
                     <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">권한</label>
-                        <select
-                            className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none"
+                        <FieldLabel variant="default">권한</FieldLabel>
+                        <NativeSelect
+                            variant="flex"
                             value={role}
                             onChange={e => setRole(e.target.value)}
                         >
                             <option value="org">단체 담당자</option>
                             <option value="admin">관리자</option>
-                        </select>
+                        </NativeSelect>
                         <p className="text-[11px] text-muted-foreground ml-1">
                             일반 봉사자 계정은 카카오 로그인으로만 만들어집니다.
                         </p>
@@ -143,9 +144,9 @@ export default function RegisterUserModal({ isOpen, onClose, onUserRegistered })
 
                     {role === 'org' && (
                         <div className="space-y-2">
-                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">소속 단체</label>
-                            <select
-                                className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none"
+                            <FieldLabel variant="default">소속 단체</FieldLabel>
+                            <NativeSelect
+                                variant="flex"
                                 value={organizationId}
                                 onChange={e => setOrganizationId(e.target.value)}
                             >
@@ -153,14 +154,14 @@ export default function RegisterUserModal({ isOpen, onClose, onUserRegistered })
                                 {organizations.map(org => (
                                     <option key={org.id} value={org.id}>{org.name}</option>
                                 ))}
-                            </select>
+                            </NativeSelect>
                         </div>
                     )}
 
                     <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">임시 비밀번호</label>
-                        <input 
-                            className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
+                        <FieldLabel variant="default">임시 비밀번호</FieldLabel>
+                        <Input
+                            variant="flex"
                             type="text" 
                             value={password} 
                             onChange={e => setPassword(e.target.value)} 
@@ -180,9 +181,9 @@ export default function RegisterUserModal({ isOpen, onClose, onUserRegistered })
                 </div>
 
                 {error && (
-                    <div className="px-3 py-2 text-xs font-medium text-destructive bg-destructive/10 border border-destructive/20 rounded-lg">
+                    <Alert variant="generalSignup">
                         {error}
-                    </div>
+                    </Alert>
                 )}
             </div>
         </Modal>

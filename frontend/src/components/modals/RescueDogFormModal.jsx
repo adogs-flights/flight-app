@@ -1,3 +1,4 @@
+import { Button, FieldLabel, Heading, Input, NativeSelect, Textarea } from '../ui/primitives.js';
 import { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
 import { useAuth } from '../../hooks/useAuth';
@@ -26,16 +27,10 @@ const EMPTY_FORM = {
     adoptionNote: '',
 };
 
-const inputClass =
-    'h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none';
-const labelClass = 'text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1';
-const textareaClass =
-    'flex min-h-[80px] w-full rounded-lg border-2 border-border bg-background px-4 py-3 text-sm transition-all focus:border-primary/50 focus-visible:outline-none';
-
 function Field({ label, children }) {
     return (
         <div className="space-y-2">
-            <label className={labelClass}>{label}</label>
+            <FieldLabel variant="default">{label}</FieldLabel>
             {children}
         </div>
     );
@@ -44,7 +39,7 @@ function Field({ label, children }) {
 function SectionTitle({ children, hint }) {
     return (
         <div className="flex items-center gap-2 pt-2">
-            <h4 className="text-sm font-black text-foreground">{children}</h4>
+            <Heading as="h4" variant="rescueDogSection">{children}</Heading>
             {hint && <span className="text-[11px] font-bold text-muted-foreground">{hint}</span>}
         </div>
     );
@@ -164,19 +159,20 @@ export default function RescueDogFormModal({ isOpen, onClose, dog, onDogSaved })
 
     const footer = (
         <div className="flex items-center justify-end w-full gap-2">
-            <button
-                className="px-4 py-2 text-sm font-bold rounded-md bg-secondary text-secondary-foreground border border-border hover:bg-muted transition-colors"
+            <Button
+                variant="secondary"
                 onClick={onClose}
             >
                 취소
-            </button>
-            <button
-                className="px-6 py-2 text-sm font-bold transition-all rounded-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm disabled:opacity-60"
+            </Button>
+            <Button
+                variant="save"
+                className="disabled:opacity-60"
                 onClick={handleSubmit}
                 disabled={saving}
             >
                 {saving ? '저장 중...' : isEditing ? '수정하기' : '등록하기'}
-            </button>
+            </Button>
         </div>
     );
 
@@ -195,23 +191,23 @@ export default function RescueDogFormModal({ isOpen, onClose, dog, onDogSaved })
             <div className="space-y-5">
                 {/* 사진 */}
                 <div className="space-y-2">
-                    <label className={labelClass}>사진</label>
+                    <FieldLabel variant="default">사진</FieldLabel>
                     {shownPhoto ? (
                         <div className="relative group">
                             <img src={shownPhoto} alt="미리보기" className="w-full h-52 object-cover rounded-xl border-2 border-border" />
                             <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl">
-                                <label className="px-3 py-1.5 text-xs font-bold rounded-lg bg-white text-slate-900 cursor-pointer hover:bg-slate-100">
+                                <FieldLabel variant="rescueDogPhotoChange">
                                     사진 변경
-                                    <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handlePhotoChange} />
-                                </label>
+                                    <Input type="file" accept="image/jpeg,image/png,image/webp" variant="hiddenFile" onChange={handlePhotoChange} />
+                                </FieldLabel>
                             </div>
                         </div>
                     ) : (
-                        <label className="flex flex-col items-center justify-center gap-2 w-full h-40 rounded-xl border-2 border-dashed border-border bg-muted/20 cursor-pointer hover:border-primary/40 hover:bg-muted/40 transition-all">
+                        <FieldLabel variant="rescueDogPhoto">
                             <span className="text-3xl">🐕</span>
                             <span className="text-xs font-bold text-muted-foreground">사진 추가 (JPG·PNG·WEBP, 최대 10MB)</span>
-                            <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handlePhotoChange} />
-                        </label>
+                            <Input type="file" accept="image/jpeg,image/png,image/webp" variant="hiddenFile" onChange={handlePhotoChange} />
+                        </FieldLabel>
                     )}
                 </div>
 
@@ -220,16 +216,16 @@ export default function RescueDogFormModal({ isOpen, onClose, dog, onDogSaved })
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Field label={<>이름<span className="text-destructive ml-0.5">*</span></>}>
-                        <input
-                            className={inputClass}
+                        <Input
+                            variant="default"
                             value={form.name}
                             onChange={e => handleChange('name', e.target.value)}
                             placeholder="예: 구리"
                         />
                     </Field>
                     <Field label="공고번호">
-                        <input
-                            className={inputClass}
+                        <Input
+                            variant="default"
                             value={form.noticeNumber}
                             onChange={e => handleChange('noticeNumber', e.target.value)}
                             placeholder="예: 경북-칠곡-2026-00159"
@@ -239,31 +235,31 @@ export default function RescueDogFormModal({ isOpen, onClose, dog, onDogSaved })
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Field label="구조일">
-                        <input className={inputClass} type="date" value={form.rescuedOn} onChange={e => handleChange('rescuedOn', e.target.value)} />
+                        <Input variant="default" type="date" value={form.rescuedOn} onChange={e => handleChange('rescuedOn', e.target.value)} />
                     </Field>
                     {/* 생년월일을 넣으면 개월수를 바로 계산해 보여준다. */}
                     <Field label={<>생년월일 (추정){age && <span className="ml-2 text-primary normal-case">{age}</span>}</>}>
-                        <input className={inputClass} type="date" value={form.birthOn} onChange={e => handleChange('birthOn', e.target.value)} />
+                        <Input variant="default" type="date" value={form.birthOn} onChange={e => handleChange('birthOn', e.target.value)} />
                     </Field>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Field label="성별">
-                        <select className={inputClass} value={form.sex} onChange={e => handleChange('sex', e.target.value)}>
+                        <NativeSelect variant="default" value={form.sex} onChange={e => handleChange('sex', e.target.value)}>
                             <option value="">미확인</option>
                             {DOG_SEXES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-                        </select>
+                        </NativeSelect>
                     </Field>
                     <Field label="상태">
-                        <select className={inputClass} value={form.status} onChange={e => handleChange('status', e.target.value)}>
+                        <NativeSelect variant="default" value={form.status} onChange={e => handleChange('status', e.target.value)}>
                             {DOG_STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-                        </select>
+                        </NativeSelect>
                     </Field>
                 </div>
 
                 <Field label="구조 장소">
-                    <input
-                        className={inputClass}
+                    <Input
+                        variant="default"
                         value={form.rescuePlace}
                         onChange={e => handleChange('rescuePlace', e.target.value)}
                         placeholder="예: 칠곡시보호소"
@@ -271,8 +267,8 @@ export default function RescueDogFormModal({ isOpen, onClose, dog, onDogSaved })
                 </Field>
 
                 <Field label="내장칩 번호">
-                    <input
-                        className={inputClass}
+                    <Input
+                        variant="default"
                         value={form.microchipNumber}
                         onChange={e => handleChange('microchipNumber', e.target.value)}
                         placeholder="미등록 시 비워두세요"
@@ -280,21 +276,21 @@ export default function RescueDogFormModal({ isOpen, onClose, dog, onDogSaved })
                 </Field>
 
                 <div className="flex items-center gap-3 p-4 rounded-xl border-2 border-border bg-muted/30">
-                    <label className="relative inline-flex items-center cursor-pointer">
-                        <input
+                    <FieldLabel variant="airline">
+                        <Input
                             type="checkbox"
-                            className="sr-only peer"
+                            variant="toggle"
                             checked={form.isNeutered}
                             onChange={e => handleChange('isNeutered', e.target.checked)}
                         />
                         <div className="w-11 h-6 bg-border rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
                         <span className="ml-3 text-sm font-bold text-foreground">✂️ 중성화 완료</span>
-                    </label>
+                    </FieldLabel>
                 </div>
 
                 <Field label="비고">
-                    <textarea
-                        className={textareaClass}
+                    <Textarea
+                        variant="short"
                         value={form.note}
                         onChange={e => handleChange('note', e.target.value)}
                         placeholder="건강 상태, 성향, 모니터링 필요 사항 등..."
@@ -306,19 +302,19 @@ export default function RescueDogFormModal({ isOpen, onClose, dog, onDogSaved })
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Field label="임보자명">
-                        <input className={inputClass} value={form.fosterName} onChange={e => handleChange('fosterName', e.target.value)} />
+                        <Input variant="default" value={form.fosterName} onChange={e => handleChange('fosterName', e.target.value)} />
                     </Field>
                     <Field label="연락처">
-                        <input className={inputClass} value={form.fosterContact} onChange={e => handleChange('fosterContact', e.target.value)} placeholder="010-0000-0000" />
+                        <Input variant="default" value={form.fosterContact} onChange={e => handleChange('fosterContact', e.target.value)} placeholder="010-0000-0000" />
                     </Field>
                 </div>
 
                 <Field label="주소">
-                    <input className={inputClass} value={form.fosterAddress} onChange={e => handleChange('fosterAddress', e.target.value)} placeholder="예: 경기도 용인" />
+                    <Input variant="default" value={form.fosterAddress} onChange={e => handleChange('fosterAddress', e.target.value)} placeholder="예: 경기도 용인" />
                 </Field>
 
                 <Field label="임보 비고">
-                    <textarea className={textareaClass} value={form.fosterNote} onChange={e => handleChange('fosterNote', e.target.value)} placeholder="소개 경로, 임보 조건 등..." />
+                    <Textarea variant="short" value={form.fosterNote} onChange={e => handleChange('fosterNote', e.target.value)} placeholder="소개 경로, 임보 조건 등..." />
                 </Field>
 
                 {/* --- 입양 --- */}
@@ -326,28 +322,28 @@ export default function RescueDogFormModal({ isOpen, onClose, dog, onDogSaved })
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Field label="입양일">
-                        <input className={inputClass} type="date" value={form.adoptedOn} onChange={e => handleChange('adoptedOn', e.target.value)} />
+                        <Input variant="default" type="date" value={form.adoptedOn} onChange={e => handleChange('adoptedOn', e.target.value)} />
                     </Field>
                     <Field label="입양자명">
-                        <input className={inputClass} value={form.adopterName} onChange={e => handleChange('adopterName', e.target.value)} />
+                        <Input variant="default" value={form.adopterName} onChange={e => handleChange('adopterName', e.target.value)} />
                     </Field>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Field label="연락처">
-                        <input className={inputClass} value={form.adopterContact} onChange={e => handleChange('adopterContact', e.target.value)} placeholder="010-0000-0000" />
+                        <Input variant="default" value={form.adopterContact} onChange={e => handleChange('adopterContact', e.target.value)} placeholder="010-0000-0000" />
                     </Field>
                     <Field label="이메일">
-                        <input className={inputClass} type="email" value={form.adopterEmail} onChange={e => handleChange('adopterEmail', e.target.value)} />
+                        <Input variant="default" type="email" value={form.adopterEmail} onChange={e => handleChange('adopterEmail', e.target.value)} />
                     </Field>
                 </div>
 
                 <Field label="주소">
-                    <input className={inputClass} value={form.adopterAddress} onChange={e => handleChange('adopterAddress', e.target.value)} />
+                    <Input variant="default" value={form.adopterAddress} onChange={e => handleChange('adopterAddress', e.target.value)} />
                 </Field>
 
                 <Field label="입양 비고">
-                    <textarea className={textareaClass} value={form.adoptionNote} onChange={e => handleChange('adoptionNote', e.target.value)} placeholder="내장칩/중성화 모니터링 필요 등..." />
+                    <Textarea variant="short" value={form.adoptionNote} onChange={e => handleChange('adoptionNote', e.target.value)} placeholder="내장칩/중성화 모니터링 필요 등..." />
                 </Field>
             </div>
         </Modal>

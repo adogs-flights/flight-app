@@ -29,7 +29,9 @@ from email.utils import formataddr, make_msgid
 SMTP_SERVER = os.environ.get("SMTP_SERVER")
 SMTP_PORT = os.environ.get("SMTP_PORT")
 SMTP_USERNAME = os.environ.get("SMTP_USERNAME")
-SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD")
+from runtime_secrets import secret_value
+
+SMTP_PASSWORD = secret_value("SMTP_PASSWORD")
 SENDER_EMAIL = os.environ.get("SENDER_EMAIL")
 SENDER_NAME = os.environ.get("SENDER_NAME", "해봉티켓")
 

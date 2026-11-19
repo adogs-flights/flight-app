@@ -1,3 +1,4 @@
+import { Button, FieldLabel, Input, Textarea } from '../ui/primitives.js';
 import { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
 import { useAuth } from '../../hooks/useAuth';
@@ -140,18 +141,18 @@ export default function TicketFormModal({ isOpen, onClose, ticket, onTicketSaved
 
     const footer = (
         <div className="flex flex-col-reverse sm:flex-row items-center justify-end w-full gap-2">
-            <button
-                className="w-full sm:w-auto h-11 sm:h-auto px-4 py-2 text-sm font-bold rounded-md bg-secondary text-secondary-foreground border border-border hover:bg-muted transition-colors"
+            <Button
+                variant="formCancel"
                 onClick={onClose}
             >
                 취소
-            </button>
-            <button
-                className="w-full sm:w-auto h-11 sm:h-auto px-6 py-2 text-sm font-bold transition-all rounded-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+            </Button>
+            <Button
+                variant="formSave"
                 onClick={handleSubmit}
             >
                 {isEditing ? '수정하기' : '등록하기'}
-            </button>
+            </Button>
         </div>
     );
 
@@ -159,9 +160,9 @@ export default function TicketFormModal({ isOpen, onClose, ticket, onTicketSaved
         <Modal isOpen={isOpen} onClose={onClose} title={isEditing ? '✈️ 티켓 수정' : '✈️ 티켓 등록'} footer={footer} error={error}>
             <div className="space-y-5 sm:space-y-6">
                 <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">티켓 제목 (미입력 시 자동 생성)</label>
-                    <input 
-                        className="h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
+                    <FieldLabel variant="default">티켓 제목 (미입력 시 자동 생성)</FieldLabel>
+                    <Input
+                        variant="default"
                         value={form.title} 
                         onChange={e => handleChange('title', e.target.value)} 
                         placeholder="예: 4월 뉴욕행 티켓 나눔합니다" 
@@ -170,20 +171,20 @@ export default function TicketFormModal({ isOpen, onClose, ticket, onTicketSaved
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">
+                        <FieldLabel variant="default">
                             출발일<span className="text-destructive ml-0.5">*</span>
-                        </label>
-                        <input 
-                            className="h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
+                        </FieldLabel>
+                        <Input
+                            variant="default"
                             type="date" 
                             value={form.departureDate} 
                             onChange={e => handleChange('departureDate', e.target.value)} 
                         />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">출발 시간</label>
-                        <input 
-                            className="h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
+                        <FieldLabel variant="default">출발 시간</FieldLabel>
+                        <Input
+                            variant="default"
                             type="time" 
                             value={form.departureTime} 
                             onChange={e => handleChange('departureTime', e.target.value)} 
@@ -193,20 +194,20 @@ export default function TicketFormModal({ isOpen, onClose, ticket, onTicketSaved
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">
+                        <FieldLabel variant="default">
                             도착일<span className="text-destructive ml-0.5">*</span>
-                        </label>
-                        <input 
-                            className="h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
+                        </FieldLabel>
+                        <Input
+                            variant="default"
                             type="date" 
                             value={form.arrivalDate} 
                             onChange={e => handleChange('arrivalDate', e.target.value)} 
                         />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">도착 시간</label>
-                        <input 
-                            className="h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
+                        <FieldLabel variant="default">도착 시간</FieldLabel>
+                        <Input
+                            variant="default"
                             type="time" 
                             value={form.arrivalTime} 
                             onChange={e => handleChange('arrivalTime', e.target.value)} 
@@ -233,9 +234,9 @@ export default function TicketFormModal({ isOpen, onClose, ticket, onTicketSaved
                 </div>
 
                 <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">항공편 정보</label>
-                    <input 
-                        className="h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
+                    <FieldLabel variant="default">항공편 정보</FieldLabel>
+                    <Input
+                        variant="default"
                         value={form.flightInfo} 
                         onChange={e => handleChange('flightInfo', e.target.value)} 
                         placeholder="예: ICN → JFK KE081" 
@@ -244,9 +245,9 @@ export default function TicketFormModal({ isOpen, onClose, ticket, onTicketSaved
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">기내(마리)</label>
-                        <input 
-                            className="h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
+                        <FieldLabel variant="default">기내(마리)</FieldLabel>
+                        <Input
+                            variant="default"
                             type="number" 
                             min="0" 
                             value={form.cabinCapacity === 0 ? '' : form.cabinCapacity} 
@@ -255,9 +256,9 @@ export default function TicketFormModal({ isOpen, onClose, ticket, onTicketSaved
                         />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">수하물(마리)</label>
-                        <input 
-                            className="h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
+                        <FieldLabel variant="default">수하물(마리)</FieldLabel>
+                        <Input
+                            variant="default"
                             type="number" 
                             min="0" 
                             value={form.cargoCapacity === 0 ? '' : form.cargoCapacity} 
@@ -268,27 +269,27 @@ export default function TicketFormModal({ isOpen, onClose, ticket, onTicketSaved
                 </div>
 
                 <div className="space-y-3">
-                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">티켓 상태</label>
+                    <FieldLabel variant="default">티켓 상태</FieldLabel>
                     <div className="flex gap-3">
-                        <button 
-                            className={`flex-1 flex items-center justify-center gap-2 h-11 rounded-lg border-2 transition-all text-sm font-semibold ${form.status === 'owned' ? 'bg-primary/5 border-primary text-primary' : 'bg-background border-border text-muted-foreground hover:border-primary/30'}`}
+                        <Button
+                            variant="ticketForm" active={form.status === 'owned'}
                             onClick={() => handleChange('status', 'owned')}
                         >
                             <span>🔒</span> 소유중
-                        </button>
-                        <button 
-                            className={`flex-1 flex items-center justify-center gap-2 h-11 rounded-lg border-2 transition-all text-sm font-semibold ${form.status === 'sharing' ? 'bg-green/5 border-green text-green' : 'bg-background border-border text-muted-foreground hover:border-primary/30'}`}
+                        </Button>
+                        <Button
+                            variant="ticketForm2" active={form.status === 'sharing'}
                             onClick={() => handleChange('status', 'sharing')}
                         >
                             <span>🎁</span> 나눔중
-                        </button>
+                        </Button>
                     </div>
                 </div>
 
                 <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">메모</label>
-                    <textarea 
-                        className="flex min-h-[100px] w-full rounded-lg border-2 border-border bg-background px-4 py-3 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
+                    <FieldLabel variant="default">메모</FieldLabel>
+                    <Textarea
+                        variant="default"
                         value={form.memo} 
                         onChange={e => handleChange('memo', e.target.value)} 
                         placeholder="추가 정보(좌석 등급, 경유 여부 등)..."

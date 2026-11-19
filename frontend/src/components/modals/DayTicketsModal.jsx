@@ -1,3 +1,4 @@
+import { Badge, Button } from '../ui/primitives.js';
 import React from 'react';
 import Modal from '../ui/Modal';
 import { useAuth } from '../../hooks/useAuth';
@@ -14,12 +15,12 @@ export default function DayTicketsModal({ isOpen, onClose, tickets, onTicketClic
     };
 
     const footer = (
-        <button 
-            className="px-4 py-2 text-sm font-bold rounded-md bg-secondary text-secondary-foreground border border-border hover:bg-muted transition-colors" 
+        <Button
+            variant="secondary"
             onClick={onClose}
         >
             닫기
-        </button>
+        </Button>
     );
 
     return (
@@ -46,12 +47,12 @@ export default function DayTicketsModal({ isOpen, onClose, tickets, onTicketClic
                                     <span>{t.airline}</span>
                                 </div>
                             </div>
-                            <span 
-                                className="px-2 py-0.5 rounded-full text-[10px] font-bold border shadow-sm" 
+                            <Badge
+                                variant="dayTickets"
                                 style={{ backgroundColor: colors.bg, color: colors.text, borderColor: colors.bg }}
                             >
                                 {t.arrival_airport}
-                            </span>
+                            </Badge>
                         </div>
                     );
                 })}

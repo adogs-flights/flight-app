@@ -1,10 +1,8 @@
+import { Badge, Button, FieldLabel, Input, Textarea } from './ui/primitives.js';
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { EXPENSE_CATEGORIES, formatDogDate, formatWon } from '../utils/rescueDogUtils';
 
-const inputClass =
-    'h-10 w-full rounded-lg border-2 border-border bg-background px-3 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none';
-const miniLabelClass = 'text-[10px] font-black uppercase tracking-wider text-muted-foreground ml-0.5';
 
 const EMPTY_DRAFT = {
     spent_on: '',
@@ -22,18 +20,18 @@ function ExpenseForm({ draft, onChange, onSubmit, onCancel, saving }) {
         <div className="space-y-3 p-4 rounded-xl border-2 border-primary/30 bg-primary/5">
             <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                    <label className={miniLabelClass}>날짜</label>
-                    <input
-                        className={inputClass}
+                    <FieldLabel variant="rescueDogMini">날짜</FieldLabel>
+                    <Input
+                        variant="compact"
                         type="date"
                         value={draft.spent_on}
                         onChange={e => onChange('spent_on', e.target.value)}
                     />
                 </div>
                 <div className="space-y-1">
-                    <label className={miniLabelClass}>비용 (원)</label>
-                    <input
-                        className={inputClass}
+                    <FieldLabel variant="rescueDogMini">비용 (원)</FieldLabel>
+                    <Input
+                        variant="compact"
                         type="number"
                         min="0"
                         step="10"
@@ -46,9 +44,9 @@ function ExpenseForm({ draft, onChange, onSubmit, onCancel, saving }) {
 
             <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                    <label className={miniLabelClass}>구분</label>
-                    <input
-                        className={inputClass}
+                    <FieldLabel variant="rescueDogMini">구분</FieldLabel>
+                    <Input
+                        variant="compact"
                         list="rescue-expense-categories"
                         value={draft.category}
                         onChange={e => onChange('category', e.target.value)}
@@ -59,9 +57,9 @@ function ExpenseForm({ draft, onChange, onSubmit, onCancel, saving }) {
                     </datalist>
                 </div>
                 <div className="space-y-1">
-                    <label className={miniLabelClass}>부담자 (임보자 등)</label>
-                    <input
-                        className={inputClass}
+                    <FieldLabel variant="rescueDogMini">부담자 (임보자 등)</FieldLabel>
+                    <Input
+                        variant="compact"
                         value={draft.payer_name}
                         onChange={e => onChange('payer_name', e.target.value)}
                         placeholder="예: 신수정"
@@ -70,41 +68,41 @@ function ExpenseForm({ draft, onChange, onSubmit, onCancel, saving }) {
             </div>
 
             <div className="space-y-1">
-                <label className={miniLabelClass}>내용</label>
-                <textarea
-                    className="flex min-h-[60px] w-full rounded-lg border-2 border-border bg-background px-3 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none"
+                <FieldLabel variant="rescueDogMini">내용</FieldLabel>
+                <Textarea
+                    variant="short"
                     value={draft.note}
                     onChange={e => onChange('note', e.target.value)}
                     placeholder="진료 내용, 영수증 메모 등..."
                 />
             </div>
 
-            <label className="flex items-center gap-2 text-xs font-bold text-foreground cursor-pointer">
-                <input
+            <FieldLabel variant="rescueDogCheckbox" className="text-foreground">
+                <Input
                     type="checkbox"
-                    className="w-4 h-4 rounded border-border accent-primary"
+                    variant="rescueDogCheckbox"
                     checked={draft.is_settled}
                     onChange={e => onChange('is_settled', e.target.checked)}
                 />
                 정산완료
-            </label>
+            </FieldLabel>
 
             <div className="flex items-center justify-end gap-2">
-                <button
+                <Button
                     type="button"
-                    className="px-3 py-1.5 text-xs font-bold rounded-md bg-secondary text-secondary-foreground border border-border hover:bg-muted transition-colors"
+                    variant="rescueRecordCancel"
                     onClick={onCancel}
                 >
                     취소
-                </button>
-                <button
+                </Button>
+                <Button
                     type="button"
-                    className="px-4 py-1.5 text-xs font-bold rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-60"
+                    variant="rescueRecordSave"
                     onClick={onSubmit}
                     disabled={saving}
                 >
                     {saving ? '저장 중...' : '저장'}
-                </button>
+                </Button>
             </div>
         </div>
     );
@@ -284,9 +282,9 @@ export default function RescueDogExpensePanel({ dog, onExpensesChanged }) {
                                 <div className="flex items-start justify-between gap-3">
                                     <div className="min-w-0 space-y-1">
                                         <div className="flex items-center gap-2 flex-wrap">
-                                            <span className={`px-2 py-0.5 rounded-md text-[10px] font-black ${expense.is_settled ? 'bg-emerald-100 text-emerald-700' : 'bg-destructive text-destructive-foreground'}`}>
+                                            <Badge variant="rescueDogRecord" className={expense.is_settled ? 'bg-emerald-100 text-emerald-700' : 'bg-destructive text-destructive-foreground'}>
                                                 {expense.is_settled ? '정산완료' : '미정산'}
-                                            </span>
+                                            </Badge>
                                             <span className="text-sm font-black text-foreground">
                                                 {formatWon(expense.amount)}
                                             </span>
@@ -308,27 +306,27 @@ export default function RescueDogExpensePanel({ dog, onExpensesChanged }) {
                                     </div>
 
                                     <div className="shrink-0 flex items-center gap-1">
-                                        <button
+                                        <Button
                                             type="button"
-                                            className="px-2 py-1 text-[11px] font-bold rounded-md text-emerald-700 border border-emerald-200 hover:bg-emerald-50 transition-colors"
+                                            variant="rescueRowConfirm"
                                             onClick={() => handleToggleSettled(expense)}
                                         >
                                             {expense.is_settled ? '정산 취소' : '정산'}
-                                        </button>
-                                        <button
+                                        </Button>
+                                        <Button
                                             type="button"
-                                            className="px-2 py-1 text-[11px] font-bold rounded-md text-muted-foreground border border-border hover:bg-muted transition-colors"
+                                            variant="rescueRowAction"
                                             onClick={() => openEdit(expense)}
                                         >
                                             수정
-                                        </button>
-                                        <button
+                                        </Button>
+                                        <Button
                                             type="button"
-                                            className="px-2 py-1 text-[11px] font-bold rounded-md text-destructive border border-destructive/30 hover:bg-destructive/10 transition-colors"
+                                            variant="rescueRowDanger"
                                             onClick={() => handleDelete(expense)}
                                         >
                                             삭제
-                                        </button>
+                                        </Button>
                                     </div>
                                 </div>
                             </div>
@@ -346,13 +344,13 @@ export default function RescueDogExpensePanel({ dog, onExpensesChanged }) {
                     saving={saving}
                 />
             ) : (
-                <button
+                <Button
                     type="button"
-                    className="w-full py-2 text-xs font-bold rounded-xl border-2 border-dashed border-border text-muted-foreground hover:border-primary/40 hover:text-foreground transition-all"
+                    variant="rescueRecordAdd"
                     onClick={openCreate}
                 >
                     + 비용 내역 추가
-                </button>
+                </Button>
             )}
         </div>
     );

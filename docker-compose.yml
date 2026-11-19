@@ -1,59 +1,105 @@
 services:
-  flight-db:
-    image: postgres:16-alpine
-    container_name: postgresql
-    ports:
-      - "15432:5432"
-    environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - flight-app
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-    restart: unless-stopped
-
   flight-backend:
-    image: ${IMAGE_NAME_BACKEND:-flight-backend}:latest
+    image: ${IMAGE_NAME_BACKEND:-ghcr.io/adogs-flights/flight-backend}:${FLIGHT_BACKEND_TAG:?immutable backend revision required}
     container_name: flight-backend
-    ports:
-      - "127.0.0.1:8010:8010"
     volumes:
       - ./data:/app/data
-    env_file:
-      - .env
+      - type: bind
+        source: /run/oci-service-secrets/flight
+        target: /run/secrets/flight
+        read_only: true
+        bind:
+          create_host_path: false
+    environment:
+      FLIGHT_SECRET_DIRECTORY: /run/secrets/flight
+      ENV: production
+      PYTHONDONTWRITEBYTECODE: "1"
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?required}
+      BASE_URL: ${BASE_URL:?required}
+      COOKIE_SECURE: "true"
+      SMTP_SERVER: ${SMTP_SERVER:?required}
+      SMTP_PORT: ${SMTP_PORT:?required}
+      SMTP_USERNAME: ${SMTP_USERNAME:?required}
+      SENDER_EMAIL: ${SENDER_EMAIL:?required}
+      GDRIVE_UPLOAD_ADMIN_EMAIL: ${GDRIVE_UPLOAD_ADMIN_EMAIL:?required}
+      KAKAO_REDIRECT_URI: ${KAKAO_REDIRECT_URI:?required}
+    group_add:
+      - ${FLIGHT_RUNTIME_GID:?host runtime group required}
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,size=64m,mode=1777
+    ulimits:
+      core: 0
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - flight-app
+      - shared-infra
       - monitoring_net
-    depends_on:
-      flight-db:
-        condition: service_healthy
-    restart: unless-stopped
+    # systemd recreates /run secrets before starting this existing container.
+    restart: "no"
 
   flight-frontend:
     image: ${IMAGE_NAME_FRONTEND:-flight-frontend}:latest
     container_name: flight-frontend
-    ports:
-      - "127.0.0.1:3010:3010"
+    user: node
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 256
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=64m,mode=1777
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - flight-app
     depends_on:
       - flight-backend
     restart: unless-stopped
 
+  flight-nginx:
+    image: nginx@sha256:5aca99593157f4ae539a5dec1092a0ad8762f8e2eb1789085a13a0f5622369f6
+    container_name: flight-nginx
+    ports:
+      - "127.0.0.1:18091:80"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./frontend/public/privacy.html:/usr/share/nginx/html/privacy.html:ro
+      - ./frontend/public/terms.html:/usr/share/nginx/html/terms.html:ro
+    depends_on:
+      - flight-backend
+      - flight-frontend
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - flight-app
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
 networks:
   flight-app:
     name: flight-app
     external: true
+  shared-infra:
+    name: shared-infra
+    external: true
   monitoring_net:
     name: monitoring_net
     external: true
-
-volumes:
-  postgres_data:

@@ -1,3 +1,4 @@
+import { Button, Card, Heading } from './ui/primitives.js';
 import React from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { getAirportColor, MAJOR_AIRPORTS } from '../utils/airportUtils';
@@ -73,25 +74,25 @@ export default function CalendarView({
                 </div>
             )}
             
-            <div 
-                className="calendar-view bg-card rounded-xl border-2 border-border overflow-hidden flex flex-col" 
+            <Card
+                variant="calendar"
                 ref={calendarRef}
             >
                 <div className="flex items-center justify-between px-6 py-4 border-b bg-background/50">
-                    <h3 className="text-xl font-bold text-foreground">{year}년 {month + 1}월</h3>
+                    <Heading as="h3" variant="calendar">{year}년 {month + 1}월</Heading>
                     <div className="flex items-center gap-1">
-                        <button 
-                            className="p-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors" 
+                        <Button
+                            variant="calendarArrow"
                             onClick={prevMonth}
                         >
                             <img src="/icon/back.png" alt="이전 달" className="w-4 h-4 opacity-70" />
-                        </button>
-                        <button 
-                            className="p-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors" 
+                        </Button>
+                        <Button
+                            variant="calendarArrow"
                             onClick={nextMonth}
                         >
                             <img src="/icon/next.png" alt="다음 달" className="w-4 h-4 opacity-70" />
-                        </button>
+                        </Button>
                     </div>
                 </div>
                     
@@ -157,7 +158,7 @@ export default function CalendarView({
                         })}
                     </div>
                 )}
-            </div>
+            </Card>
         </div>
     );
 }

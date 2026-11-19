@@ -1,3 +1,4 @@
+import { Button, FieldLabel, Heading, Input } from '../components/ui/primitives.js';
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import RescueDogCard from '../components/RescueDogCard';
@@ -121,25 +122,25 @@ export default function RescueDogView() {
         <div className="space-y-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-1">
-                    <h1 className="text-2xl font-bold tracking-tight text-foreground">구조견 관리</h1>
+                    <Heading as="h1" variant="page">구조견 관리</Heading>
                     <p className="text-sm text-muted-foreground">구조·임보·입양 이력을 한 곳에서 관리합니다.</p>
                 </div>
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                     <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs opacity-50">🔍</span>
-                        <input
+                        <Input
                             placeholder="이름·공고번호·구조 장소 검색..."
-                            className="flex h-10 w-full rounded-md border-2 border-border bg-background pl-9 pr-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none transition-all focus:border-primary/50 sm:w-[240px]"
+                            variant="search"
                             value={searchText}
                             onChange={e => setSearchText(e.target.value)}
                         />
                     </div>
-                    <button
-                        className="inline-flex items-center justify-center px-4 py-2 text-sm font-bold transition-colors rounded-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+                    <Button
+                        variant="primary"
                         onClick={handleCreateClick}
                     >
                         + 구조견 등록
-                    </button>
+                    </Button>
                 </div>
             </div>
 
@@ -169,26 +170,26 @@ export default function RescueDogView() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
                     {FILTERS.map(f => (
-                        <button
+                        <Button
                             key={f.value}
-                            className={`shrink-0 px-4 py-1.5 text-xs font-black rounded-full border-2 transition-all ${activeFilter === f.value ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-muted-foreground border-border hover:border-primary/30'}`}
+                            variant="filter" active={activeFilter === f.value}
                             onClick={() => setActiveFilter(f.value)}
                         >
                             {f.label}
-                        </button>
+                        </Button>
                     ))}
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
                     {user?.organization_id && (
-                        <label className="flex items-center gap-2 text-xs font-bold text-muted-foreground cursor-pointer">
-                            <input
+                        <FieldLabel variant="rescueDogCheckbox">
+                            <Input
                                 type="checkbox"
-                                className="w-4 h-4 rounded border-border accent-primary"
+                                variant="rescueDogCheckbox"
                                 checked={onlyMine}
                                 onChange={e => setOnlyMine(e.target.checked)}
                             />
                             우리 단체만
-                        </label>
+                        </FieldLabel>
                     )}
                     {!dogsState.loading && !dogsState.error && (
                         <span className="text-xs font-bold text-muted-foreground whitespace-nowrap">총 {filteredDogs.length}마리</span>

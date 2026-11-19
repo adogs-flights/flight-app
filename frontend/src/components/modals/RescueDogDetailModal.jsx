@@ -1,3 +1,4 @@
+import { Badge, Button, Heading } from '../ui/primitives.js';
 import Modal from '../ui/Modal';
 import RescueDogRecordPanel from '../RescueDogRecordPanel';
 import RescueDogExpensePanel from '../RescueDogExpensePanel';
@@ -23,7 +24,7 @@ function Row({ label, value }) {
 function Section({ title, children }) {
     return (
         <div className="space-y-1">
-            <h4 className="text-sm font-black text-foreground mb-2">{title}</h4>
+            <Heading as="h4" variant="rescueDogSection" className="mb-2">{title}</Heading>
             <div className="px-4 py-2 rounded-xl border-2 border-border bg-muted/20">{children}</div>
         </div>
     );
@@ -42,18 +43,18 @@ export default function RescueDogDetailModal({ isOpen, onClose, dog, onEditClick
 
     const footer = dog.can_edit ? (
         <div className="flex items-center justify-between w-full gap-2">
-            <button
-                className="px-4 py-2 text-sm font-bold rounded-md text-destructive border border-destructive/30 hover:bg-destructive/10 transition-colors"
+            <Button
+                variant="rescueDogDelete"
                 onClick={handleDelete}
             >
                 삭제
-            </button>
-            <button
-                className="px-6 py-2 text-sm font-bold transition-all rounded-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+            </Button>
+            <Button
+                variant="save"
                 onClick={() => { onEditClick(dog); onClose(); }}
             >
                 수정하기
-            </button>
+            </Button>
         </div>
     ) : (
         <span className="text-xs font-bold text-muted-foreground">담당 단체만 수정할 수 있습니다.</span>
@@ -73,12 +74,12 @@ export default function RescueDogDetailModal({ isOpen, onClose, dog, onEditClick
                         </div>
                     )}
                     <div className="absolute top-3 left-3 flex items-center gap-1.5">
-                        <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black border shadow-sm ${getStatusStyle(dog.status)}`}>
+                        <Badge variant="rescueDogCard" className={getStatusStyle(dog.status)}>
                             {getStatusLabel(dog.status)}
-                        </span>
-                        <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black border shadow-sm ${dog.is_neutered ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-slate-900/75 text-white border-transparent'}`}>
+                        </Badge>
+                        <Badge variant="rescueDogCard" className={dog.is_neutered ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-slate-900/75 text-white border-transparent'}>
                             {dog.is_neutered ? '중성화 완료' : '중성화 미완'}
-                        </span>
+                        </Badge>
                     </div>
                 </div>
 
@@ -95,7 +96,7 @@ export default function RescueDogDetailModal({ isOpen, onClose, dog, onEditClick
                 </Section>
 
                 <div className="space-y-2">
-                    <h4 className="text-sm font-black text-foreground">접종 · 검진 · 모니터링</h4>
+                    <Heading as="h4" variant="rescueDogSection">접종 · 검진 · 모니터링</Heading>
                     <RescueDogRecordPanel dog={dog} onRecordsChanged={onRecordsChanged} />
                 </div>
 
@@ -131,7 +132,7 @@ export default function RescueDogDetailModal({ isOpen, onClose, dog, onEditClick
 
                         {/* 금액·부담자는 단체 내부 정산 정보라 담당 단체 영역 안에 둔다. */}
                         <div className="space-y-2">
-                            <h4 className="text-sm font-black text-foreground">비용 · 정산</h4>
+                            <Heading as="h4" variant="rescueDogSection">비용 · 정산</Heading>
                             <RescueDogExpensePanel dog={dog} onExpensesChanged={onRecordsChanged} />
                         </div>
                     </>

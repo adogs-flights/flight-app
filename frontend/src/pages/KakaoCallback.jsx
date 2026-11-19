@@ -1,3 +1,4 @@
+import { Button } from '../components/ui/primitives.js';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -33,13 +34,13 @@ export default function KakaoCallback() {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen gap-4 px-6">
                 <p className="text-sm font-medium text-destructive text-center">{message}</p>
-                <button
+                <Button
                     type="button"
                     onClick={() => navigate('/', { replace: true })}
-                    className="text-sm font-bold text-primary hover:underline"
+                    variant="textLink"
                 >
                     처음으로 돌아가기
-                </button>
+                </Button>
             </div>
         );
     }

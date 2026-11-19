@@ -19,7 +19,9 @@ from services import kakao_service
 # ======================================================================================
 # Configuration
 # ======================================================================================
-SECRET_KEY = os.environ.get("SECRET_KEY", "super-secret-key-for-dev")
+from runtime_secrets import secret_value
+
+SECRET_KEY = secret_value("SECRET_KEY", "super-secret-key-for-dev")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30  # Short-lived for security
 REFRESH_TOKEN_EXPIRE_DAYS = 14  # Long-lived for convenience

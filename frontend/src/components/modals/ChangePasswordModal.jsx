@@ -1,3 +1,4 @@
+import { Alert, Button, FieldLabel, Input } from '../ui/primitives.js';
 import { useState } from 'react';
 import Modal from '../ui/Modal';
 import { useAuth } from '../../hooks/useAuth';
@@ -59,19 +60,19 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
 
     const footer = (
         <div className="flex items-center justify-end w-full gap-2">
-            <button 
-                className="px-4 py-2 text-sm font-bold rounded-md bg-secondary text-secondary-foreground border border-border hover:bg-muted transition-colors" 
+            <Button
+                variant="secondary"
                 onClick={onClose}
             >
                 취소
-            </button>
-            <button 
-                className="px-6 py-2 text-sm font-bold transition-all rounded-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm disabled:opacity-50 disabled:grayscale" 
+            </Button>
+            <Button
+                variant="saveDisabled"
                 onClick={handleSubmit} 
                 disabled={!isAllPassed || !oldPassword || !confirmPassword}
             >
                 변경하기
-            </button>
+            </Button>
         </div>
     );
 
@@ -80,9 +81,9 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
             <div className="space-y-6">
                 <div className="space-y-4">
                     <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">현재 비밀번호</label>
-                        <input 
-                            className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
+                        <FieldLabel variant="default">현재 비밀번호</FieldLabel>
+                        <Input
+                            variant="flex"
                             type="password" 
                             value={oldPassword} 
                             onChange={(e) => setOldPassword(e.target.value)} 
@@ -90,9 +91,9 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
                         />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">새 비밀번호</label>
-                        <input 
-                            className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
+                        <FieldLabel variant="default">새 비밀번호</FieldLabel>
+                        <Input
+                            variant="flex"
                             type="password" 
                             value={newPassword} 
                             onChange={(e) => setNewPassword(e.target.value)} 
@@ -111,9 +112,9 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">새 비밀번호 확인</label>
-                        <input 
-                            className="flex h-11 w-full rounded-lg border-2 border-border bg-background px-4 py-2 text-sm transition-all focus:border-primary/50 focus-visible:outline-none" 
+                        <FieldLabel variant="default">새 비밀번호 확인</FieldLabel>
+                        <Input
+                            variant="flex"
                             type="password" 
                             value={confirmPassword} 
                             onChange={(e) => setConfirmPassword(e.target.value)} 
@@ -123,9 +124,9 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
                 </div>
                 
                 {error && (
-                    <div className="px-3 py-2 text-xs font-medium text-destructive bg-destructive/10 border border-destructive/20 rounded-lg animate-in shake duration-300">
+                    <Alert variant="guestTicketSubmit3">
                         {error}
-                    </div>
+                    </Alert>
                 )}
                 {success && (
                     <div className="px-3 py-2 text-xs font-bold text-green bg-green-foreground border border-green/20 rounded-lg animate-in fade-in duration-500">
