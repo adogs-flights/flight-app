@@ -622,8 +622,55 @@ class RescueDog(BaseModel):
 
     organization: Organization | None = None
     has_photo: bool = False
+    # 예정일이 지났는데 아직 완료되지 않은 기록 수(볼 수 있는 것만 센다).
+    overdue_count: int = 0
     private_hidden: bool = False  # 개인정보가 가려진 응답인지
     can_edit: bool = False  # 현재 사용자가 수정·삭제할 수 있는지
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class RescueDogRecordKind(str, Enum):
+    vaccination = "vaccination"  # 접종
+    checkup = "checkup"  # 검진
+    monitoring = "monitoring"  # 입양 후 모니터링
+
+
+class RescueDogRecordBase(BaseModel):
+    kind: RescueDogRecordKind
+    title: str | None = None
+    scheduled_on: date | None = None
+    completed_on: date | None = None
+    note: str | None = None
+
+    @field_validator("title", "note")
+    @classmethod
+    def empty_to_none(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        v = v.strip()
+        return v or None
+
+
+class RescueDogRecordCreate(RescueDogRecordBase):
+    pass
+
+
+class RescueDogRecordUpdate(RescueDogRecordBase):
+    """수정도 폼 전체를 받아 통째로 치환한다. kind는 바꾸지 않는다."""
+
+    kind: RescueDogRecordKind | None = None
+
+
+class RescueDogRecord(RescueDogRecordBase):
+    id: str
+    dog_id: str
+    is_completed: bool = False
+    # 예정일이 지났는데 완료되지 않은 기록. 화면에서 붉게 표시한다.
+    is_overdue: bool = False
     created_at: datetime
     updated_at: datetime
 

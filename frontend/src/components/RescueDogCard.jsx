@@ -37,13 +37,19 @@ const RescueDogCard = ({ dog, onClick }) => {
                         {getStatusLabel(dog.status)}
                     </span>
                 </div>
-                {!dog.is_neutered && (
-                    <div className="absolute top-3 right-3">
+                <div className="absolute top-3 right-3 flex items-center gap-1.5">
+                    {/* 예정일이 지난 접종·검진이 있으면 카드에서 바로 보이게 한다. */}
+                    {dog.overdue_count > 0 && (
+                        <span className="px-2.5 py-1 rounded-lg text-[10px] font-black bg-destructive text-destructive-foreground shadow-sm">
+                            ⚠️ 지연 {dog.overdue_count}
+                        </span>
+                    )}
+                    {!dog.is_neutered && (
                         <span className="px-2.5 py-1 rounded-lg text-[10px] font-black bg-slate-900/75 text-white shadow-sm">
                             중성화 미완
                         </span>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
 
             {/* 본문 */}

@@ -4,7 +4,7 @@
 admin만 본다. 수정·삭제도 담당 단체(또는 admin)만 한다.
 """
 
-from datetime import timedelta
+from datetime import date, timedelta
 
 import models
 from routers.auth import ACCESS_COOKIE_NAME, create_access_token
@@ -380,3 +380,231 @@ def test_photo_requires_org_login(client, db_session, make_user, make_organizati
     general = make_user(role="general")
     _authenticate(client, general)
     assert client.get(f"/api/rescue-dogs/{dog.id}/photo").status_code == 403
+
+
+# ======================================================================================
+# 접종·검진·모니터링 기록
+# ======================================================================================
+YESTERDAY = (date.today() - timedelta(days=1)).isoformat()
+TOMORROW = (date.today() + timedelta(days=1)).isoformat()
+
+
+def _make_record(db_session, dog_id, kind="vaccination", **kwargs):
+    record = models.RescueDogRecord(dog_id=dog_id, kind=kind, **kwargs)
+    db_session.add(record)
+    db_session.commit()
+    db_session.refresh(record)
+    return record
+
+
+def _org_login(client, make_user, make_organization, name="단체A", slug="a"):
+    org = make_organization(name=name, slug=slug)
+    user = make_user(role="org", organization_id=org.id, email=f"{slug}@b.com")
+    _login(client, user.email)
+    return org
+
+
+# --- 지연(overdue) 판정 ---
+
+
+def test_past_due_record_is_overdue(client, db_session, make_user, make_organization):
+    """예정일이 지났는데 완료일이 없으면 지연이다."""
+    org = _org_login(client, make_user, make_organization)
+    dog = _make_dog(db_session, org.id)
+    _make_record(db_session, dog.id, title="종합백신 2차", scheduled_on=date.today() - timedelta(days=1))
+
+    (record,) = client.get(f"/api/rescue-dogs/{dog.id}/records").json()
+    assert record["is_overdue"] is True
+    assert record["is_completed"] is False
+
+
+def test_completed_record_is_not_overdue(
+    client, db_session, make_user, make_organization
+):
+    """예정일이 지났어도 완료했으면 지연이 아니다."""
+    org = _org_login(client, make_user, make_organization)
+    dog = _make_dog(db_session, org.id)
+    _make_record(
+        db_session,
+        dog.id,
+        scheduled_on=date.today() - timedelta(days=10),
+        completed_on=date.today() - timedelta(days=9),
+    )
+
+    (record,) = client.get(f"/api/rescue-dogs/{dog.id}/records").json()
+    assert record["is_overdue"] is False
+    assert record["is_completed"] is True
+
+
+def test_future_and_undated_records_are_not_overdue(
+    client, db_session, make_user, make_organization
+):
+    org = _org_login(client, make_user, make_organization)
+    dog = _make_dog(db_session, org.id)
+    _make_record(db_session, dog.id, title="미래", scheduled_on=date.today() + timedelta(days=3))
+    _make_record(db_session, dog.id, title="날짜없음", scheduled_on=None)
+
+    records = client.get(f"/api/rescue-dogs/{dog.id}/records").json()
+    assert [r["is_overdue"] for r in records] == [False, False]
+
+
+def test_dog_carries_overdue_count(client, db_session, make_user, make_organization):
+    org = _org_login(client, make_user, make_organization)
+    dog = _make_dog(db_session, org.id)
+    _make_record(db_session, dog.id, kind="vaccination", scheduled_on=date.today() - timedelta(days=1))
+    _make_record(db_session, dog.id, kind="checkup", scheduled_on=date.today() - timedelta(days=2))
+    _make_record(db_session, dog.id, kind="checkup", scheduled_on=date.today() + timedelta(days=2))
+
+    (body,) = client.get("/api/rescue-dogs").json()
+    assert body["overdue_count"] == 2
+
+
+# --- 공개 범위: 모니터링은 담당 단체 전용 ---
+
+
+def test_other_org_sees_medical_records_but_not_monitoring(
+    client, db_session, make_user, make_organization
+):
+    """접종·검진은 개체 의료 이력이라 공유하고, 모니터링은 감춘다."""
+    org_b = make_organization(name="단체B", slug="b")
+    dog = _make_dog(db_session, org_b.id)
+    _make_record(db_session, dog.id, kind="vaccination", title="종합백신 1차")
+    _make_record(db_session, dog.id, kind="checkup", title="건강검진")
+    _make_record(db_session, dog.id, kind="monitoring", note="입양자 통화, 잘 지냄")
+
+    _org_login(client, make_user, make_organization)
+
+    records = client.get(f"/api/rescue-dogs/{dog.id}/records").json()
+    assert sorted(r["kind"] for r in records) == ["checkup", "vaccination"]
+
+
+def test_owning_org_sees_monitoring(client, db_session, make_user, make_organization):
+    org = _org_login(client, make_user, make_organization)
+    dog = _make_dog(db_session, org.id)
+    _make_record(db_session, dog.id, kind="monitoring", note="입양자 통화, 잘 지냄")
+
+    (record,) = client.get(f"/api/rescue-dogs/{dog.id}/records").json()
+    assert record["kind"] == "monitoring"
+    assert record["note"] == "입양자 통화, 잘 지냄"
+
+
+def test_overdue_count_excludes_monitoring_for_other_org(
+    client, db_session, make_user, make_organization
+):
+    """감춘 모니터링이 지연 건수로 새어나가면 안 된다."""
+    org_b = make_organization(name="단체B", slug="b")
+    dog = _make_dog(db_session, org_b.id)
+    _make_record(db_session, dog.id, kind="monitoring", scheduled_on=date.today() - timedelta(days=1))
+
+    _org_login(client, make_user, make_organization)
+
+    (body,) = client.get("/api/rescue-dogs").json()
+    assert body["overdue_count"] == 0
+
+
+# --- 쓰기 권한 ---
+
+
+def test_create_record(client, db_session, make_user, make_organization):
+    org = _org_login(client, make_user, make_organization)
+    dog = _make_dog(db_session, org.id)
+
+    response = client.post(
+        f"/api/rescue-dogs/{dog.id}/records",
+        json={
+            "kind": "vaccination",
+            "title": "종합백신 2차",
+            "scheduled_on": TOMORROW,
+            "note": "27일 예정",
+        },
+    )
+    assert response.status_code == 201
+    body = response.json()
+    assert body["kind"] == "vaccination"
+    assert body["title"] == "종합백신 2차"
+    assert body["is_completed"] is False
+    assert body["is_overdue"] is False
+
+
+def test_create_record_rejects_unknown_kind(
+    client, db_session, make_user, make_organization
+):
+    org = _org_login(client, make_user, make_organization)
+    dog = _make_dog(db_session, org.id)
+
+    response = client.post(
+        f"/api/rescue-dogs/{dog.id}/records", json={"kind": "grooming"}
+    )
+    assert response.status_code == 422
+
+
+def test_other_org_cannot_write_records(
+    client, db_session, make_user, make_organization
+):
+    org_b = make_organization(name="단체B", slug="b")
+    dog = _make_dog(db_session, org_b.id)
+    record = _make_record(db_session, dog.id, kind="vaccination")
+
+    _org_login(client, make_user, make_organization)
+
+    assert client.post(
+        f"/api/rescue-dogs/{dog.id}/records", json={"kind": "vaccination"}
+    ).status_code == 403
+    assert client.put(
+        f"/api/rescue-dogs/{dog.id}/records/{record.id}",
+        json={"title": "덮어쓰기"},
+    ).status_code == 403
+    assert client.delete(
+        f"/api/rescue-dogs/{dog.id}/records/{record.id}"
+    ).status_code == 403
+
+
+def test_update_and_delete_record(client, db_session, make_user, make_organization):
+    org = _org_login(client, make_user, make_organization)
+    dog = _make_dog(db_session, org.id)
+    record = _make_record(
+        db_session, dog.id, kind="vaccination", scheduled_on=date.today() - timedelta(days=1)
+    )
+
+    response = client.put(
+        f"/api/rescue-dogs/{dog.id}/records/{record.id}",
+        json={"title": "종합백신 2차", "scheduled_on": YESTERDAY, "completed_on": YESTERDAY},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    # 완료일이 채워지면 더 이상 지연이 아니다.
+    assert body["is_completed"] is True
+    assert body["is_overdue"] is False
+    # kind는 수정 대상이 아니다.
+    assert body["kind"] == "vaccination"
+
+    assert client.delete(
+        f"/api/rescue-dogs/{dog.id}/records/{record.id}"
+    ).status_code == 204
+    assert client.get(f"/api/rescue-dogs/{dog.id}/records").json() == []
+
+
+def test_record_of_another_dog_is_not_reachable(
+    client, db_session, make_user, make_organization
+):
+    """기록 id만 알아도 다른 구조견 경로로는 건드릴 수 없다."""
+    org = _org_login(client, make_user, make_organization)
+    dog_a = _make_dog(db_session, org.id, name="구리")
+    dog_b = _make_dog(db_session, org.id, name="메리", notice_number="전북-김제-2026-00320")
+    record = _make_record(db_session, dog_b.id, kind="vaccination")
+
+    response = client.put(
+        f"/api/rescue-dogs/{dog_a.id}/records/{record.id}", json={"title": "x"}
+    )
+    assert response.status_code == 404
+
+
+def test_deleting_dog_removes_its_records(
+    client, db_session, make_user, make_organization
+):
+    org = _org_login(client, make_user, make_organization)
+    dog = _make_dog(db_session, org.id)
+    _make_record(db_session, dog.id, kind="vaccination")
+
+    assert client.delete(f"/api/rescue-dogs/{dog.id}").status_code == 204
+    assert db_session.query(models.RescueDogRecord).count() == 0

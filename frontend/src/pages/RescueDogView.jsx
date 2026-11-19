@@ -182,6 +182,7 @@ export default function RescueDogView() {
                 dog={currentDog}
                 onEditClick={handleEditClick}
                 onDeleteClick={handleDeleteClick}
+                onRecordsChanged={fetchDogs}
             />
         </div>
     );

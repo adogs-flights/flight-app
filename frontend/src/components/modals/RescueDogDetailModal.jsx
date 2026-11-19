@@ -1,4 +1,5 @@
 import Modal from '../ui/Modal';
+import RescueDogRecordPanel from '../RescueDogRecordPanel';
 import {
     formatDogAge,
     formatDogDate,
@@ -27,7 +28,7 @@ function Section({ title, children }) {
     );
 }
 
-export default function RescueDogDetailModal({ isOpen, onClose, dog, onEditClick, onDeleteClick }) {
+export default function RescueDogDetailModal({ isOpen, onClose, dog, onEditClick, onDeleteClick, onRecordsChanged }) {
     if (!dog) return null;
 
     const age = formatDogAge(dog.birth_on);
@@ -91,6 +92,11 @@ export default function RescueDogDetailModal({ isOpen, onClose, dog, onEditClick
                     <Row label="담당 단체" value={dog.organization?.name} />
                     <Row label="비고" value={dog.note} />
                 </Section>
+
+                <div className="space-y-2">
+                    <h4 className="text-sm font-black text-foreground">접종 · 검진 · 모니터링</h4>
+                    <RescueDogRecordPanel dog={dog} onRecordsChanged={onRecordsChanged} />
+                </div>
 
                 {!dog.can_edit ? (
                     /* 다른 단체의 개체. 임보·입양 개인정보는 응답에서 비워져 온다.

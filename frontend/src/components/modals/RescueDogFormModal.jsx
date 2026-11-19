@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
 import { useAuth } from '../../hooks/useAuth';
-import { DOG_SEXES, DOG_STATUSES } from '../../utils/rescueDogUtils';
+import { DOG_SEXES, DOG_STATUSES, formatDogAge } from '../../utils/rescueDogUtils';
 
 const EMPTY_FORM = {
     name: '',
@@ -181,6 +181,8 @@ export default function RescueDogFormModal({ isOpen, onClose, dog, onDogSaved })
     );
 
     const shownPhoto = photoPreview || existingPhotoUrl;
+    // 생년월일 입력에 맞춰 즉시 갱신되는 개월수.
+    const age = formatDogAge(form.birthOn);
 
     return (
         <Modal
@@ -239,7 +241,8 @@ export default function RescueDogFormModal({ isOpen, onClose, dog, onDogSaved })
                     <Field label="구조일">
                         <input className={inputClass} type="date" value={form.rescuedOn} onChange={e => handleChange('rescuedOn', e.target.value)} />
                     </Field>
-                    <Field label="생년월일 (추정)">
+                    {/* 생년월일을 넣으면 개월수를 바로 계산해 보여준다. */}
+                    <Field label={<>생년월일 (추정){age && <span className="ml-2 text-primary normal-case">{age}</span>}</>}>
                         <input className={inputClass} type="date" value={form.birthOn} onChange={e => handleChange('birthOn', e.target.value)} />
                     </Field>
                 </div>

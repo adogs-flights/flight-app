@@ -1,4 +1,5 @@
 import uuid
+from datetime import date
 
 from sqlalchemy import (
     Boolean,
@@ -436,7 +437,65 @@ class RescueDog(Base):
 
     organization = relationship("Organization")
     creator = relationship("User")
+    records = relationship(
+        "RescueDogRecord",
+        back_populates="dog",
+        cascade="all, delete-orphan",
+    )
 
     @property
     def has_photo(self) -> bool:
         return self.photo_object_key is not None
+
+
+class RescueDogRecord(Base):
+    """구조견의 접종·검진·모니터링 이력.
+
+    셋 다 "예정일 → 완료일 + 내용"이라는 같은 모양이라 kind로 구분해 한
+    테이블에 담는다. completed_on이 비어 있고 예정일이 지났으면 지연(overdue)
+    으로 보고 화면에서 붉게 표시한다.
+
+    공개 범위는 종류에 따라 다르다. 접종·검진은 개체의 의료 이력이라 구조견
+    정보와 함께 모든 단체가 공유하고, 모니터링은 입양자 사후관리 기록이라
+    담당 단체와 admin만 본다. 등록·수정·삭제는 셋 다 담당 단체만 한다.
+    """
+
+    __tablename__ = "rescue_dog_records"
+    __table_args__ = (
+        CheckConstraint(
+            "kind IN ('vaccination', 'checkup', 'monitoring')",
+            name="ck_rescue_dog_records_kind",
+        ),
+    )
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    dog_id = Column(
+        String, ForeignKey("rescue_dogs.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    kind = Column(String, nullable=False, index=True)
+    # 접종은 백신 종류, 검진은 검진 항목. 모니터링은 비워두는 경우가 많다.
+    title = Column(String, nullable=True)
+    scheduled_on = Column(Date, nullable=True, index=True)  # 예정일(모니터링은 날짜)
+    completed_on = Column(Date, nullable=True)  # 완료일. 비어 있으면 미완료
+    note = Column(Text, nullable=True)  # 내용·결과·소견
+
+    created_by_id = Column(
+        String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    dog = relationship("RescueDog", back_populates="records")
+
+    @property
+    def is_completed(self) -> bool:
+        return self.completed_on is not None
+
+    @property
+    def is_overdue(self) -> bool:
+        """예정일이 지났는데 아직 완료되지 않았는지."""
+        if self.completed_on is not None or self.scheduled_on is None:
+            return False
+        return self.scheduled_on < date.today()

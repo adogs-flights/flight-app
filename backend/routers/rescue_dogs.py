@@ -23,7 +23,7 @@ from fastapi import (
     status,
 )
 from fastapi.responses import Response
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 import models
 import schemas
@@ -41,6 +41,10 @@ MAX_IMAGE_SIZE = 10 * 1024 * 1024  # 10MB
 
 VALID_STATUSES = {"protecting", "fostering", "adopted"}
 VALID_SEXES = {"male", "female"}
+
+# 접종·검진은 개체의 의료 이력이라 구조견 정보처럼 모든 단체가 공유한다.
+# 모니터링은 입양자 사후관리 기록이라 담당 단체만 본다.
+SHARED_RECORD_KINDS = {"vaccination", "checkup"}
 
 # 담당 단체·admin만 볼 수 있는 개인정보 필드.
 PRIVATE_FIELDS = (
@@ -126,10 +130,21 @@ def _is_manager(dog: models.RescueDog, user: models.User) -> bool:
     )
 
 
+def _visible_records(
+    dog: models.RescueDog, user: models.User
+) -> list[models.RescueDogRecord]:
+    """사용자가 볼 수 있는 기록만 추린다. 모니터링은 담당 단체 전용."""
+    if _is_manager(dog, user):
+        return list(dog.records)
+    return [r for r in dog.records if r.kind in SHARED_RECORD_KINDS]
+
+
 def _serialize(dog: models.RescueDog, user: models.User) -> schemas.RescueDog:
     """권한에 맞게 개인정보를 비운 응답을 만든다."""
     out = schemas.RescueDog.model_validate(dog)
     out.can_edit = _is_manager(dog, user)
+    # 볼 수 있는 기록 중 예정일이 지났는데 완료되지 않은 건수.
+    out.overdue_count = sum(1 for r in _visible_records(dog, user) if r.is_overdue)
     if not out.can_edit:
         # "값이 비었다"와 "볼 권한이 없다"를 프론트가 구분할 수 있게
         # 가린 내용이 실제로 있었는지만 알려준다.
@@ -142,7 +157,10 @@ def _serialize(dog: models.RescueDog, user: models.User) -> schemas.RescueDog:
 def _get_dog(db: Session, dog_id: str) -> models.RescueDog:
     dog = (
         db.query(models.RescueDog)
-        .options(joinedload(models.RescueDog.organization))
+        .options(
+            joinedload(models.RescueDog.organization),
+            selectinload(models.RescueDog.records),
+        )
         .filter(models.RescueDog.id == dog_id)
         .first()
     )
@@ -236,7 +254,11 @@ def list_rescue_dogs(
     """
     dogs = (
         db.query(models.RescueDog)
-        .options(joinedload(models.RescueDog.organization))
+        .options(
+            joinedload(models.RescueDog.organization),
+            # 지연 건수를 세려면 기록이 필요하다. 한 번에 적재해 N+1을 막는다.
+            selectinload(models.RescueDog.records),
+        )
         .order_by(
             models.RescueDog.rescued_on.desc().nullslast(),
             models.RescueDog.created_at.desc(),
@@ -361,3 +383,115 @@ def delete_rescue_dog(dog_id: str, db: DBSession, current_user: OrgUser) -> None
         except Exception as e:
             # 대장에서는 이미 지워졌다. 남은 파일은 로그로만 알린다.
             print(f"[rescue dog] 사진 삭제 실패 ({photo_key}): {e}")
+
+
+# ======================================================================================
+# 접종·검진·모니터링 기록
+# ======================================================================================
+def _get_record(
+    db: Session, dog: models.RescueDog, record_id: str
+) -> models.RescueDogRecord:
+    """기록을 찾되 반드시 해당 구조견의 것인지 확인한다.
+
+    dog_id를 함께 걸지 않으면 남의 구조견 기록 id를 넘겨 우회할 수 있다.
+    """
+    record = (
+        db.query(models.RescueDogRecord)
+        .filter(
+            models.RescueDogRecord.id == record_id,
+            models.RescueDogRecord.dog_id == dog.id,
+        )
+        .first()
+    )
+    if not record:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="기록을 찾을 수 없습니다."
+        )
+    return record
+
+
+@router.get("/{dog_id}/records", response_model=list[schemas.RescueDogRecord])
+def list_rescue_dog_records(
+    dog_id: str, db: DBSession, current_user: OrgUser
+) -> list[models.RescueDogRecord]:
+    """구조견의 접종·검진·모니터링 기록.
+
+    다른 단체에는 모니터링을 감춘다. 예정일이 빠른 순으로 돌려주고, 예정일이
+    없는 기록은 뒤로 보낸다.
+    """
+    dog = _get_dog(db, dog_id)
+    records = _visible_records(dog, current_user)
+    return sorted(
+        records,
+        key=lambda r: (r.scheduled_on is None, r.scheduled_on or date.min),
+    )
+
+
+@router.post(
+    "/{dog_id}/records",
+    response_model=schemas.RescueDogRecord,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_rescue_dog_record(
+    dog_id: str,
+    record_in: schemas.RescueDogRecordCreate,
+    db: DBSession,
+    current_user: OrgUser,
+) -> models.RescueDogRecord:
+    """기록을 추가한다. 종류와 무관하게 담당 단체만 쓸 수 있다."""
+    dog = _get_dog(db, dog_id)
+    _require_manager(dog, current_user)
+
+    record = models.RescueDogRecord(
+        dog_id=dog.id,
+        kind=record_in.kind.value,
+        title=record_in.title,
+        scheduled_on=record_in.scheduled_on,
+        completed_on=record_in.completed_on,
+        note=record_in.note,
+        created_by_id=current_user.id,
+    )
+    db.add(record)
+    db.commit()
+    db.refresh(record)
+    return record
+
+
+@router.put(
+    "/{dog_id}/records/{record_id}", response_model=schemas.RescueDogRecord
+)
+def update_rescue_dog_record(
+    dog_id: str,
+    record_id: str,
+    record_in: schemas.RescueDogRecordUpdate,
+    db: DBSession,
+    current_user: OrgUser,
+) -> models.RescueDogRecord:
+    """기록을 수정한다. 폼 전체를 받아 치환하되 kind는 바꾸지 않는다."""
+    dog = _get_dog(db, dog_id)
+    _require_manager(dog, current_user)
+    record = _get_record(db, dog, record_id)
+
+    record.title = record_in.title
+    record.scheduled_on = record_in.scheduled_on
+    record.completed_on = record_in.completed_on
+    record.note = record_in.note
+
+    db.add(record)
+    db.commit()
+    db.refresh(record)
+    return record
+
+
+@router.delete(
+    "/{dog_id}/records/{record_id}", status_code=status.HTTP_204_NO_CONTENT
+)
+def delete_rescue_dog_record(
+    dog_id: str, record_id: str, db: DBSession, current_user: OrgUser
+) -> None:
+    dog = _get_dog(db, dog_id)
+    _require_manager(dog, current_user)
+    record = _get_record(db, dog, record_id)
+
+    db.delete(record)
+    db.commit()
