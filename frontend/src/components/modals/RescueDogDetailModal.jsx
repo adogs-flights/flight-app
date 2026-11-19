@@ -1,5 +1,6 @@
 import Modal from '../ui/Modal';
 import RescueDogRecordPanel from '../RescueDogRecordPanel';
+import RescueDogExpensePanel from '../RescueDogExpensePanel';
 import {
     formatDogAge,
     formatDogDate,
@@ -127,6 +128,12 @@ export default function RescueDogDetailModal({ isOpen, onClose, dog, onEditClick
                             <Row label="이메일" value={dog.adopter_email} />
                             <Row label="비고" value={dog.adoption_note} />
                         </Section>
+
+                        {/* 금액·부담자는 단체 내부 정산 정보라 담당 단체 영역 안에 둔다. */}
+                        <div className="space-y-2">
+                            <h4 className="text-sm font-black text-foreground">비용 · 정산</h4>
+                            <RescueDogExpensePanel dog={dog} onExpensesChanged={onRecordsChanged} />
+                        </div>
                     </>
                 )}
             </div>

@@ -127,3 +127,21 @@ export const todayValue = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
+
+/** 비용 '구분' 입력을 돕는 제안 목록. 자유 입력이라 여기 없는 값도 쓸 수 있다. */
+export const EXPENSE_CATEGORIES = [
+  '병원진료',
+  '접종',
+  '검사',
+  '사료·용품',
+  '미용',
+  '이동',
+  '기타',
+];
+
+/** 원화 표기. 시트와 같은 '₩76,170' 모양으로 맞춘다. */
+export const formatWon = (amount) => {
+  const n = Number(amount);
+  if (!Number.isFinite(n)) return '₩0';
+  return `₩${Math.round(n).toLocaleString('ko-KR')}`;
+};

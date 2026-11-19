@@ -23,9 +23,11 @@ from fastapi import (
     status,
 )
 from fastapi.responses import Response
+from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 import models
+import permissions
 import schemas
 from database import get_db
 from routers.auth import OrgUser
@@ -494,4 +496,173 @@ def delete_rescue_dog_record(
     record = _get_record(db, dog, record_id)
 
     db.delete(record)
+    db.commit()
+
+
+# ======================================================================================
+# 비용 · 정산
+# ======================================================================================
+# 금액과 부담자 이름은 단체 내부 정산 정보라 접종·검진처럼 공유하지 않는다.
+# 조회까지 담당 단체로 막는다.
+def _require_manager_for_money(dog: models.RescueDog, user: models.User) -> None:
+    if not _is_manager(dog, user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="비용·정산 내역은 담당 단체만 볼 수 있습니다.",
+        )
+
+
+def _expense_summary(
+    expenses: list[models.RescueDogExpense],
+) -> schemas.RescueDogExpenseSummary:
+    """시트 하단의 총 금액 / 정산 금액 / 미정산 금액."""
+    settled = sum(e.amount for e in expenses if e.is_settled)
+    unsettled = sum(e.amount for e in expenses if not e.is_settled)
+    return schemas.RescueDogExpenseSummary(
+        total=settled + unsettled, settled=settled, unsettled=unsettled
+    )
+
+
+def _get_expense(
+    db: Session, dog: models.RescueDog, expense_id: str
+) -> models.RescueDogExpense:
+    """기록과 같은 이유로 dog_id를 함께 걸어 조회한다."""
+    expense = (
+        db.query(models.RescueDogExpense)
+        .filter(
+            models.RescueDogExpense.id == expense_id,
+            models.RescueDogExpense.dog_id == dog.id,
+        )
+        .first()
+    )
+    if not expense:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="비용 내역을 찾을 수 없습니다."
+        )
+    return expense
+
+
+@router.get("/expenses/summary", response_model=schemas.RescueDogExpenseSummary)
+def get_org_expense_summary(
+    db: DBSession, current_user: OrgUser
+) -> schemas.RescueDogExpenseSummary:
+    """우리 단체 구조견 전체의 비용 합계. admin은 전 단체를 합산한다.
+
+    구조견 목록 화면 상단에 미정산 금액을 띄우는 데 쓴다. 경로가 '/{dog_id}'
+    보다 깊어 충돌하지 않지만, 읽기 쉽도록 개별 비용 경로보다 위에 둔다.
+    """
+    query = (
+        db.query(
+            models.RescueDogExpense.is_settled,
+            func.coalesce(func.sum(models.RescueDogExpense.amount), 0),
+        )
+        .join(models.RescueDog, models.RescueDogExpense.dog_id == models.RescueDog.id)
+        .group_by(models.RescueDogExpense.is_settled)
+    )
+    # 단체 격리 규칙은 permissions에 모여 있다. 구조견의 소속으로 범위를 좁힌다.
+    query = permissions.scope_to_org(query, current_user, models.RescueDog)
+
+    settled = unsettled = 0
+    for is_settled, total in query.all():
+        if is_settled:
+            settled = int(total)
+        else:
+            unsettled = int(total)
+    return schemas.RescueDogExpenseSummary(
+        total=settled + unsettled, settled=settled, unsettled=unsettled
+    )
+
+
+@router.get("/{dog_id}/expenses", response_model=schemas.RescueDogExpenseList)
+def list_rescue_dog_expenses(
+    dog_id: str, db: DBSession, current_user: OrgUser
+) -> schemas.RescueDogExpenseList:
+    """구조견 한 마리의 비용 내역과 합계. 최근 지출이 위로 온다."""
+    dog = _get_dog(db, dog_id)
+    _require_manager_for_money(dog, current_user)
+
+    expenses = (
+        db.query(models.RescueDogExpense)
+        .filter(models.RescueDogExpense.dog_id == dog.id)
+        .order_by(
+            models.RescueDogExpense.spent_on.desc().nullslast(),
+            models.RescueDogExpense.created_at.desc(),
+        )
+        .all()
+    )
+    return schemas.RescueDogExpenseList(
+        items=[schemas.RescueDogExpense.model_validate(e) for e in expenses],
+        summary=_expense_summary(expenses),
+    )
+
+
+@router.post(
+    "/{dog_id}/expenses",
+    response_model=schemas.RescueDogExpense,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_rescue_dog_expense(
+    dog_id: str,
+    expense_in: schemas.RescueDogExpenseCreate,
+    db: DBSession,
+    current_user: OrgUser,
+) -> models.RescueDogExpense:
+    dog = _get_dog(db, dog_id)
+    _require_manager(dog, current_user)
+
+    expense = models.RescueDogExpense(
+        dog_id=dog.id,
+        spent_on=expense_in.spent_on,
+        payer_name=expense_in.payer_name,
+        category=expense_in.category,
+        amount=expense_in.amount,
+        is_settled=expense_in.is_settled,
+        note=expense_in.note,
+        created_by_id=current_user.id,
+    )
+    db.add(expense)
+    db.commit()
+    db.refresh(expense)
+    return expense
+
+
+@router.put(
+    "/{dog_id}/expenses/{expense_id}", response_model=schemas.RescueDogExpense
+)
+def update_rescue_dog_expense(
+    dog_id: str,
+    expense_id: str,
+    expense_in: schemas.RescueDogExpenseUpdate,
+    db: DBSession,
+    current_user: OrgUser,
+) -> models.RescueDogExpense:
+    """비용 내역을 수정한다. 폼 전체를 받아 치환한다."""
+    dog = _get_dog(db, dog_id)
+    _require_manager(dog, current_user)
+    expense = _get_expense(db, dog, expense_id)
+
+    expense.spent_on = expense_in.spent_on
+    expense.payer_name = expense_in.payer_name
+    expense.category = expense_in.category
+    expense.amount = expense_in.amount
+    expense.is_settled = expense_in.is_settled
+    expense.note = expense_in.note
+
+    db.add(expense)
+    db.commit()
+    db.refresh(expense)
+    return expense
+
+
+@router.delete(
+    "/{dog_id}/expenses/{expense_id}", status_code=status.HTTP_204_NO_CONTENT
+)
+def delete_rescue_dog_expense(
+    dog_id: str, expense_id: str, db: DBSession, current_user: OrgUser
+) -> None:
+    dog = _get_dog(db, dog_id)
+    _require_manager(dog, current_user)
+    expense = _get_expense(db, dog, expense_id)
+
+    db.delete(expense)
     db.commit()

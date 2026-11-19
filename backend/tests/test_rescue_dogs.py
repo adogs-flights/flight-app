@@ -608,3 +608,191 @@ def test_deleting_dog_removes_its_records(
 
     assert client.delete(f"/api/rescue-dogs/{dog.id}").status_code == 204
     assert db_session.query(models.RescueDogRecord).count() == 0
+
+
+# ======================================================================================
+# 비용 · 정산
+# ======================================================================================
+def _make_expense(db_session, dog_id, amount=76170, is_settled=False, **kwargs):
+    expense = models.RescueDogExpense(
+        dog_id=dog_id, amount=amount, is_settled=is_settled, **kwargs
+    )
+    db_session.add(expense)
+    db_session.commit()
+    db_session.refresh(expense)
+    return expense
+
+
+def test_expense_list_carries_sheet_totals(
+    client, db_session, make_user, make_organization
+):
+    """시트 하단의 총 금액 / 정산 금액 / 미정산 금액을 그대로 돌려준다."""
+    org = _org_login(client, make_user, make_organization)
+    dog = _make_dog(db_session, org.id)
+    _make_expense(db_session, dog.id, amount=76170, is_settled=True, category="병원진료")
+    _make_expense(db_session, dog.id, amount=30000, is_settled=False, category="접종")
+
+    body = client.get(f"/api/rescue-dogs/{dog.id}/expenses").json()
+
+    assert body["summary"] == {"total": 106170, "settled": 76170, "unsettled": 30000}
+    assert len(body["items"]) == 2
+
+
+def test_create_expense(client, db_session, make_user, make_organization):
+    org = _org_login(client, make_user, make_organization)
+    dog = _make_dog(db_session, org.id)
+
+    response = client.post(
+        f"/api/rescue-dogs/{dog.id}/expenses",
+        json={
+            "spent_on": "2026-11-17",
+            "payer_name": "신수정",
+            "category": "병원진료",
+            "amount": 76170,
+            "is_settled": True,
+            "note": "곰팡이성 피부병 진료. 약욕",
+        },
+    )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["amount"] == 76170
+    assert body["payer_name"] == "신수정"
+    assert body["is_settled"] is True
+
+
+def test_expense_rejects_negative_amount(
+    client, db_session, make_user, make_organization
+):
+    org = _org_login(client, make_user, make_organization)
+    dog = _make_dog(db_session, org.id)
+
+    response = client.post(
+        f"/api/rescue-dogs/{dog.id}/expenses", json={"amount": -1000}
+    )
+    assert response.status_code == 422
+
+
+def test_other_org_cannot_even_read_expenses(
+    client, db_session, make_user, make_organization
+):
+    """금액·부담자는 단체 내부 정산 정보라 조회부터 막는다."""
+    org_b = make_organization(name="단체B", slug="b")
+    dog = _make_dog(db_session, org_b.id)
+    expense = _make_expense(db_session, dog.id, payer_name="신수정")
+
+    _org_login(client, make_user, make_organization)
+
+    assert client.get(f"/api/rescue-dogs/{dog.id}/expenses").status_code == 403
+    assert client.post(
+        f"/api/rescue-dogs/{dog.id}/expenses", json={"amount": 1000}
+    ).status_code == 403
+    assert client.put(
+        f"/api/rescue-dogs/{dog.id}/expenses/{expense.id}", json={"amount": 1}
+    ).status_code == 403
+    assert client.delete(
+        f"/api/rescue-dogs/{dog.id}/expenses/{expense.id}"
+    ).status_code == 403
+
+
+def test_settle_and_delete_expense(client, db_session, make_user, make_organization):
+    org = _org_login(client, make_user, make_organization)
+    dog = _make_dog(db_session, org.id)
+    expense = _make_expense(db_session, dog.id, amount=76170, is_settled=False)
+
+    response = client.put(
+        f"/api/rescue-dogs/{dog.id}/expenses/{expense.id}",
+        json={"amount": 76170, "is_settled": True, "payer_name": "신수정"},
+    )
+    assert response.status_code == 200
+    assert response.json()["is_settled"] is True
+
+    body = client.get(f"/api/rescue-dogs/{dog.id}/expenses").json()
+    assert body["summary"]["unsettled"] == 0
+
+    assert client.delete(
+        f"/api/rescue-dogs/{dog.id}/expenses/{expense.id}"
+    ).status_code == 204
+    assert client.get(f"/api/rescue-dogs/{dog.id}/expenses").json()["items"] == []
+
+
+def test_expense_of_another_dog_is_not_reachable(
+    client, db_session, make_user, make_organization
+):
+    org = _org_login(client, make_user, make_organization)
+    dog_a = _make_dog(db_session, org.id, name="구리")
+    dog_b = _make_dog(db_session, org.id, name="메리", notice_number="전북-김제-2026-00320")
+    expense = _make_expense(db_session, dog_b.id)
+
+    response = client.put(
+        f"/api/rescue-dogs/{dog_a.id}/expenses/{expense.id}", json={"amount": 1}
+    )
+    assert response.status_code == 404
+
+
+def test_deleting_dog_removes_its_expenses(
+    client, db_session, make_user, make_organization
+):
+    org = _org_login(client, make_user, make_organization)
+    dog = _make_dog(db_session, org.id)
+    _make_expense(db_session, dog.id)
+
+    assert client.delete(f"/api/rescue-dogs/{dog.id}").status_code == 204
+    assert db_session.query(models.RescueDogExpense).count() == 0
+
+
+# --- 단체 전체 합계 ---
+
+
+def test_org_summary_counts_only_own_organization(
+    client, db_session, make_user, make_organization
+):
+    """다른 단체의 지출이 우리 합계에 섞이면 안 된다."""
+    org_a = make_organization(name="단체A", slug="a")
+    org_b = make_organization(name="단체B", slug="b")
+    dog_a = _make_dog(db_session, org_a.id, name="구리")
+    dog_b = _make_dog(db_session, org_b.id, name="메리")
+    _make_expense(db_session, dog_a.id, amount=76170, is_settled=True)
+    _make_expense(db_session, dog_a.id, amount=30000, is_settled=False)
+    _make_expense(db_session, dog_b.id, amount=999999, is_settled=False)
+
+    user = make_user(role="org", organization_id=org_a.id, email="a@b.com")
+    _login(client, user.email)
+
+    summary = client.get("/api/rescue-dogs/expenses/summary").json()
+    assert summary == {"total": 106170, "settled": 76170, "unsettled": 30000}
+
+
+def test_org_summary_is_zero_without_expenses(
+    client, make_user, make_organization
+):
+    _org_login(client, make_user, make_organization)
+
+    summary = client.get("/api/rescue-dogs/expenses/summary").json()
+    assert summary == {"total": 0, "settled": 0, "unsettled": 0}
+
+
+def test_admin_summary_spans_every_organization(
+    client, db_session, make_user, make_organization
+):
+    org_a = make_organization(name="단체A", slug="a")
+    org_b = make_organization(name="단체B", slug="b")
+    _make_expense(db_session, _make_dog(db_session, org_a.id, name="구리").id, amount=1000)
+    _make_expense(db_session, _make_dog(db_session, org_b.id, name="메리").id, amount=2000)
+
+    admin = make_user(role="admin", email="admin@b.com")
+    _login(client, admin.email)
+
+    assert client.get("/api/rescue-dogs/expenses/summary").json()["total"] == 3000
+
+
+def test_summary_path_is_not_captured_by_dog_id_route(
+    client, make_user, make_organization
+):
+    """'/expenses/summary'가 '/{dog_id}' 경로에 먹히지 않는지 못박는다."""
+    _org_login(client, make_user, make_organization)
+
+    response = client.get("/api/rescue-dogs/expenses/summary")
+
+    assert response.status_code == 200
+    assert set(response.json()) == {"total", "settled", "unsettled"}

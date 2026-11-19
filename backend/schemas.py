@@ -676,3 +676,60 @@ class RescueDogRecord(RescueDogRecordBase):
 
     class Config:
         from_attributes = True
+
+
+class RescueDogExpenseBase(BaseModel):
+    spent_on: date | None = None
+    payer_name: str | None = None
+    category: str | None = None
+    amount: int = 0
+    is_settled: bool = False
+    note: str | None = None
+
+    @field_validator("payer_name", "category", "note")
+    @classmethod
+    def empty_to_none(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        v = v.strip()
+        return v or None
+
+    @field_validator("amount")
+    @classmethod
+    def non_negative(cls, v: int) -> int:
+        if v < 0:
+            raise ValueError("비용은 0원 이상이어야 합니다.")
+        return v
+
+
+class RescueDogExpenseCreate(RescueDogExpenseBase):
+    pass
+
+
+class RescueDogExpenseUpdate(RescueDogExpenseBase):
+    """수정도 폼 전체를 받아 통째로 치환한다."""
+
+
+class RescueDogExpense(RescueDogExpenseBase):
+    id: str
+    dog_id: str
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class RescueDogExpenseSummary(BaseModel):
+    """시트 하단의 총 금액 / 정산 금액 / 미정산 금액."""
+
+    total: int = 0
+    settled: int = 0
+    unsettled: int = 0
+
+
+class RescueDogExpenseList(BaseModel):
+    """목록과 합계를 함께 돌려준다. 화면이 둘을 항상 같이 쓴다."""
+
+    items: list[RescueDogExpense] = []
+    summary: RescueDogExpenseSummary = RescueDogExpenseSummary()

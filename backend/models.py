@@ -442,6 +442,11 @@ class RescueDog(Base):
         back_populates="dog",
         cascade="all, delete-orphan",
     )
+    expenses = relationship(
+        "RescueDogExpense",
+        back_populates="dog",
+        cascade="all, delete-orphan",
+    )
 
     @property
     def has_photo(self) -> bool:
@@ -499,3 +504,42 @@ class RescueDogRecord(Base):
         if self.completed_on is not None or self.scheduled_on is None:
             return False
         return self.scheduled_on < date.today()
+
+
+class RescueDogExpense(Base):
+    """구조견에게 든 비용과 정산 여부.
+
+    시트의 "비용/정산" 탭(날짜·구조견·임보자·구분·비용·정산 여부·내용)을 옮긴
+    것이다. 임보자가 먼저 부담한 병원비를 단체가 돌려주는 흐름이라 "누가 먼저
+    냈는지"(payer_name)와 "돌려줬는지"(is_settled)를 함께 둔다.
+
+    금액과 임보자 이름은 단체 내부 정산 정보라 접종·검진처럼 공유하지 않는다.
+    담당 단체와 admin만 조회·수정한다.
+    """
+
+    __tablename__ = "rescue_dog_expenses"
+    __table_args__ = (
+        CheckConstraint("amount >= 0", name="ck_rescue_dog_expenses_amount"),
+    )
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    dog_id = Column(
+        String, ForeignKey("rescue_dogs.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    spent_on = Column(Date, nullable=True, index=True)  # 날짜
+    payer_name = Column(String, nullable=True)  # 임보자 등 먼저 부담한 사람
+    category = Column(String, nullable=True)  # 구분(병원진료, 접종, 사료·용품 등)
+    # 원 단위 정수. 원화는 소수점을 쓰지 않아 부동소수 오차를 들일 이유가 없다.
+    amount = Column(Integer, nullable=False, default=0)
+    is_settled = Column(Boolean, nullable=False, default=False, index=True)  # 정산 여부
+    note = Column(Text, nullable=True)  # 내용
+
+    created_by_id = Column(
+        String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    dog = relationship("RescueDog", back_populates="expenses")

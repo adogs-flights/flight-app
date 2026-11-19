@@ -4,7 +4,7 @@ import RescueDogCard from '../components/RescueDogCard';
 import RescueDogFormModal from '../components/modals/RescueDogFormModal';
 import RescueDogDetailModal from '../components/modals/RescueDogDetailModal';
 import { useModal } from '../hooks/useModal';
-import { DOG_STATUSES } from '../utils/rescueDogUtils';
+import { DOG_STATUSES, formatWon } from '../utils/rescueDogUtils';
 
 const FILTERS = [{ value: 'ALL', label: '전체' }, ...DOG_STATUSES];
 
@@ -16,6 +16,8 @@ export default function RescueDogView() {
     const [activeFilter, setActiveFilter] = useState('ALL');
     const [searchText, setSearchText] = useState('');
     const [onlyMine, setOnlyMine] = useState(false);
+    // 시트 하단의 총/정산/미정산에 해당하는 우리 단체 전체 합계.
+    const [expenseSummary, setExpenseSummary] = useState(null);
 
     const { isOpen: isFormOpen, openModal: openFormModal, closeModal: closeFormModal } = useModal();
     const { isOpen: isDetailOpen, openModal: openDetailModal, closeModal: closeDetailModal } = useModal();
@@ -31,9 +33,26 @@ export default function RescueDogView() {
         }
     }, [apiClient]);
 
+    const fetchExpenseSummary = useCallback(async () => {
+        try {
+            const response = await apiClient.get('/rescue-dogs/expenses/summary');
+            setExpenseSummary(response.data);
+        } catch {
+            // 합계는 보조 정보다. 실패해도 목록은 그대로 보여준다.
+            setExpenseSummary(null);
+        }
+    }, [apiClient]);
+
     useEffect(() => {
         fetchDogs();
-    }, [fetchDogs]);
+        fetchExpenseSummary();
+    }, [fetchDogs, fetchExpenseSummary]);
+
+    // 비용이 바뀌면 목록(지연 건수)과 합계를 함께 새로 고친다.
+    const refreshAll = useCallback(() => {
+        fetchDogs();
+        fetchExpenseSummary();
+    }, [fetchDogs, fetchExpenseSummary]);
 
     const handleCreateClick = () => {
         setCurrentDog(null);
@@ -124,15 +143,26 @@ export default function RescueDogView() {
                 </div>
             </div>
 
-            {/* 상태별 집계 */}
+            {/* 상태별 집계 + 단체 전체 미정산 금액 */}
             {!dogsState.loading && !dogsState.error && (
-                <div className="grid grid-cols-3 gap-3">
+                <div className={`grid gap-3 ${expenseSummary ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'}`}>
                     {DOG_STATUSES.map(s => (
                         <div key={s.value} className="px-4 py-3 rounded-xl border-2 border-border bg-card">
                             <div className="text-[10px] font-black uppercase tracking-wider text-muted-foreground/70">{s.label}</div>
                             <div className="text-xl font-black text-foreground">{counts[s.value] ?? 0}</div>
                         </div>
                     ))}
+                    {expenseSummary && (
+                        <div className={`px-4 py-3 rounded-xl border-2 ${expenseSummary.unsettled > 0 ? 'border-destructive/40 bg-destructive/5' : 'border-border bg-card'}`}>
+                            <div className="text-[10px] font-black uppercase tracking-wider text-muted-foreground/70">미정산</div>
+                            <div className={`text-xl font-black ${expenseSummary.unsettled > 0 ? 'text-destructive' : 'text-foreground'}`}>
+                                {formatWon(expenseSummary.unsettled)}
+                            </div>
+                            <div className="text-[10px] font-bold text-muted-foreground/70">
+                                총 {formatWon(expenseSummary.total)}
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -182,7 +212,7 @@ export default function RescueDogView() {
                 dog={currentDog}
                 onEditClick={handleEditClick}
                 onDeleteClick={handleDeleteClick}
-                onRecordsChanged={fetchDogs}
+                onRecordsChanged={refreshAll}
             />
         </div>
     );
