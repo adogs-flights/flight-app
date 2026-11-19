@@ -69,6 +69,7 @@ export default function Sidebar({ isOpen, onClose, onPwChangeClick }) {
                             <nav className="flex flex-col gap-1.5">
                                 <NavItem to="/schedules" icon="">일정 관리</NavItem>
                                 <NavItem to="/needs" icon="">구해요 게시판</NavItem>
+                                <NavItem to="/rescueadog" icon="">구조견 관리</NavItem>
                                 <NavItem to="/give" icon="">나눔해요</NavItem>
                                 <NavItem to="/mytickets" icon="" count={counts.owned_new_applications}>내 티켓</NavItem>
                                 <NavItem to="/myapplications" icon="" count={counts.my_application_updates}>내 신청 현황</NavItem>

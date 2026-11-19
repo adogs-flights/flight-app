@@ -368,3 +368,75 @@ class GoogleDriveSync(Base):
     )
 
     ticket = relationship("Ticket", back_populates="google_sync")
+
+
+class RescueDog(Base):
+    """구조견 관리 대장.
+
+    구글 시트의 3개 블록(구조견 정보 / 임보 / 입양)을 한 행으로 모은다.
+    임보자·입양자의 이름·주소·연락처·이메일은 개인정보이므로 담당 단체와
+    admin만 본다(permissions.py의 "전화번호는 자기 단체만" 규칙과 동일 계열).
+    """
+
+    __tablename__ = "rescue_dogs"
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('protecting', 'fostering', 'adopted')",
+            name="ck_rescue_dogs_status",
+        ),
+        CheckConstraint(
+            "sex IS NULL OR sex IN ('male', 'female')",
+            name="ck_rescue_dogs_sex",
+        ),
+    )
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+
+    # --- 구조견 정보 ---
+    # 공고번호(예: 경북-칠곡-2026-00159). 사설 구조는 공고가 없어 nullable.
+    notice_number = Column(String, nullable=True, index=True)
+    name = Column(String, nullable=False)
+    photo_object_key = Column(String, nullable=True)  # 사진(스토리지 키)
+    rescued_on = Column(Date, nullable=True, index=True)  # 구조일
+    birth_on = Column(Date, nullable=True)  # 생년월일(추정)
+    sex = Column(String, nullable=True)  # 'male' | 'female'
+    rescue_place = Column(String, nullable=True)  # 구조 장소
+    status = Column(
+        String, nullable=False, default="protecting", index=True
+    )  # 'protecting'(보호중) | 'fostering'(임보중) | 'adopted'(입양완료)
+    microchip_number = Column(String, nullable=True)  # 내장칩 번호
+    is_neutered = Column(Boolean, nullable=False, default=False)  # 중성화 완료 여부
+    note = Column(Text, nullable=True)  # 비고
+
+    # --- 임보 ---
+    foster_name = Column(String, nullable=True)
+    foster_address = Column(String, nullable=True)
+    foster_contact = Column(String, nullable=True)
+    foster_note = Column(Text, nullable=True)
+
+    # --- 입양 ---
+    adopted_on = Column(Date, nullable=True)
+    adopter_name = Column(String, nullable=True)
+    adopter_address = Column(String, nullable=True)
+    adopter_contact = Column(String, nullable=True)
+    adopter_email = Column(String, nullable=True)
+    adoption_note = Column(Text, nullable=True)
+
+    organization_id = Column(
+        Integer, ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    created_by_id = Column(
+        String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    organization = relationship("Organization")
+    creator = relationship("User")
+
+    @property
+    def has_photo(self) -> bool:
+        return self.photo_object_key is not None

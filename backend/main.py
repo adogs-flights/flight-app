@@ -20,6 +20,7 @@ from routers import (
     master,
     need_posts,
     organizations,
+    rescue_dogs,
     ticket_applications,
     tickets,
 )
@@ -133,6 +134,7 @@ app.include_router(gdrive.router)
 app.include_router(tickets.router)
 app.include_router(ticket_applications.router)
 app.include_router(need_posts.router)
+app.include_router(rescue_dogs.router)
 app.include_router(master.router)
 app.include_router(organizations.router)
 app.include_router(guest_submissions.router)

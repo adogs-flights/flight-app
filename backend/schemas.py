@@ -568,3 +568,64 @@ class GuestSubmissionStatusPublic(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# ======================================================================================
+# Rescue Dog Schemas
+# ======================================================================================
+class RescueDogStatus(str, Enum):
+    protecting = "protecting"  # 보호중
+    fostering = "fostering"  # 임보중
+    adopted = "adopted"  # 입양완료
+
+
+class RescueDogSex(str, Enum):
+    male = "male"  # 남
+    female = "female"  # 여
+
+
+class RescueDog(BaseModel):
+    """구조견 응답 모델.
+
+    임보·입양 블록의 이름·주소·연락처·이메일·비고는 개인정보다. 담당 단체와
+    admin이 아닌 사용자에게는 라우터가 전부 None으로 비우고 `private_hidden`을
+    True로 세워 "값이 없음"과 "볼 권한이 없음"을 프론트가 구분할 수 있게 한다.
+    """
+
+    id: str
+
+    # --- 구조견 정보 (모든 단체 공유) ---
+    notice_number: str | None = None
+    name: str
+    rescued_on: date | None = None
+    birth_on: date | None = None
+    sex: RescueDogSex | None = None
+    rescue_place: str | None = None
+    status: RescueDogStatus
+    microchip_number: str | None = None
+    is_neutered: bool
+    note: str | None = None
+    adopted_on: date | None = None  # 입양 시점은 개체 이력이라 공유한다
+
+    # --- 임보 (담당 단체 전용) ---
+    foster_name: str | None = None
+    foster_address: str | None = None
+    foster_contact: str | None = None
+    foster_note: str | None = None
+
+    # --- 입양 (담당 단체 전용) ---
+    adopter_name: str | None = None
+    adopter_address: str | None = None
+    adopter_contact: str | None = None
+    adopter_email: str | None = None
+    adoption_note: str | None = None
+
+    organization: Organization | None = None
+    has_photo: bool = False
+    private_hidden: bool = False  # 개인정보가 가려진 응답인지
+    can_edit: bool = False  # 현재 사용자가 수정·삭제할 수 있는지
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
