@@ -22,6 +22,7 @@ import schemas
 from database import get_db
 from routers.auth import OrgUser
 from services import gdrive_service, storage_service
+from static_data import DEPARTURE_CHECKLIST_TEMPLATE
 
 DEPARTURE_ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "application/pdf"}
 DEPARTURE_MAX_SIZE = 10 * 1024 * 1024  # 10MB
@@ -46,6 +47,9 @@ def create_ticket(
         **ticket_in.dict(), created_by_id=current_user.id, owner_id=current_user.id
     )
     db.add(db_ticket)
+    db.flush()
+    # 출국 준비 체크리스트 기본 항목을 함께 깔아준다.
+    _seed_checklist_items(db, db_ticket, current_user.id)
     db.commit()
     db.refresh(db_ticket)
 
@@ -410,3 +414,226 @@ def delete_ticket_departure_info(
     db.commit()
     db.refresh(ticket)
     return ticket
+
+
+# --------------------------------------------------------------------------------------
+# 출국 준비 체크리스트
+#
+# 기한 없이 완료 여부만 다룬다. 조회·수정 권한은 출국 준비 추가정보와 같은
+# _get_ticket_for_departure(소유자·admin)를 재사용한다. 체크리스트에는 인수자
+# 연락처 등 개인정보가 섞일 수 있어 공용 Ticket 응답에는 싣지 않는다.
+# --------------------------------------------------------------------------------------
+
+
+def _seed_checklist_items(
+    db: Session, ticket: models.Ticket, user_id: str | None
+) -> None:
+    """기본 항목을 아직 깔지 않은 티켓에 템플릿을 깔아준다.
+
+    이미 시드한 티켓은 건드리지 않는다. 담당자가 기본 항목을 전부 지웠을 때
+    조회만으로 되살아나면 지운 의미가 없기 때문이다. 되살리려면 복원
+    엔드포인트를 쓴다. commit은 호출하는 쪽에서 한다.
+    """
+    if ticket.checklist_initialized_at is not None:
+        return
+    for order, item in enumerate(DEPARTURE_CHECKLIST_TEMPLATE):
+        db.add(
+            models.TicketChecklistItem(
+                ticket_id=ticket.id,
+                template_key=item["template_key"],
+                label=item["label"],
+                sort_order=order,
+                created_by_id=user_id,
+            )
+        )
+    ticket.checklist_initialized_at = datetime.now(timezone.utc)
+
+
+def _list_checklist_items(
+    db: Session, ticket_id: str
+) -> list[models.TicketChecklistItem]:
+    return (
+        db.query(models.TicketChecklistItem)
+        .filter(models.TicketChecklistItem.ticket_id == ticket_id)
+        .order_by(
+            models.TicketChecklistItem.sort_order,
+            models.TicketChecklistItem.created_at,
+        )
+        .all()
+    )
+
+
+def _checklist_response(
+    ticket: models.Ticket, items: list[models.TicketChecklistItem]
+) -> schemas.TicketChecklist:
+    """항목 진행률과 기존 추가정보 진행률을 함께 담는다."""
+    document_flags = [
+        bool(ticket.dep_address),
+        bool(ticket.dep_kakao_id),
+        ticket.has_passport,
+        ticket.has_seat_confirm,
+        ticket.has_eticket,
+    ]
+    documents = schemas.TicketChecklistDocuments(
+        has_address=document_flags[0],
+        has_kakao_id=document_flags[1],
+        has_passport=document_flags[2],
+        has_seat_confirm=document_flags[3],
+        has_eticket=document_flags[4],
+        total=len(document_flags),
+        done=sum(1 for flag in document_flags if flag),
+    )
+    present_keys = {item.template_key for item in items if item.template_key}
+    return schemas.TicketChecklist(
+        ticket_id=ticket.id,
+        items=[schemas.TicketChecklistItem.model_validate(item) for item in items],
+        total=len(items),
+        done=sum(1 for item in items if item.is_done),
+        documents=documents,
+        missing_template_keys=[
+            t["template_key"]
+            for t in DEPARTURE_CHECKLIST_TEMPLATE
+            if t["template_key"] not in present_keys
+        ],
+    )
+
+
+def _get_checklist_item(
+    db: Session, ticket_id: str, item_id: str
+) -> models.TicketChecklistItem:
+    item = (
+        db.query(models.TicketChecklistItem)
+        .filter(
+            models.TicketChecklistItem.id == item_id,
+            models.TicketChecklistItem.ticket_id == ticket_id,
+        )
+        .first()
+    )
+    if not item:
+        raise HTTPException(status_code=404, detail="체크리스트 항목을 찾을 수 없습니다.")
+    return item
+
+
+@router.get("/{ticket_id}/checklist", response_model=schemas.TicketChecklist)
+def get_ticket_checklist(
+    ticket_id: str, db: DBSession, current_user: OrgUser
+) -> schemas.TicketChecklist:
+    """티켓의 출국 준비 체크리스트 조회(소유자·관리자만).
+
+    체크리스트가 생기기 전에 만들어진 티켓은 이 시점에 기본 항목을 깔아준다.
+    """
+    ticket = _get_ticket_for_departure(db, ticket_id, current_user)
+    if ticket.checklist_initialized_at is None:
+        _seed_checklist_items(db, ticket, current_user.id)
+        db.commit()
+    return _checklist_response(ticket, _list_checklist_items(db, ticket.id))
+
+
+@router.post(
+    "/{ticket_id}/checklist",
+    response_model=schemas.TicketChecklist,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_ticket_checklist_item(
+    ticket_id: str,
+    item_in: schemas.TicketChecklistItemCreate,
+    db: DBSession,
+    current_user: OrgUser,
+) -> schemas.TicketChecklist:
+    """체크리스트 항목 추가(소유자·관리자만). 맨 뒤에 붙인다."""
+    ticket = _get_ticket_for_departure(db, ticket_id, current_user)
+    items = _list_checklist_items(db, ticket.id)
+    next_order = (max((i.sort_order for i in items), default=-1)) + 1
+    now = datetime.now(timezone.utc)
+    db.add(
+        models.TicketChecklistItem(
+            ticket_id=ticket.id,
+            label=item_in.label,
+            note=item_in.note,
+            is_done=item_in.is_done,
+            completed_at=now if item_in.is_done else None,
+            sort_order=next_order,
+            created_by_id=current_user.id,
+        )
+    )
+    # 직접 추가한 항목만 있는 티켓에도 기본 항목이 뒤늦게 깔리지 않게 시드 처리로 본다.
+    if ticket.checklist_initialized_at is None:
+        ticket.checklist_initialized_at = now
+    db.commit()
+    db.refresh(ticket)
+    return _checklist_response(ticket, _list_checklist_items(db, ticket.id))
+
+
+@router.put(
+    "/{ticket_id}/checklist/{item_id}", response_model=schemas.TicketChecklist
+)
+def update_ticket_checklist_item(
+    ticket_id: str,
+    item_id: str,
+    item_in: schemas.TicketChecklistItemUpdate,
+    db: DBSession,
+    current_user: OrgUser,
+) -> schemas.TicketChecklist:
+    """체크리스트 항목 수정(소유자·관리자만). 보낸 필드만 바꾼다."""
+    ticket = _get_ticket_for_departure(db, ticket_id, current_user)
+    item = _get_checklist_item(db, ticket.id, item_id)
+    changes = item_in.model_dump(exclude_unset=True)
+    if "label" in changes:
+        item.label = changes["label"]
+    if "note" in changes:
+        item.note = changes["note"]
+    if "is_done" in changes and changes["is_done"] != item.is_done:
+        item.is_done = changes["is_done"]
+        item.completed_at = datetime.now(timezone.utc) if item.is_done else None
+    db.commit()
+    return _checklist_response(ticket, _list_checklist_items(db, ticket.id))
+
+
+@router.delete(
+    "/{ticket_id}/checklist/{item_id}", response_model=schemas.TicketChecklist
+)
+def delete_ticket_checklist_item(
+    ticket_id: str, item_id: str, db: DBSession, current_user: OrgUser
+) -> schemas.TicketChecklist:
+    """체크리스트 항목 삭제(소유자·관리자만)."""
+    ticket = _get_ticket_for_departure(db, ticket_id, current_user)
+    item = _get_checklist_item(db, ticket.id, item_id)
+    db.delete(item)
+    db.commit()
+    return _checklist_response(ticket, _list_checklist_items(db, ticket.id))
+
+
+@router.post(
+    "/{ticket_id}/checklist/restore-template",
+    response_model=schemas.TicketChecklist,
+)
+def restore_ticket_checklist_template(
+    ticket_id: str, db: DBSession, current_user: OrgUser
+) -> schemas.TicketChecklist:
+    """지워진 기본 항목만 다시 만든다(소유자·관리자만).
+
+    남아 있는 항목과 완료 상태는 그대로 두고, template_key가 비어 있는 기본
+    항목만 뒤에 붙인다. 이름을 고친 기본 항목은 키가 남아 있어 중복되지 않는다.
+    """
+    ticket = _get_ticket_for_departure(db, ticket_id, current_user)
+    items = _list_checklist_items(db, ticket.id)
+    present_keys = {item.template_key for item in items if item.template_key}
+    next_order = (max((i.sort_order for i in items), default=-1)) + 1
+    for template in DEPARTURE_CHECKLIST_TEMPLATE:
+        if template["template_key"] in present_keys:
+            continue
+        db.add(
+            models.TicketChecklistItem(
+                ticket_id=ticket.id,
+                template_key=template["template_key"],
+                label=template["label"],
+                sort_order=next_order,
+                created_by_id=current_user.id,
+            )
+        )
+        next_order += 1
+    if ticket.checklist_initialized_at is None:
+        ticket.checklist_initialized_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(ticket)
+    return _checklist_response(ticket, _list_checklist_items(db, ticket.id))

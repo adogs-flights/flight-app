@@ -264,6 +264,100 @@ class Ticket(TicketBase):
 
 
 # ======================================================================================
+# Ticket Checklist Schemas
+# ======================================================================================
+class TicketChecklistItemCreate(BaseModel):
+    """담당자가 직접 추가하는 항목. 기본 항목은 서버가 템플릿으로 만든다."""
+
+    label: str
+    note: str | None = None
+    is_done: bool = False
+
+    @field_validator("label")
+    @classmethod
+    def label_required(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("항목 이름을 입력해주세요.")
+        return v
+
+    @field_validator("note")
+    @classmethod
+    def empty_to_none(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        return v.strip() or None
+
+
+class TicketChecklistItemUpdate(BaseModel):
+    """보낸 항목만 바꾼다. 완료 토글만 하는 경우가 많아 부분 수정으로 받는다."""
+
+    label: str | None = None
+    note: str | None = None
+    is_done: bool | None = None
+
+    @field_validator("label")
+    @classmethod
+    def label_not_blank(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        v = v.strip()
+        if not v:
+            raise ValueError("항목 이름을 입력해주세요.")
+        return v
+
+    @field_validator("note")
+    @classmethod
+    def empty_to_none(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        return v.strip() or None
+
+
+class TicketChecklistItem(BaseModel):
+    id: str
+    ticket_id: str
+    template_key: str | None = None
+    label: str
+    note: str | None = None
+    is_done: bool = False
+    completed_at: datetime | None = None
+    sort_order: int = 0
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class TicketChecklistDocuments(BaseModel):
+    """기존 출국 준비 추가정보에서 파생한 읽기 전용 상태.
+
+    체크리스트 항목으로 복제하지 않고 Ticket 컬럼을 그대로 읽는다.
+    """
+
+    has_address: bool = False
+    has_kakao_id: bool = False
+    has_passport: bool = False
+    has_seat_confirm: bool = False
+    has_eticket: bool = False
+    total: int = 0
+    done: int = 0
+
+
+class TicketChecklist(BaseModel):
+    """체크리스트 조회 응답. 소유자·admin만 받는다."""
+
+    ticket_id: str
+    items: list[TicketChecklistItem] = []
+    total: int = 0
+    done: int = 0
+    documents: TicketChecklistDocuments
+    # 기본 항목 중 아직 티켓에 없는 것이 있는지. 화면의 "기본 항목 복원" 노출에 쓴다.
+    missing_template_keys: list[str] = []
+
+
+# ======================================================================================
 # TicketApplication Schemas
 # ======================================================================================
 class TicketApplicationBase(BaseModel):

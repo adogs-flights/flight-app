@@ -102,6 +102,11 @@ export const uiVariants = {
             className: "col-span-full min-w-0 w-full space-y-2",
             usedBy: ["src/pages/GuestTicketSubmitView.jsx"],
         },
+        checklist: {
+            label: "출국 준비 체크리스트",
+            className: "col-span-full min-w-0 w-full mt-3 space-y-3",
+            usedBy: ["src/components/modals/TicketChecklistSection.jsx"],
+        },
     },
     Heading: {
         rescueDogCard: {
@@ -455,6 +460,7 @@ export const uiVariants = {
             usedBy: [
                 "src/components/RescueDogExpensePanel.jsx",
                 "src/components/RescueDogRecordPanel.jsx",
+                "src/components/modals/TicketChecklistSection.jsx",
             ],
         },
         rescueRecordCancel: {
@@ -462,6 +468,7 @@ export const uiVariants = {
             usedBy: [
                 "src/components/RescueDogExpensePanel.jsx",
                 "src/components/RescueDogRecordPanel.jsx",
+                "src/components/modals/TicketChecklistSection.jsx",
             ],
         },
         rescueRecordAdd: {
@@ -469,6 +476,7 @@ export const uiVariants = {
             usedBy: [
                 "src/components/RescueDogExpensePanel.jsx",
                 "src/components/RescueDogRecordPanel.jsx",
+                "src/components/modals/TicketChecklistSection.jsx",
             ],
         },
         rescueRowAction: {
@@ -476,6 +484,7 @@ export const uiVariants = {
             usedBy: [
                 "src/components/RescueDogExpensePanel.jsx",
                 "src/components/RescueDogRecordPanel.jsx",
+                "src/components/modals/TicketChecklistSection.jsx",
             ],
         },
         rescueRowConfirm: {
@@ -490,6 +499,7 @@ export const uiVariants = {
             usedBy: [
                 "src/components/RescueDogExpensePanel.jsx",
                 "src/components/RescueDogRecordPanel.jsx",
+                "src/components/modals/TicketChecklistSection.jsx",
             ],
         },
         rescueDogDelete: {
@@ -790,7 +800,7 @@ export const uiVariants = {
         },
         purgeDocuments: {
             className: "mt-3 block text-[11px] font-medium text-slate-400 hover:text-destructive underline underline-offset-4",
-            usedBy: ["src/components/modals/TicketDepartureSection.jsx"],
+            usedBy: ["src/components/modals/TicketDepartureSection.jsx","src/components/modals/TicketChecklistSection.jsx"],
         },
         detailCopy: {
             className: "flex items-center justify-center gap-2 h-10 px-5 text-[13px] font-bold rounded-lg bg-slate-100 text-slate-900 hover:bg-slate-200 transition-all duration-200 active:scale-[0.96] shadow-sm",
@@ -893,7 +903,7 @@ export const uiVariants = {
         },
         ticketDeparture: {
             className: "text-[12px] font-bold uppercase tracking-wider text-muted-foreground",
-            usedBy: ["src/components/modals/TicketDepartureSection.jsx","src/components/modals/TicketDetailModal.jsx","src/components/modals/TicketEticketSection.jsx"],
+            usedBy: ["src/components/modals/TicketDepartureSection.jsx","src/components/modals/TicketDetailModal.jsx","src/components/modals/TicketEticketSection.jsx","src/components/modals/TicketChecklistSection.jsx"],
         },
         ticketDetail: {
             className: "text-[12px] font-bold uppercase tracking-wider text-muted-foreground whitespace-nowrap",
@@ -907,8 +917,16 @@ export const uiVariants = {
             className: "text-[12px] font-bold uppercase tracking-wider text-muted-foreground pl-1",
             usedBy: ["src/components/modals/TicketDetailModal.jsx"],
         },
+        ticketChecklistItem: {
+            className: "block text-sm font-bold leading-snug break-words cursor-pointer",
+            usedBy: ["src/components/modals/TicketChecklistSection.jsx"],
+        },
     },
     Input: {
+        ticketChecklist: {
+            className: "mt-0.5 w-5 h-5 shrink-0 rounded border-border accent-primary disabled:opacity-50",
+            usedBy: ["src/components/modals/TicketChecklistSection.jsx"],
+        },
         rescueDogCheckbox: {
             className: "w-4 h-4 rounded border-border accent-primary",
             usedBy: [
@@ -958,7 +976,7 @@ export const uiVariants = {
         },
         compact: {
             className: "flex h-10 w-full rounded-lg border-2 border-border bg-background px-3 text-sm transition-all focus:border-primary/50 focus-visible:outline-none",
-            usedBy: ["src/pages/OrgProfileEdit.jsx","src/components/modals/TicketDepartureSection.jsx"],
+            usedBy: ["src/pages/OrgProfileEdit.jsx","src/components/modals/TicketDepartureSection.jsx","src/components/modals/TicketChecklistSection.jsx"],
         },
         publicSearch: {
             className: "flex h-10 w-full rounded-md border-2 border-border bg-background pl-9 pr-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-all focus:border-primary/50 sm:w-[260px]",
@@ -1094,6 +1112,10 @@ export const uiVariants = {
         },
     },
     Badge: {
+        ticketChecklistProgress: {
+            className: "text-[11px] font-black text-muted-foreground whitespace-nowrap",
+            usedBy: ["src/components/modals/TicketChecklistSection.jsx"],
+        },
         rescueDogCard: {
             className: "px-2.5 py-1 rounded-lg text-[10px] font-black border shadow-sm",
             usedBy: [
@@ -1106,6 +1128,7 @@ export const uiVariants = {
             usedBy: [
                 "src/components/RescueDogExpensePanel.jsx",
                 "src/components/RescueDogRecordPanel.jsx",
+                "src/components/modals/TicketChecklistSection.jsx",
             ],
         },
         admin: {
@@ -1227,7 +1250,7 @@ export const uiVariants = {
         },
         generalSignup: {
             className: "px-3 py-2 text-xs font-medium text-destructive bg-destructive/10 border border-destructive/20 rounded-lg",
-            usedBy: ["src/pages/GeneralSignup.jsx","src/pages/OrgProfileEdit.jsx","src/pages/OrgSignup.jsx","src/pages/SubmissionStatusView.jsx","src/components/modals/AirlineModal.jsx","src/components/modals/AirportModal.jsx","src/components/modals/ApplyModal.jsx","src/components/modals/OrganizationModal.jsx","src/components/modals/RegisterUserModal.jsx","src/components/modals/TicketDepartureSection.jsx"],
+            usedBy: ["src/pages/GeneralSignup.jsx","src/pages/OrgProfileEdit.jsx","src/pages/OrgSignup.jsx","src/pages/SubmissionStatusView.jsx","src/components/modals/AirlineModal.jsx","src/components/modals/AirportModal.jsx","src/components/modals/ApplyModal.jsx","src/components/modals/OrganizationModal.jsx","src/components/modals/RegisterUserModal.jsx","src/components/modals/TicketDepartureSection.jsx","src/components/modals/TicketChecklistSection.jsx"],
         },
         guestTicketSubmit: {
             className: "p-6 rounded-xl border-2 border-green/20 bg-green/5 text-center space-y-2",
@@ -1278,7 +1301,7 @@ export const uiVariants = {
         },
         short: {
             className: "flex min-h-[80px] w-full rounded-lg border-2 border-border bg-background px-4 py-3 text-sm transition-all focus:border-primary/50 focus-visible:outline-none",
-            usedBy: ["src/components/modals/GuestSubmissionReviewModal.jsx"],
+            usedBy: ["src/components/modals/GuestSubmissionReviewModal.jsx","src/components/modals/TicketChecklistSection.jsx"],
         },
         default: {
             className: "flex min-h-[100px] w-full rounded-lg border-2 border-border bg-background px-4 py-3 text-sm transition-all focus:border-primary/50 focus-visible:outline-none",

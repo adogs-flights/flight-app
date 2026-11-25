@@ -85,6 +85,26 @@ function PagePlaceholder() {
     );
 }
 
+function ChecklistPlaceholder() {
+    // 실제 체크리스트와 같은 순서: 진행률 바 → 서류 칩 → 항목 행.
+    return (
+        <>
+            <Skeleton style={{ height: '8px', borderRadius: '9999px' }} />
+            <div className="flex flex-wrap gap-1.5">
+                {repeat(5, index => <Skeleton key={index} variant="badge" />)}
+            </div>
+            <div className="space-y-2">
+                {repeat(4, index => (
+                    <div key={index} className="flex items-start gap-3 rounded-xl border-2 border-border p-3">
+                        <Skeleton style={{ width: '20px', height: '20px', flexShrink: 0 }} />
+                        <Skeleton style={{ width: index % 2 ? '55%' : '70%' }} />
+                    </div>
+                ))}
+            </div>
+        </>
+    );
+}
+
 function Content({ variant, count, columns }) {
     switch (variant) {
         case 'tickets': return repeat(count ?? 6, index => <TicketPlaceholder key={index} />);
@@ -117,6 +137,7 @@ function Content({ variant, count, columns }) {
         case 'notifications': return <Card variant="skeletonPanel"><div className="space-y-4">{repeat(4, index => <Skeleton key={index} style={{ width: index % 2 ? '75%' : '55%' }} />)}</div></Card>;
         case 'image': return <Skeleton variant="image" />;
         case 'field': return <><Skeleton style={{ width: '30%' }} /><Skeleton variant="field" /></>;
+        case 'checklist': return <ChecklistPlaceholder />;
         default: return <PagePlaceholder />;
     }
 }

@@ -38,3 +38,8 @@
 1. **Alembic env.py 검증**: 마이그레이션 생성 전 `env.py`에 `import models`가 포함되어 있는지 반드시 확인한다.
 2. **마이그레이션 수동 검토**: `op.drop_table` 등이 의도치 않게 포함되었는지 전수 검사한다.
 3. **Base.metadata.create_all 사용 금지**: 오직 Alembic 마이그레이션을 통해서만 스키마를 변경한다.
+
+### 🚨 테스트와 린트 (TICKET-CHECKLIST)
+1. **org 사용자 픽스처**: `role="org"` 사용자는 `ck_users_org_requires_credentials_and_org` 제약 때문에 `organization_id` 없이 만들 수 없다. 테스트에서 단체를 먼저 만들고 연결한다.
+2. **ruff 설정 부재**: 저장소에 ruff 설정 파일이 없고 ruff가 `requirements.txt`에도 없다. 기본 규칙으로 돌리면 기존 코드 전반에서 `UP017`(`datetime.timezone.utc`)이 잡히므로, 새 코드도 주변과 같은 `timezone.utc` 관례를 유지하고 린트 결과는 기존 건수와 비교해 보고한다.
+3. **티켓 하위 리소스 권한**: 티켓의 민감 하위 리소스(출국 준비 추가정보·체크리스트)는 `routers/tickets.py`의 `_get_ticket_for_departure`(소유자·admin)를 재사용한다. 공용 `schemas.Ticket`에 실으면 티켓 목록을 공유받는 다른 단체까지 보게 되므로 별도 엔드포인트로만 내려준다.

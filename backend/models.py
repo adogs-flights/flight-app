@@ -152,6 +152,10 @@ class Ticket(Base):
     # 봉사자 제출 티켓을 승인해 만든 일정이면, 제출 시 받은 e티켓 이미지 키를 여기로 이관한다.
     eticket_object_key = Column(String, nullable=True)  # e티켓 이미지
 
+    # 출국 준비 체크리스트의 기본 항목을 깔아준 시각. 항목을 전부 지운 티켓에
+    # 기본 항목이 되살아나지 않게 하려고 "시드했는지"를 따로 기록한다.
+    checklist_initialized_at = Column(DateTime(timezone=True), nullable=True)
+
     created_by_id = Column(
         String, ForeignKey("users.id", ondelete="SET NULL"), index=True
     )
@@ -174,6 +178,12 @@ class Ticket(Base):
     google_sync = relationship(
         "GoogleDriveSync", back_populates="ticket", uselist=False, cascade="all, delete-orphan"
     )
+    checklist_items = relationship(
+        "TicketChecklistItem",
+        back_populates="ticket",
+        cascade="all, delete-orphan",
+        order_by="TicketChecklistItem.sort_order",
+    )
 
     @property
     def has_passport(self) -> bool:
@@ -190,6 +200,46 @@ class Ticket(Base):
     @property
     def departure_submitted(self) -> bool:
         return self.departure_submitted_at is not None
+
+
+class TicketChecklistItem(Base):
+    """티켓 하나의 출국 준비 체크리스트 항목.
+
+    기한 없이 "했는지 안 했는지"만 본다. 출국일이 티켓에 이미 있어 항목마다
+    날짜를 또 받으면 관리 대상만 늘어나기 때문이다. 완료로 바꾼 시점은
+    completed_at에 남겨 누가 언제 끝냈는지 되짚을 수 있게 한다.
+
+    기본 항목(static_data.DEPARTURE_CHECKLIST_TEMPLATE)에서 생성된 항목은
+    template_key를 갖고, 담당자가 직접 추가한 항목은 비어 있다. 기본 항목도
+    수정·삭제할 수 있으므로 template_key는 "복원 시 중복 생성 방지" 용도다.
+
+    서류(여권·자리 확약·e티켓)와 주소는 Ticket 컬럼에 이미 있으므로 여기에
+    항목으로 복제하지 않고, 조회 응답에서 파생 상태로만 함께 보여준다.
+    """
+
+    __tablename__ = "ticket_checklist_items"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    ticket_id = Column(
+        String, ForeignKey("tickets.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    # 기본 항목 식별자. 담당자가 추가한 항목은 None.
+    template_key = Column(String, nullable=True)
+    label = Column(Text, nullable=False)
+    note = Column(Text, nullable=True)
+    is_done = Column(Boolean, nullable=False, default=False, index=True)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+    sort_order = Column(Integer, nullable=False, default=0)
+
+    created_by_id = Column(
+        String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    ticket = relationship("Ticket", back_populates="checklist_items")
 
 
 class TicketApplication(Base):

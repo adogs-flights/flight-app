@@ -1,5 +1,14 @@
 # 프로젝트 이슈 및 로드맵
 
+## [TICKET-CHECKLIST] 티켓별 출국 준비 체크리스트
+
+- 티켓마다 출국 준비 항목을 기본 템플릿(`static_data.DEPARTURE_CHECKLIST_TEMPLATE`)으로 깔아주고, 담당자가 항목을 추가·수정·삭제한다.
+- 기한은 두지 않고 완료 여부만 다룬다. 완료로 바꾼 시각(`completed_at`)만 함께 남긴다.
+- 조회·수정은 티켓 소유자와 `admin`만 한다. 공용 `schemas.Ticket`에 싣지 않고 `/api/tickets/{id}/checklist`로만 내려준다.
+- 기존 출국 준비 추가정보(주소·카카오 ID·여권·자리확약·e티켓)는 복제하지 않고 조회 응답의 `documents` 파생값으로 읽기 전용 진행률만 보여준다.
+- 기본 항목을 지운 티켓은 조회만으로 되살아나지 않는다(`tickets.checklist_initialized_at`). 복원은 `POST /checklist/restore-template`로 명시적으로 한다.
+- 구현 및 검증 기록은 `todo.md`의 같은 항목을 참조한다.
+
 ## [UI-CATALOG] 공통 UI와 관리자 컴포넌트 미리보기
 
 - 실제 페이지와 `/admin/ui`가 같은 공통 컴포넌트·스타일을 사용한다.

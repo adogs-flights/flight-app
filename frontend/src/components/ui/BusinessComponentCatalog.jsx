@@ -18,6 +18,7 @@ import GuestSubmissionReviewModal from '../modals/GuestSubmissionReviewModal';
 import FolderSetupModal from '../modals/FolderSetupModal';
 import TicketDepartureSection from '../modals/TicketDepartureSection';
 import TicketEticketSection from '../modals/TicketEticketSection';
+import TicketChecklistSection from '../modals/TicketChecklistSection';
 import { createPreviewApi, previewUser, previewOrganization, previewAirports, previewAirlines, previewTicket, previewPost, previewSubmission } from './previewData.js';
 
 const COMPONENTS = {
@@ -29,6 +30,7 @@ const COMPONENTS = {
     OrganizationModal: [OrganizationModal, '단체 관리'], ChangePasswordModal: [ChangePasswordModal, '비밀번호 변경'],
     GuestSubmissionReviewModal: [GuestSubmissionReviewModal, '제출 검토'], FolderSetupModal: [FolderSetupModal, 'Drive 폴더 설정'],
     TicketDepartureSection: [TicketDepartureSection, '출국 준비 정보'], TicketEticketSection: [TicketEticketSection, 'e티켓 표시'],
+    TicketChecklistSection: [TicketChecklistSection, '출국 준비 체크리스트'],
 };
 
 export default function BusinessComponentCatalog() {

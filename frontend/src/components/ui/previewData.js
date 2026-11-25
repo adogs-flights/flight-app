@@ -24,9 +24,44 @@ export const previewSubmission = {
     organization: previewOrganization, need_post: previewPost,
 };
 
+// 출국 준비 체크리스트 미리보기. 기본 항목 일부를 지운 상태로 두어
+// '지워진 기본 항목 복원' 동작까지 확인할 수 있게 한다.
+export const previewChecklist = {
+    ticket_id: previewTicket.id,
+    items: [
+        {
+            id: 'ui-preview-checklist-1', ticket_id: previewTicket.id, template_key: 'airline_pet_booking',
+            label: '항공사 반려동물 동반 예약 확인', note: '기내 1마리 확약 완료', is_done: true,
+            completed_at: '2026-10-01T01:00:00Z', sort_order: 0,
+            created_at: '2026-09-30T01:00:00Z', updated_at: '2026-10-01T01:00:00Z',
+        },
+        {
+            id: 'ui-preview-checklist-2', ticket_id: previewTicket.id, template_key: 'rabies_record',
+            label: '광견병 예방접종·항체 검사 확인', note: null, is_done: false,
+            completed_at: null, sort_order: 1,
+            created_at: '2026-09-30T01:00:00Z', updated_at: '2026-09-30T01:00:00Z',
+        },
+        {
+            id: 'ui-preview-checklist-3', ticket_id: previewTicket.id, template_key: null,
+            label: '켄넬 대여 확인', note: '공항 카운터에서 수령', is_done: false,
+            completed_at: null, sort_order: 2,
+            created_at: '2026-09-30T02:00:00Z', updated_at: '2026-09-30T02:00:00Z',
+        },
+    ],
+    total: 3,
+    done: 1,
+    documents: {
+        has_address: true, has_kakao_id: false, has_passport: true,
+        has_seat_confirm: false, has_eticket: false, total: 5, done: 2,
+    },
+    missing_template_keys: ['export_quarantine', 'microchip'],
+};
+
 export function createPreviewApi(onAction) {
     const mutate = async (method, url, payload) => {
         onAction(`${method} ${url}`);
+        // 체크리스트 엔드포인트는 티켓이 아니라 체크리스트를 돌려준다.
+        if (url.includes('/checklist')) return { data: previewChecklist };
         return { data: { ...previewTicket, ...(payload instanceof FormData ? {} : payload) } };
     };
     return {
@@ -36,6 +71,7 @@ export function createPreviewApi(onAction) {
             if (url === `/tickets/${previewTicket.id}/applications`) return {
                 data: [{ id: 'ui-preview-application', applicant: previewUser, status: 'pending', message: '이동봉사를 신청합니다.', contact: '연락처 예시' }],
             };
+            if (url === `/tickets/${previewTicket.id}/checklist`) return { data: previewChecklist };
             if (url === `/tickets/${previewTicket.id}/eticket`) return {
                 data: new Blob(['<svg xmlns="http://www.w3.org/2000/svg" width="400" height="180"><rect width="400" height="180" fill="#f4f4f5"/><text x="30" y="90" font-size="24">SAMPLE E-TICKET</text></svg>'], { type: 'image/svg+xml' }),
             };
