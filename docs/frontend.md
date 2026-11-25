@@ -28,3 +28,8 @@
 ## 주의 사항: 조회 스켈레톤 (UI-CATALOG)
 - 페이지와 관리자 카탈로그는 `components/ui/LoadingSkeleton.jsx` 및 `uiVariants.js`의 공통 정의를 사용한다. 조회 시작·성공·실패를 구분하고 실패 시 스켈레톤을 끝낸다. 특히 이미지 URL이 비었다는 조건만으로 로딩 여부를 판단하면 조회 실패 후 무한 로딩이 남으므로 오류 상태를 함께 관리한다.
 - 반응형 카드 목록의 최소 열 너비는 컨테이너보다 넓어지지 않도록 제한한다. 스켈레톤에서도 실제 콘텐츠와 동일한 열 배치를 사용한다.
+
+## 주의 사항: 공통 UI 테스트 (TICKET-CHECKLIST)
+- `node --test tests/*.test.mjs`는 로더가 없어 `.jsx`를 import하지 못한다(`ERR_UNKNOWN_FILE_EXTENSION`). UI 테스트는 `.js` 모듈(`primitives.js`, `uiVariants.js`, `previewData.js`, `utils/*.js`)을 직접 불러 검증하고, 컴포넌트는 소스 문자열에서 사용한 `variant` 이름을 확인하는 방식으로 다룬다.
+- 새 컴포넌트를 만들면 `uiVariants.js`의 신규 variant뿐 아니라 **재사용한 기존 variant의 `usedBy`**에도 경로를 추가한다. 재사용 쪽은 테스트로 강제하지 않으면 빠지기 쉬우므로 테스트에서 함께 확인한다.
+- 공통 뱃지(`Badge.rescueDogRecord`)처럼 테두리 유틸리티가 없는 정의를 재사용할 때는 상태 색과 함께 `border`를 `className`으로 넘긴다. 색만 넘기면 테두리가 보이지 않는다.

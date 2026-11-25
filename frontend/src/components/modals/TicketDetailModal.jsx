@@ -4,6 +4,7 @@ import Modal from '../ui/Modal';
 import { useAuth } from '../../hooks/useAuth';
 import { getAirportColor } from '../../utils/airportUtils';
 import { toBlob } from 'html-to-image';
+import TicketChecklistSection from './TicketChecklistSection';
 import TicketDepartureSection from './TicketDepartureSection';
 import TicketEticketSection from './TicketEticketSection';
 
@@ -335,6 +336,9 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onEditClick
 
             {/* e티켓 이미지 (소유자/관리자만) — 공유 이미지 캡처 영역 밖에 둔다 */}
             {canDelete && <TicketEticketSection ticket={ticket} />}
+
+            {/* 출국 준비 체크리스트 (소유자/관리자만) — 공유 이미지 캡처 영역 밖에 둔다 */}
+            {canDelete && <TicketChecklistSection ticket={ticket} canManage={canDelete} />}
 
             {/* 출국 준비 추가정보 (소유자/관리자만) — 공유 이미지 캡처 영역 밖에 둔다 */}
             {canDelete && (
