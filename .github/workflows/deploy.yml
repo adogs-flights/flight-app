@@ -147,7 +147,7 @@ jobs:
             --instance-ids "${{ env.INSTANCE_ID }}" \
             --document-name AWS-RunShellScript \
             --comment "deploy ${{ github.sha }}" \
-            --parameters "commands=[\"set -euo pipefail\",\"cd /home/ubuntu/flight-app\",\"aws s3 cp s3://adogs-ticket-uploads/_deploy/${{ github.sha }}.tar.gz /tmp/d.tar.gz --region ${{ env.AWS_REGION }} --quiet\",\"tar xzf /tmp/d.tar.gz -C /home/ubuntu/flight-app\",\"rm -f /tmp/d.tar.gz\",\"chown -R ubuntu:ubuntu /home/ubuntu/flight-app\",\"chmod +x scripts/deploy-aws.sh scripts/db/init-roles.sh\",\"bash scripts/deploy-aws.sh ${{ github.sha }}\"],executionTimeout=[900]" \
+            --parameters "commands=[\"#!/bin/bash\",\"set -euo pipefail\",\"cd /home/ubuntu/flight-app\",\"aws s3 cp s3://adogs-ticket-uploads/_deploy/${{ github.sha }}.tar.gz /tmp/d.tar.gz --region ${{ env.AWS_REGION }} --quiet\",\"tar xzf /tmp/d.tar.gz -C /home/ubuntu/flight-app\",\"rm -f /tmp/d.tar.gz\",\"chown -R ubuntu:ubuntu /home/ubuntu/flight-app\",\"chmod +x scripts/deploy-aws.sh scripts/db/init-roles.sh\",\"bash scripts/deploy-aws.sh ${{ github.sha }}\"],executionTimeout=[900]" \
             --timeout-seconds 900 \
             --query 'Command.CommandId' --output text)
           echo "SSM 명령: $command_id"
@@ -166,7 +166,7 @@ jobs:
               Failed|Cancelled|TimedOut)
                 aws ssm get-command-invocation --command-id "$command_id" \
                   --instance-id "${{ env.INSTANCE_ID }}" \
-                  --query '{출력:StandardOutputContent,오류:StandardErrorContent}' --output json
+                  --query '{Stdout:StandardOutputContent,Stderr:StandardErrorContent}' --output json
                 echo "배포 실패: $status" >&2
                 exit 1
                 ;;
@@ -176,7 +176,10 @@ jobs:
           echo '배포 상태 확인이 시간 초과되었다' >&2
           exit 1
 
+      # 이전 기간에는 공개 도메인이 아직 기존 서버를 가리켜 이 확인이
+      # 무의미하게 통과한다. 컷오버 이후인 main에서만 수행한다.
       - name: Verify public endpoint
+        if: github.ref == 'refs/heads/main'
         run: |
           curl --fail --silent --show-error --location --max-redirs 3 \
             --retry 10 --retry-delay 3 \

@@ -42,7 +42,7 @@ services:
     restart: unless-stopped
 
   flight-backend:
-    image: ${IMAGE_NAME_BACKEND:-ghcr.io/adogs-flights/flight-backend}:${FLIGHT_BACKEND_TAG:?immutable backend revision required}
+    image: ${IMAGE_NAME_BACKEND:-966203577238.dkr.ecr.ap-northeast-2.amazonaws.com/flight-backend}:${FLIGHT_BACKEND_TAG:?immutable backend revision required}
     container_name: flight-backend
     volumes:
       - ./data:/app/data
@@ -91,7 +91,7 @@ services:
     restart: "no"
 
   flight-frontend:
-    image: ${IMAGE_NAME_FRONTEND:-flight-frontend}:latest
+    image: ${IMAGE_NAME_FRONTEND:-966203577238.dkr.ecr.ap-northeast-2.amazonaws.com/flight-frontend}:latest
     container_name: flight-frontend
     user: node
     read_only: true
