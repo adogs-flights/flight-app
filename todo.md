@@ -131,6 +131,54 @@ Flexible은 오리진에 평문 80으로 접속하는데 새 인스턴스는 443
 
 ---
 
+## [BACKUP] 야간 백업 구축 (2026-11-28)
+
+[참조 하네스]: AGENTS.md, docs/vault-runtime.md
+[상태]: **완료 — 복원까지 검증.**
+
+[배경 — 내가 빠뜨린 항목]
+`[AWS-MIGRATION]` 1단계 체크리스트에 "야간 백업 작업: pg_dump → S3 + EBS 스냅샷
+일정. **1순위 선택의 전제 조건이므로 이 단계에서 반드시 완성**"이라고 적어두고
+실제로 만들지 않았다. 컨테이너 DB를 고른 근거가 "백업을 직접 만든다"였는데,
+그 전제가 충족되지 않은 상태로 운영을 전환했다. 확인 결과 systemd 타이머·cron·
+백업 스크립트가 모두 없었고 S3에도 백업 객체가 없었다. **EBS 볼륨이 유일한
+사본인 상태로 며칠 돌 수 있었다.**
+
+[구성]
+- `scripts/backup-flight.sh` — 컨테이너 PostgreSQL을 `pg_dump`로 뜨고(런타임
+  자격증명으로 충분하다. DDL 권한이 필요 없다) gzip 후 S3 `_backup/db/`로 보낸다.
+  업로드는 `aws s3 sync`로 `_backup/uploads/`에 변경분만 올린다. **삭제는 반영하지
+  않는다** — 실수로 지운 파일이 백업에서도 사라지는 것을 막는다
+- 안전장치: 빈 덤프·깨진 gzip·테이블 정의 없는 덤프를 올리지 않는다
+- 보존: DB 덤프 30일. 업로드는 지우지 않는다
+- `haebong-backup.timer` — 매일 19:00 UTC(한국 새벽 4시대), `Persistent=true`로
+  인스턴스가 꺼져 있던 동안의 실행을 따라잡는다
+
+[구축 중 고친 문제 둘]
+1. **`zcat | grep -q` + `pipefail`** — `grep -q`가 일치 즉시 종료해 `zcat`이
+   SIGPIPE로 죽고, `pipefail`이 그것을 파이프라인 실패로 전파했다. 덤프가
+   정상인데 "테이블 정의가 없다"고 판정했다. `grep -c`로 바꿨다(입력을 끝까지 읽음)
+2. **`NoNewPrivileges=yes` + AppArmor** — 이 옵션이 켜져 있으면 `docker run`이
+   컨테이너에 AppArmor 프로필을 적용할 수 없어 `cannot change profile for the
+   next exec call`로 거부된다. root로 도커를 호출하는 oneshot 유닛이라 실익이
+   없어 제거했다
+
+[검증]
+- 타이머 `enabled`/`active`, 예정 실행 확인
+- **예정을 기다리지 않고 즉시 실행**해 성공 확인: `28K, 테이블 17개`
+- S3 확인: DB 덤프 2건, 업로드 52개·20.7MB
+- **복원 검증**: 최신 덤프를 임시 데이터베이스 `restore_probe`로 복원해
+  `alembic 022` / users 8 / tickets 75 / 테이블 17개 확인 후 정리.
+  운영 DB는 건드리지 않았다
+
+[남은 일]
+- [ ] EBS 스냅샷 일정(AWS Backup 또는 DLM). 현재는 S3 백업만 있다. 볼륨 전체
+      복구가 필요한 경우를 대비하려면 추가해야 한다
+- [ ] 업로드 파일을 S3를 **1차 저장소**로 쓰도록 전환(`MINIO_*` 설정).
+      현재는 로컬 디스크가 1차이고 S3는 백업 사본이다
+
+---
+
 ## [PUSH-ENABLE] 웹푸시 활성화 (2026-11-28)
 
 [참조 하네스]: AGENTS.md, docs/pwa-web-push.md, docs/security.md
