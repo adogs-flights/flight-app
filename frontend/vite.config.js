@@ -30,6 +30,12 @@ export default defineConfig({
           src: `/pwa-${size}.png`, sizes: `${size}x${size}`, type: 'image/png', purpose: 'any',
         })),
       },
+      // Serve src/sw.js in vite dev too, so Push can be tested without a build.
+      // The plugin replaces __WB_MANIFEST with [] here, so dev modules are never precached.
+      devOptions: {
+        enabled: true,
+        type: 'module',
+      },
     })
   ],
   preview: {

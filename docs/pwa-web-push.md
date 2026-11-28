@@ -115,7 +115,9 @@ npm run preview -- --host 127.0.0.1
 ```
 
 `http://localhost:4173`에서 로그인 → 알림 설정 → 알림 받기 → 테스트 알림 보내기 순서로 확인한다.
-preview의 `/api`는 8000번 백엔드로 연결된다. 일반 `npm run dev`에서는 워커를 등록하지 않는다.
+preview의 `/api`는 8000번 백엔드로 연결된다. `npm run dev`도 `devOptions`로 같은 `src/sw.js`를
+등록하므로 `http://localhost:5173`에서 바로 확인할 수 있다. dev에서는 `__WB_MANIFEST`가 `[]`로
+치환되어 사전 캐시는 하지 않으며, 플러그인이 만드는 `frontend/dev-dist/`는 Git에서 제외한다.
 실기기는 HTTPS 환경을 사용한다. iPhone/iPad는 홈 화면에 설치해 실행한 앱에서 권한을 요청한다.
 권한은 버튼 클릭에서만 요청하며 차단 상태에서는 브라우저/OS 설정 변경 안내를 표시한다.
 

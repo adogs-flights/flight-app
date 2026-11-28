@@ -11,9 +11,9 @@ export function urlBase64ToUint8Array(value) {
 }
 
 export async function pushRegistration() {
-    // vite dev intentionally has no worker. Avoid an endlessly pending ready promise.
+    // A tab opened before the worker registered has none. Avoid an endlessly pending ready promise.
     const registration = await navigator.serviceWorker.getRegistration('/');
-    if (!registration) throw new Error('앱 준비가 끝나지 않았습니다. 새로고침 후 다시 시도해 주세요. 로컬에서는 빌드 미리보기를 사용해 주세요.');
+    if (!registration) throw new Error('앱 준비가 끝나지 않았습니다. 새로고침 후 다시 시도해 주세요.');
     let timer;
     try {
         return await Promise.race([
