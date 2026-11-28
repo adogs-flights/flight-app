@@ -131,6 +131,48 @@ Flexible은 오리진에 평문 80으로 접속하는데 새 인스턴스는 443
 
 ---
 
+## [PUSH-ENABLE] 웹푸시 활성화 (2026-11-28)
+
+[참조 하네스]: AGENTS.md, docs/pwa-web-push.md, docs/security.md
+[상태]: **완료 — 실제 알림 수신 확인.**
+
+[배경]
+도메인 교체 계획을 세울 때 "교체하면 웹푸시 구독이 전부 무효가 되니 사용자에게
+재구독 안내가 필요하다"고 판단했으나, **운영에 웹푸시가 설정돼 있지 않았다.**
+`CONFIG_JSON`에 `VAPID_*`가 없었고(`runtime_secrets.py`의 `OPTIONAL_NAMES`라 없어도
+기동됨) `push_subscriptions`도 0건이었다. 코드는 완성돼 있고 설정만 비어 있던
+상태다. `watch_folder`가 호출되지 않는 것과 같은 패턴이다 — **코드의 존재를 운영
+동작의 근거로 삼으면 안 된다는 교훈.**
+
+[작업]
+- VAPID 키 쌍 생성(P-256). `web_push_provider.WebPushSettings.from_env`의 검증
+  조건(개인키 32바이트, 공개키가 개인키에서 파생된 값과 일치, `VAPID_SUBJECT`가
+  `mailto:` 또는 `https:`)을 생성 시점에 미리 통과시켰다
+- **값은 `CONFIG_JSON`에 병합했다.** `read_runtime`이 `CONFIG_JSON` 하나만 읽으므로
+  별도 SSM 파라미터로는 앱이 보지 못한다. 처음 별도 파라미터로 넣었다가 정정하고
+  임시 파라미터는 삭제했다
+- 발행기로 세대 발행 후 백엔드 재기동. 프론트엔드는 런타임에
+  `/api/push/public-key`로 공개키를 받으므로 **재빌드가 불필요했다**
+
+[검증]
+- `WebPushSettings.enabled` → True, `subject` → `mailto:adogs.ticket@gmail.com`
+- `/api/push/public-key`가 생성한 공개키와 일치하는 값 반환
+- `POST /api/push/subscriptions` 비로그인 401
+- 실제 브라우저에서 구독 등록 성공(Apple 푸시 서비스 1건) 및 **알림 수신 확인**
+- 백엔드 로그에 발송 오류 0건
+
+[알림이 발송되는 상황]
+| 상황 | 수신자 | 이동 경로 |
+|---|---|---|
+| 티켓에 새 신청 | 티켓 소유자 + 소유 단체 회원 전원 | `/mytickets` |
+| 신청 결과 결정(승인·미선정) | 신청자 | `/myapplications` |
+
+이동 경로는 `App.jsx`의 실제 라우트(`mytickets`, `myapplications` — 하이픈 없음)와
+일치한다. 발송은 `BackgroundTasks`로 처리되어 응답을 지연시키지 않고 이메일도
+함께 간다. 404/410 응답 시 구독 행을 자동 삭제하는 처리가 이미 있다.
+
+---
+
 ## [DOMAIN-SWITCH] 주 도메인 교체 (2026-11-28)
 
 [상태]: **실행 완료 — `haebongticket.com`으로 전환. 검증 기록은 아래.**
