@@ -131,9 +131,48 @@ Flexible은 오리진에 평문 80으로 접속하는데 새 인스턴스는 443
 
 ---
 
-## [DOMAIN-SWITCH] 주 도메인 교체 (AWS 이전 완료 후)
+## [DOMAIN-SWITCH] 주 도메인 교체 (2026-11-28)
 
-[상태]: **보류 — `[AWS-MIGRATION]` 2단계 안정화 확인 후 착수. 새 도메인 이름 미정.**
+[상태]: **실행 완료 — `haebongticket.com`으로 전환. 검증 기록은 아래.**
+
+[사용자 결정]
+- 새 도메인은 **`haebongticket.com`**(가비아 등록, 2026-11-28 생성). DNS는 Cloudflare로 이전했다.
+- 기존 `adogs-ticket.shop`은 폐기하지 않고 301 리다이렉트로 유지한다.
+- 구글 클라우드 프로젝트는 새로 만들지 않고 **기존 프로젝트에 소유자로 추가**받는 경로(A′)를 택했다. `client_id`가 유지되므로 기존 사용자의 드라이브 연동이 끊기지 않는다.
+- 이메일은 Gmail SMTP를 유지한다. SES 전환은 임계 경로가 아니므로 하지 않았다.
+
+### 실행 기록
+
+사전 작업(사용자): Cloudflare에 영역 추가 및 가비아 네임서버 변경, A 레코드
+`43.200.17.212`(프록시), SSL/TLS Full (strict), 새 도메인용 Origin 인증서 발급,
+카카오 콘솔 Redirect URI 추가, 구글 OAuth 클라이언트에 새 도메인 URI·JS 원본 추가,
+구글 동의 화면 승인된 도메인 추가, Search Console TXT 소유 확인.
+
+구성 변경:
+- 발행기 `publish-secrets.py`에 `TLS_CERT_NEW`·`TLS_KEY_NEW` 슬롯 추가. 두 도메인의
+  Origin 인증서를 같은 세대에 발행하고 nginx가 SNI로 구분해 제시한다
+- `nginx/conf.d/flight-tls.inc` 분리. `ssl_session_cache`는 공유 영역 이름이 중복되어 쓰지 않는다
+- 기존 도메인은 301, `www`도 캐노니컬 하나로 모은다
+- **리다이렉트 예외**: 기존 도메인의 `/api/gdrive/webhook`은 그대로 처리한다. 구글
+  드라이브 감시 채널이 아직 기존 주소를 가리키고 구글은 리다이렉트를 따라가지 않아
+  전부 넘기면 알림이 조용히 유실된다. 채널이 새 주소로 갱신된 뒤 예외를 제거한다
+- 호스트 `.env`의 `BASE_URL`·`ALLOWED_ORIGINS`·`KAKAO_REDIRECT_URI` 전환(이전 값 백업).
+  `ALLOWED_ORIGINS`에 기존 도메인을 남긴 이유는 전환 직후 캐시된 페이지가 기존
+  오리진으로 요청할 수 있기 때문이다
+
+검증: 프론트엔드 린트 오류 0·경고 18(기존과 동일), 프론트엔드 테스트 15/15,
+백엔드 `test_kakao_login.py` 11/11, `npm run build` 통과(PWA 사전 캐시 10개 유지).
+병행 서빙 단계에서 두 도메인 모두 `/`·`/api/static/*`·`/privacy` 200,
+SNI별로 올바른 인증서 제시 확인.
+
+`AI Auditor`(`.agents/skills/ai_audit.py`)는 저장소에 없어 실행하지 못했다.
+위 결과는 실제 실행한 로컬 검사이며 AI Auditor 통과를 의미하지 않는다.
+
+### 남은 일
+- [ ] 구글 Cloud Console **도메인 확인**에 `haebongticket.com` 등록(Search Console 확인은 완료). 미등록 시 드라이브 감시 채널 **갱신 시점에** 등록이 거부되어 동기화가 멈춘다
+- [ ] 감시 채널이 새 주소로 갱신된 뒤 nginx의 `/api/gdrive/webhook` 리다이렉트 예외 제거
+- [ ] 카카오톡·SNS 공유 캐시 재수집(디버거로 og 갱신)
+- [ ] 기존 도메인 OAuth URI·JS 원본 정리(전환 안정화 후)
 
 [사용자 결정]
 - 새 도메인을 앞으로 **주 주소(캐노니컬)로** 쓴다.

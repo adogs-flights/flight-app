@@ -96,6 +96,15 @@ test('성공 시 마이그레이션과 기동 프로브가 교체보다 먼저 �
     assert.ok(probe < stop, '기동 프로브가 교체보다 먼저여야 한다');
     assert.ok(stop < up, '기존 백엔드를 내린 뒤 교체해야 한다');
     assert.ok(calls.includes('/api/static/airlines'), 'DB 기반 준비 상태를 확인하지 않았다');
+
+    // nginx는 바인드 마운트라 up -d가 재생성하지 않는다. 명시적으로 다시
+    // 읽히지 않으면 설정 변경이 반영되지 않는다(실제로 겪은 문제다).
+    const test_ = calls.indexOf('nginx -t');
+    const reload = calls.indexOf('nginx -s reload');
+    assert.ok(test_ >= 0, 'nginx 설정 검사를 하지 않았다');
+    assert.ok(reload >= 0, 'nginx 설정을 다시 읽히지 않았다');
+    assert.ok(test_ < reload, '검사가 reload보다 먼저여야 한다');
+    assert.ok(up < reload, '컨테이너 교체 후에 다시 읽혀야 한다');
   } finally {
     await cleanup();
   }

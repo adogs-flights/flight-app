@@ -99,6 +99,12 @@ docker compose up -d --remove-orphans
 sudo -n systemctl enable haebong-secrets.service haebong-runtime.service >/dev/null
 sudo -n systemctl start haebong-runtime.service
 
+# nginx 설정은 바인드 마운트라 파일만 바뀌고 프로세스는 옛 설정을 계속 쓴다.
+# compose 정의가 그대로면 up -d가 이 컨테이너를 재생성하지 않으므로
+# 명시적으로 다시 읽혀야 한다. 설정이 깨졌으면 reload 전에 멈춘다.
+docker exec flight-nginx nginx -t
+docker exec flight-nginx nginx -s reload
+
 # 로컬 평문 종단으로 DB까지 닿는 준비 상태를 확인한다.
 for attempt in $(seq 1 40); do
   if curl --fail --silent --max-time 5 \
