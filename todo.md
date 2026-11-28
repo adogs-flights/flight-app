@@ -168,11 +168,38 @@ SNI별로 올바른 인증서 제시 확인.
 `AI Auditor`(`.agents/skills/ai_audit.py`)는 저장소에 없어 실행하지 못했다.
 위 결과는 실제 실행한 로컬 검사이며 AI Auditor 통과를 의미하지 않는다.
 
+### 전환 후 검증 (2026-11-28)
+
+- 캐노니컬 `haebongticket.com`: `/`·`/api/static/airlines`·`/api/organizations/1/logo`·`/privacy`·`/terms` 모두 200
+- `adogs-ticket.shop` → 301, **경로 보존** 확인(`/my-tickets` → `/my-tickets`). `www`도 301
+- `/api/users/me` 401(인증 보호 유지), `canonical`·`og:url` 태그 반영 확인
+- 백엔드가 구성한 외부 연동 주소 전부 새 도메인: `BASE_URL`, `KAKAO_REDIRECT_URI`,
+  구글 `REDIRECT_URI`, 구글 `WEBHOOK_URL`
+
+**배포 과정에서 발견해 고친 버그**: nginx 설정은 바인드 마운트라 파일만 바뀌고
+프로세스는 메모리의 옛 설정을 계속 쓴다. compose 정의가 그대로면
+`docker compose up -d`가 nginx 컨테이너를 재생성하지 않아, 백엔드는 `BASE_URL`이
+반영됐는데 기존 도메인이 301을 주지 않는 상태가 됐다. `deploy-aws.sh`에
+`nginx -t` → `nginx -s reload`를 추가하고 테스트에 순서 검증을 넣었다.
+
+### 사실 정정 — 드라이브 감시(watch)는 현재 비활성
+
+`gdrive_service.watch_folder`는 정의만 있고 **호출되는 곳이 없다.**
+`/setup-folder`는 루트 폴더 ID만 저장하고 감시 채널을 등록하지 않으며,
+웹훅 핸들러에도 "단방향 연동을 위해 동기화 로직은 주석 처리함"이라고 적혀 있다.
+즉 **드라이브 → 웹 자동 티켓 생성은 운영에서 동작하지 않는다**(`issue.md` v1.6에
+구현됐다고 적혀 있으나 이후 단방향으로 되돌린 것으로 보인다).
+
+따라서 도메인 교체로 인해 **감시 채널이 끊길 위험은 없었다.** 등록된 채널이
+없으므로 만료될 것도 없다. 구글 Cloud Console 도메인 확인은 완료해 두었고,
+나중에 이 기능을 되살릴 때의 선행 조건으로 유효하다.
+
 ### 남은 일
-- [ ] 구글 Cloud Console **도메인 확인**에 `haebongticket.com` 등록(Search Console 확인은 완료). 미등록 시 드라이브 감시 채널 **갱신 시점에** 등록이 거부되어 동기화가 멈춘다
-- [ ] 감시 채널이 새 주소로 갱신된 뒤 nginx의 `/api/gdrive/webhook` 리다이렉트 예외 제거
+- [x] 구글 Cloud Console **도메인 확인**에 `haebongticket.com` 등록 (Search Console TXT 확인 포함 완료)
+- [ ] nginx의 `/api/gdrive/webhook` 리다이렉트 예외 제거. 감시 기능이 비활성이라 받는 것이 없는 경로를 보호하고 있다. 드라이브 → 웹 동기화를 되살릴 계획이 없으면 지금 제거해도 된다
 - [ ] 카카오톡·SNS 공유 캐시 재수집(디버거로 og 갱신)
 - [ ] 기존 도메인 OAuth URI·JS 원본 정리(전환 안정화 후)
+- [ ] OCI 자원 정리(flight 관련만. 호스트에 타 서비스가 함께 있다)
 
 [사용자 결정]
 - 새 도메인을 앞으로 **주 주소(캐노니컬)로** 쓴다.
