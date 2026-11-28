@@ -80,6 +80,38 @@
 - [ ] 인스턴스 재부팅 후 시크릿 세대 발행 → 백엔드 자동 기동(현재 OCI에서 미검증 항목이므로 여기서 확인)
 - [ ] 컨테이너에서 IMDS 접근 불가 확인, 백엔드 환경변수에 시크릿 미노출 확인
 
+### 1단계 검증 기록 (2026-11-28)
+
+구축 완료: EC2 `i-037a39eaf90d1754a`(t4g.small, arm64), 탄력적 IP `43.200.17.212`,
+보안 그룹 `sg-0a003ec2b1a867863`(Cloudflare 15개 대역의 443만, SSH 미개방),
+IMDSv2 강제 + hop limit 1, S3 `adogs-ticket-uploads`(퍼블릭 차단·버전 관리),
+ECR `flight-backend`(불변 태그)·`flight-frontend`, OIDC 역할 `haebong-github-deploy`,
+시크릿 발행기 `haebong-secrets.service`, 기동 게이트 `haebong-runtime.service`.
+
+검증 통과 항목:
+- 시크릿 발행 권한 계약: `0750` 디렉터리 / `0640` 파일 / uid 0 / `g-XXXXXX` 세대. `flight-runtime` 그룹 읽기 성공, `nobody` 차단
+- DB 권한 분리 실증: `adogs-pg`는 SELECT·INSERT 성공하고 CREATE·DROP 차단. `adogs-pg-mg`는 DDL 성공. 틀린 비밀번호는 scram 거부
+- 데이터 이관 정확도: alembic `022`, 테이블 17개, users 8 / organizations 3 / rescue_dogs 2 / rescue_dog_records 2 / ticket_checklist_items 9 / refresh_tokens 160 — **원본과 전 항목 일치**
+- 업로드 52개(20MB) 이관, DB가 참조하는 키 3개 모두 디스크에 존재
+- 마이그레이션 자격증명 경로: `runtime_secrets` 세대 검증 통과 후 `adogs-pg-mg`로 DB 연결 성공
+- ECR 수신: 인스턴스 프로파일로 로그인, 저장된 자격증명 없음
+- TLS: Cloudflare Origin CA 인증서(SAN `*.adogs-ticket.shop`, 2041년까지), 인증서·키 짝 일치
+- 외부 HTTPS 검증(본인 IP 임시 허용 후 제거): `/`, `/api/static/*`, `/privacy`, `/terms` 모두 200. `/api/tickets`·`/api/users/me` 비로그인 401. `POST /api/token` 틀린 자격증명 401
+- 배포 스크립트 실패 경계 테스트 6/6 통과
+
+배포 경로에서 발견해 고친 문제: OIDC 역할의 S3 쓰기 권한 누락, AWS 관리 문서 ARN의
+계정 필드(비어 있어야 함), SSM이 `sh`로 실행하는 문제(bash shebang 필요),
+오류 보고 쿼리의 JMESPath 한글 키(실제 실패 원인을 가렸다), 이미지 레지스트리
+기본값이 GHCR을 가리킨 문제, 마이그레이션 시크릿을 평평한 디렉터리로 넘긴 문제,
+`gosu`가 보조 그룹을 재설정해 `group_add`가 사라지는 문제, macOS `tar`의 `._*` 파일이
+nginx `conf.d/*.conf`에 섞이는 문제, 인증서를 RTF로 저장해 PEM이 깨진 문제(발행기
+검증을 강화해 거부하도록 했다), 인증서와 키가 서로 바뀌어 등록된 문제.
+
+**2단계 전 반드시 확인할 제약**: 현재 Cloudflare SSL/TLS 모드가 **Flexible**이다.
+Flexible은 오리진에 평문 80으로 접속하는데 새 인스턴스는 443만 받는다. 따라서
+**DNS 전환과 SSL 모드 전환(Full strict)을 동시에** 해야 한다. 순서가 어긋나면
+사이트가 끊긴다. 기존 OCI 오리진은 평문 80만 받으므로 모드를 미리 올릴 수도 없다.
+
 ### 2단계 · 운영 전환 (짧은 점검, 주소는 그대로)
 - [ ] DNS TTL 사전 인하, 점검 공지
 - [ ] OCI 쓰기 차단 → 최종 `pg_dump` → AWS 복원, MinIO 증분 미러
