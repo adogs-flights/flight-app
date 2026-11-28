@@ -1,11 +1,53 @@
 services:
+  flight-db:
+    image: postgres:16-alpine
+    container_name: flight-db
+    environment:
+      POSTGRES_DB: flight-db
+      POSTGRES_USER: flightapp
+      # 부트스트랩 수퍼유저 비밀번호도 환경변수가 아니라 파일로 읽는다.
+      POSTGRES_PASSWORD_FILE: /run/secrets/flight/current/DB_ADMIN_PASSWORD
+      POSTGRES_INITDB_ARGS: "--data-checksums"
+    volumes:
+      - flight-db-data:/var/lib/postgresql/data
+      - ./scripts/db/init-roles.sh:/docker-entrypoint-initdb.d/10-init-roles.sh:ro
+      - type: bind
+        source: /run/haebong-secrets/flight
+        target: /run/secrets/flight
+        read_only: true
+        bind:
+          create_host_path: false
+    # 이미지의 postgres uid(70)와 호스트 flight-runtime gid로 직접 실행한다.
+    # group_add로는 안 된다. 엔트리포인트가 gosu로 사용자를 내릴 때 컨테이너
+    # 내부 group 파일 기준으로 보조 그룹을 재설정해 group_add가 사라지고,
+    # 0640 root:flight-runtime 시크릿을 초기화 시점에 읽지 못한다.
+    user: "70:${FLIGHT_RUNTIME_GID:?host runtime group required}"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U flightapp -d flight-db"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - flight-app
+    restart: unless-stopped
+
   flight-backend:
-    image: ${IMAGE_NAME_BACKEND:-ghcr.io/adogs-flights/flight-backend}:${FLIGHT_BACKEND_TAG:?immutable backend revision required}
+    image: ${IMAGE_NAME_BACKEND:-966203577238.dkr.ecr.ap-northeast-2.amazonaws.com/flight-backend}:${FLIGHT_BACKEND_TAG:?immutable backend revision required}
     container_name: flight-backend
     volumes:
       - ./data:/app/data
       - type: bind
-        source: /run/oci-service-secrets/flight
+        source: /run/haebong-secrets/flight
         target: /run/secrets/flight
         read_only: true
         bind:
@@ -23,8 +65,12 @@ services:
       SENDER_EMAIL: ${SENDER_EMAIL:?required}
       GDRIVE_UPLOAD_ADMIN_EMAIL: ${GDRIVE_UPLOAD_ADMIN_EMAIL:?required}
       KAKAO_REDIRECT_URI: ${KAKAO_REDIRECT_URI:?required}
+      OTEL_SDK_DISABLED: "true"
     group_add:
       - ${FLIGHT_RUNTIME_GID:?host runtime group required}
+    depends_on:
+      flight-db:
+        condition: service_healthy
     read_only: true
     cap_drop:
       - ALL
@@ -41,13 +87,11 @@ services:
         max-file: "3"
     networks:
       - flight-app
-      - shared-infra
-      - monitoring_net
-    # systemd recreates /run secrets before starting this existing container.
+    # systemd(haebong-runtime.service)가 시크릿 발행 후에만 기동한다.
     restart: "no"
 
   flight-frontend:
-    image: ${IMAGE_NAME_FRONTEND:-flight-frontend}:latest
+    image: ${IMAGE_NAME_FRONTEND:-966203577238.dkr.ecr.ap-northeast-2.amazonaws.com/flight-frontend}:latest
     container_name: flight-frontend
     user: node
     read_only: true
@@ -73,11 +117,22 @@ services:
     image: nginx@sha256:5aca99593157f4ae539a5dec1092a0ad8762f8e2eb1789085a13a0f5622369f6
     container_name: flight-nginx
     ports:
-      - "127.0.0.1:18091:80"
+      # Cloudflare가 직접 연결하는 유일한 공개 포트.
+      - "443:443"
+      # 배포 스크립트와 헬스체크용 로컬 전용 평문 포트.
+      - "127.0.0.1:18091:8080"
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - ./frontend/public/privacy.html:/usr/share/nginx/html/privacy.html:ro
       - ./frontend/public/terms.html:/usr/share/nginx/html/terms.html:ro
+      - type: bind
+        source: /run/haebong-secrets/flight
+        target: /run/secrets/flight
+        read_only: true
+        bind:
+          create_host_path: false
+    group_add:
+      - ${FLIGHT_RUNTIME_GID:?host runtime group required}
     depends_on:
       - flight-backend
       - flight-frontend
@@ -93,13 +148,10 @@ services:
       retries: 5
       start_period: 10s
 
+volumes:
+  flight-db-data:
+    name: flight-db-data
+
 networks:
   flight-app:
     name: flight-app
-    external: true
-  shared-infra:
-    name: shared-infra
-    external: true
-  monitoring_net:
-    name: monitoring_net
-    external: true
