@@ -1,5 +1,139 @@
 # 🚀 작업 계획 및 기록 (Harness Execution)
 
+## [AWS-MIGRATION] AWS 이전 (2026-11-28)
+
+[참조 하네스]: AGENTS.md, docs/vault-runtime.md, docs/backend.md, docs/security.md, issue.md
+[상태]: **계획 수립 완료 · 사용자 승인 대기 중. 코드 미수정.**
+
+[사용자 결정]
+- 서버를 Oracle Cloud 단일 VM에서 AWS로 이전한다.
+- **AWS 이전을 먼저 완료하고, 주 도메인 교체는 그 다음 별도 작업으로 한다**(아래 `[DOMAIN-SWITCH]` 항목).
+- 아키텍처는 비용·적합도 비교 결과 1순위(EC2 Graviton 단일 노드 + CloudFront + S3 + SSM)로 시작한다.
+- 이 작업에서 도메인은 `adogs-ticket.shop`을 그대로 유지한다. 검증 입구로만 임시 서브도메인 `aws.adogs-ticket.shop`을 쓰고 전환 후 제거한다. **새 도메인 이름은 이 작업의 선행 조건이 아니다.**
+
+[미확정 입력 — 승인 시 함께 알려줘야 하는 것]
+1. ~~OCI 호스트 접근 가능 여부~~ → **해결: A등급(이식).** 0단계 기록 참조.
+2. ~~배포 방식~~ → **결정: GitHub OIDC + SSM Send-Command.** 인바운드 22번을 열지 않고 장기 자격증명도 저장하지 않는다.
+3. **DB (미결)**: 1순위대로 인스턴스 내 PostgreSQL 컨테이너로 시작 vs 처음부터 RDS db.t4g.micro(월 +$20.9). `flight-db`가 9.2MB로 매우 작아 어느 쪽이든 이전은 수초면 끝난다.
+4. **2단계 점검 시간대** — 데이터가 30MB라 전송은 수초이고 DNS 전파가 지배한다. Cloudflare 프록시라 전파가 거의 즉시이므로 중단은 분 단위로 예상된다.
+
+[준수 보안 규칙]
+- 시크릿은 **파일 마운트 방식을 유지**한다. `backend/runtime_secrets.py`의 계약(`/run` tmpfs 세대, uid 0, 0750/0640, `CONFIG_JSON` 단일 파일, 환경변수에 시크릿 미복사)을 그대로 보존한다. SSM 값을 컨테이너 환경변수로 내리지 않는다.
+- **컨테이너의 IMDS 접근을 차단**한다. IMDSv2 강제 + `HttpPutResponseHopLimit=1` + 컨테이너 네트워크에서 `169.254.169.254` 차단(현 `imds-guard.py`와 같은 목적).
+- **DDL 권한 분리를 유지**한다. 런타임 계정은 CRUD만, 마이그레이션 전용 자격증명만 DDL. 런타임 마운트로 Alembic을 실행하지 않는다.
+- `BASE_URL`은 환경변수 고정값을 유지한다. 요청 `Host` 기반 동적 해석은 도입하지 않는다(호스트 헤더 인젝션 표면을 만들지 않는다).
+- S3 버킷은 **퍼블릭 액세스 전면 차단**. 업로드 조회는 지금처럼 백엔드 경유를 유지한다(프리사인/CDN 직접 서빙은 범위 밖).
+- 임시 서브도메인 `aws.adogs-ticket.shop`은 **외부 접근을 차단**하고 `noindex`를 적용한다. 검증용 복제 DB에 실제 사용자 데이터가 섞이거나 스테이징이 검색에 노출되지 않게 한다.
+- 1단계에서 **구글 드라이브 웹훅은 등록하지 않는다.** 실제 드라이브 이벤트가 검증용 DB에 티켓을 만들지 않게 한다.
+- 관리자 접근 제어(`user.role === 'admin'`)와 `/admin/ui` 미리보기 격리를 유지한다.
+
+### 설계 요약
+
+**아키텍처**: EC2 t4g.small(Graviton, arm64 이미지 그대로) 단일 노드에 nginx·정적 FE·백엔드·PostgreSQL 컨테이너. 업로드는 S3(MinIO 클라이언트가 S3 호환이라 `storage_service.py` 코드 변경 없음), 시크릿은 SSM 파라미터 스토어(표준·무료)에서 호스트가 읽어 `/run`에 세대 발행, 진입은 CloudFront(영구 무료 1TB 한도로 TLS·캐싱·대역폭 흡수) + Route 53 + ACM. 월 약 $22, 1년 Savings Plan 적용 시 약 $18.
+
+**왜 이 구성인가**: ALB($17.4+IPv4 $7.3)·NAT Gateway($43.1)·Aurora 최소 ACU($44~51) 같은 트래픽 무관 고정비를 전부 피한다. arm64 빌드 파이프라인·`docker compose` 구조·파일 마운트 시크릿 설계를 유지하므로 이전 작업 부피가 가장 작고, 실패 시 DNS만 되돌려 복귀할 수 있다.
+
+**도메인을 건드리지 않는 이유**: 이 작업의 목표는 "같은 주소, 다른 서버"다. `BASE_URL`·`KAKAO_REDIRECT_URI`·og 태그·쿠키·푸시 구독·PWA 스코프를 전혀 바꾸지 않으므로 사용자 입장에서는 아무 일도 일어나지 않는다. 검증은 임시 서브도메인에서 끝내고, 전환은 기존 도메인의 DNS 한 번으로 완료한다.
+
+### 0단계 · 사전 확인
+- [x] **OCI 호스트 접근 확인 — A등급(이식 가능).** 2026-11-28: `ubuntu@158.180.94.64:58116` SSH·`sudo` 가능, `instance-20260211-1517`·`aarch64`. `/opt/project-management-runtime/current/ops/oci-runtime/`의 40개 파일 전부 읽기 가능하며 `imds-guard.py`·`migrate-flight.mjs`·`service-readiness.mjs`·`flight-secrets.service`·`flight-runtime.service`·`backup-flight-db.sh`·`provision-flight-roles.mjs`·`vault-*.mjs` 확인. `flight-secrets`/`flight-runtime` 유닛 모두 `enabled`. **AWS용 발행기는 신규 작성이 아니라 이식으로 진행한다.**
+- [x] **용량 측정 완료 — 총 약 30MB.** `flight-db` 9.2MB(공유 PostgreSQL 내), 업로드 20MB(52개 항목, 최신 2026-11-21), 레거시 MinIO 약 784KB. **점검 시간은 DNS 전파가 지배하며 데이터 전송은 수초 수준이다.**
+- [x] **호스트가 멀티테넌트 공유 플랫폼임을 확인.** flight 외에 `project-management`(DB 2.46GB), `youtube-sync`, `ilchul`, `conkiri`가 같은 호스트에서 동작하고 PostgreSQL·MinIO·Redis·RabbitMQ·MySQL과 관측 스택(prometheus·grafana·loki·tempo·pyroscope·cadvisor)을 공유한다(총 25개 이상 컨테이너). **이전은 "서버 교체"가 아니라 "타인 소유 공유 플랫폼에서 독립"하는 작업이다.** 따라서 1단계에 관측 스택 대체와 공유 자원에서 flight 몫만 분리하는 작업이 포함된다.
+- [x] **운영용 AWS 계정 확보 완료 — `966203577238`.** 2026-11-28: 조직 미소속(`AWSOrganizationsNotInUseException`)이며 계정 활성화가 끝나 서울 리전 EC2 호출이 성공한다(`OptInRequired` 해소). 로컬 `default` 프로파일을 이 계정·`ap-northeast-2`로 설정함. 이전 경위: 2026-11-28 확인: 보유 계정 `858093957974`는 타인의 조직(`o-jhm010zse2`, 관리 계정 `572878595811`) 소속이며 SCP가 홈 리전 `ap-southeast-2` 외 모든 리전을 명시적으로 거부한다. 서울 리전은 계정 수준에서 `ENABLED_BY_DEFAULT`이므로 원인은 조직 정책이고 본인이 해제할 수 없다. 학습용 샌드박스로 판단되어 **운영에 사용하지 않는다** — 지연(왕복 130~160ms), 통제권 부재, 샌드박스 수명, 그리고 여권·이티켓 등 개인정보를 제3자 관리 조직 계정에 두는 문제 때문이다. 조직에 속하지 않은 단독 계정을 확보하고 리전은 `ap-northeast-2`로 확정한다
+- [ ] 기존 서울 EC2(`13.125.219.53`, `known_hosts` 기록)가 어느 계정 소유인지 확인. 본인 단독 계정이면 신규 생성 없이 재사용 가능
+- [x] **Budgets 예산 알림 설정 완료.** 2026-11-28: 월 $30 `haebong-monthly`, 실제 사용 50%·80%·100%와 예측 100%에서 `adogs.ticket@gmail.com`으로 알림. 리소스 생성 전에 설정함
+- [x] **루트 MFA 활성화 완료** (`AccountMFAEnabled = 1`). 루트 액세스 키는 만들지 않았고 CLI 인증은 `aws login` 임시 자격증명을 사용한다
+- [ ] 로컬 도구: AWS CLI 설치 완료(`aws-cli/2.42.5`). 인증은 `aws login`(콘솔 세션 기반 임시 자격증명)을 사용하며 장기 액세스 키를 디스크에 두지 않는다. **저장소가 public이므로 자격증명을 저장소에 넣지 않는다**
+- [ ] 현재 OCI 요금 등급 확인(Always Free면 이전 후 비용이 0에서 증가하는 점을 명시적으로 합의)
+- [ ] `adogs-ticket.shop` DNS 관리 위치 확인(Route 53 이전 여부는 선택. 네임서버 유지한 채 레코드만 바꿔도 된다)
+
+### 1단계 · AWS 구축 및 검증 (운영 영향 0, 기존 도메인 그대로)
+인프라
+- [ ] EC2 t4g.small + EBS gp3 30GB + 스왑 2GB, 보안 그룹(인바운드는 CloudFront 프리픽스 리스트와 운영자 경로만)
+- [ ] IAM 인스턴스 프로파일: SSM 파라미터 읽기 + 해당 S3 버킷만
+- [ ] S3 버킷 생성(퍼블릭 차단, 버전 관리)
+- [ ] **업로드 저장 방식 교정 (2026-11-28 발견).** 운영 `flight-backend` 컨테이너에 `MINIO_*` 환경변수가 **하나도 없어** `storage_service.py`의 `USE_LOCAL_STORAGE` 분기가 타고 있다. 즉 여권·이티켓·구조견 사진이 오브젝트 스토리지가 아니라 **VM 로컬 디스크**(`/home/ubuntu/flight-app/data/uploads`, 20MB)에 저장된다. 코드 주석의 "운영에서는 키가 항상 설정되므로 이 경로를 타지 않는다"는 사실과 다르다. AWS에서는 S3 자격증명을 실제로 주입해 이 분기를 타지 않게 하고, 로컬 파일 20MB를 S3로 이관한다
+- [ ] **레거시 MinIO 객체 처리 확인.** MinIO에 `eticket-images`(객체 1개) · `flight-logo`(696KB) 버킷이 남아 있으나 현재 앱은 자격증명이 없어 읽을 수 없다. 이 객체 키를 참조하는 DB 행이 있으면 **이미 운영에서 깨져 있는 상태**이므로, 이전 전에 참조 여부를 조회해 확인하고 필요하면 함께 S3로 옮긴다
+- [ ] ACM 인증서(**`us-east-1`** 발급, `adogs-ticket.shop` + `aws.adogs-ticket.shop` SAN), CloudFront 배포
+- [ ] SSM 파라미터에 `CONFIG_JSON` 이관(현 형식·키 집합 유지)
+- [ ] 시크릿 발행기 systemd 유닛 이식(`flight-secrets`/`flight-runtime` 등가) + IMDS 차단 + 재부팅 후 자동 기동 확인
+- [ ] `shared-infra`·`monitoring_net` 외부 네트워크 생성 또는 compose에서 정리
+- [ ] OTEL 처리 방침 결정(ADOT 수집기 컨테이너 vs 비활성화). 미처리 시 내보내기 실패 로그가 쌓인다
+- [ ] 야간 백업 작업: `pg_dump` → S3 + EBS 스냅샷 일정. **1순위 선택의 전제 조건이므로 이 단계에서 반드시 완성**
+
+저장소 변경
+- [ ] `docker-compose.yml`: 시크릿 바인드 경로, PostgreSQL 서비스 추가, 외부 네트워크 정리
+- [ ] `nginx/conf.d/default.conf`: `server_name`에 기존 도메인 + 임시 서브도메인
+- [ ] `.github/workflows/deploy.yml`: `ORACLE_*` → AWS 배포 경로, 헬스체크 Host·URL
+- [ ] `scripts/deploy-vault.sh`: `oci-runtime` 경로 → AWS 등가 러너
+- [ ] `ALLOWED_ORIGINS`에 임시 서브도메인 오리진 추가(이미 콤마 구분이라 환경변수만)
+
+검증용 데이터 및 접근 차단
+- [ ] OCI `pg_dump` → AWS PostgreSQL 복원(스냅샷 시점), MinIO → S3 `mc mirror`
+- [ ] `aws.adogs-ticket.shop` 외부 접근 차단(CloudFront 함수 기본 인증 또는 WAF IP 허용) + `noindex`
+- [ ] 카카오·구글 콘솔에 임시 서브도메인 콜백 URI **임시 추가**(기존 것 유지, 전환 후 제거)
+- [ ] 구글 드라이브 웹훅은 **등록하지 않음**
+
+검증 항목
+- [ ] 로그인(이메일·카카오), 티켓 CRUD, 업로드·조회(S3 경유), 메일 발송, 웹푸시, `/admin/ui` 관리자 접근
+- [ ] Alembic 마이그레이션 실행 및 실패 시 기존 앱 보존 동작
+- [ ] 인스턴스 재부팅 후 시크릿 세대 발행 → 백엔드 자동 기동(현재 OCI에서 미검증 항목이므로 여기서 확인)
+- [ ] 컨테이너에서 IMDS 접근 불가 확인, 백엔드 환경변수에 시크릿 미노출 확인
+
+### 2단계 · 운영 전환 (짧은 점검, 주소는 그대로)
+- [ ] DNS TTL 사전 인하, 점검 공지
+- [ ] OCI 쓰기 차단 → 최종 `pg_dump` → AWS 복원, MinIO 증분 미러
+- [ ] `adogs-ticket.shop` DNS를 CloudFront로 전환
+- [ ] 구글 드라이브 웹훅을 AWS 쪽으로 재등록(주소는 동일 도메인이므로 채널 재생성만)
+- [ ] 임시 서브도메인 제거 및 임시 콜백 URI 정리
+- [ ] `BASE_URL`·`KAKAO_REDIRECT_URI`·og 태그는 **변경하지 않는다** → 로그인·메일·푸시·PWA 모두 그대로, 사용자 영향 0
+- [ ] 롤백 경로: DNS 되돌리기 + OCI 쓰기 재개(단일 동작)
+- [ ] 안정화 확인 후 OCI 자원 정리 시점 합의(**즉시 삭제하지 않고 일정 기간 보존**)
+
+### 검증
+- [ ] 프론트엔드 변경 후 `frontend`에서 `npm run lint`, `node --test tests/*.test.mjs`, `npm run build`
+- [ ] 백엔드 `ruff check`(저장소에 ruff 설정·의존성이 없으므로 기존 관례대로 임시 설치해 실행하고 신규 지적만 보고) 및 `pytest`
+- [ ] AI Auditor(`.agents/skills/ai_audit.py`) 부재 시 실행 불가 사실을 기록하고 린트·테스트·빌드 결과와 구분해 보고
+- [ ] 검증 결과는 로컬 검증 / CI / 운영 배포 확인으로 구분해 기록
+- [ ] 임시 스크립트·스냅샷·검증 산출물 정리
+
+---
+
+## [DOMAIN-SWITCH] 주 도메인 교체 (AWS 이전 완료 후)
+
+[상태]: **보류 — `[AWS-MIGRATION]` 2단계 안정화 확인 후 착수. 새 도메인 이름 미정.**
+
+[사용자 결정]
+- 새 도메인을 앞으로 **주 주소(캐노니컬)로** 쓴다.
+- 기존 `adogs-ticket.shop`은 폐기하지 않고 301 리다이렉트로 유지한다.
+
+[선행 조건]
+- `[AWS-MIGRATION]` 완료 및 안정화
+- 새 도메인 확정, 등록기관 확인, Route 53 호스티드 존
+- SES: 새 도메인 인증 + SPF·DKIM·DMARC + 샌드박스 해제 신청(**리드타임이 길어 AWS 이전 중에 미리 착수하는 것이 좋다**)
+
+[사용자 영향 — 사전 공지 필수]
+주 주소를 바꾸면 아래는 피할 수 없다. 이것이 이 작업을 AWS 이전과 분리한 이유다.
+- **웹푸시 구독 전부 무효.** `endpoint`가 오리진 단위라 `push_subscriptions` 행은 남지만 발송이 실패한다. 마이그레이션 수단이 없어 사용자가 직접 재구독해야 한다
+- **설치된 PWA 재설치 필요.** `vite.config.js`의 `id: '/'`·`scope: '/'`·`display: standalone`이 기존 오리진에 묶여 있다
+- **전원 1회 재로그인.** 쿠키에 `domain=` 속성이 없어 호스트 한정이다(`auth.py:88`, `:100`)
+- 카카오톡·SNS에 캐시된 공유 미리보기가 구 도메인을 가리킨다
+
+### 작업
+- [ ] 공지 및 앱 내 배너(주소 변경, 알림 재설정, 앱 재설치, 재로그인)
+- [ ] ACM 인증서에 새 도메인 추가, CloudFront 대체 도메인 이름 추가, Route 53 레코드
+- [ ] `nginx server_name`에 새 도메인 추가, `ALLOWED_ORIGINS`에 새 오리진 추가
+- [ ] `BASE_URL`을 새 도메인으로. 영향 사용처 4곳: `routers/auth.py:748`, `routers/ticket_applications.py:55`, `routers/guest_submissions.py:72`, `services/gdrive_service.py:26`
+- [ ] `KAKAO_REDIRECT_URI`를 새 도메인으로(`services/kakao_service.py:17`), 카카오 콘솔에 양쪽 등록
+- [ ] 구글: 새 도메인 소유 확인 → OAuth 콜백·Drive 웹훅 재등록(웹훅은 1개만 등록 가능하므로 새 도메인으로 고정)
+- [ ] `frontend/index.html`: `og:url`·`og:image`·`og:image:secure_url`·`twitter:image` 5곳 교체, **`canonical` 태그 추가**(현재 없음), 새 도메인용 사이트 소유 확인 파일 배치
+- [ ] `adogs-ticket.shop` → 새 도메인 301(CloudFront 함수)
+- [ ] SES 발신 도메인 전환
+- [ ] 카카오톡·SNS 공유 캐시 재수집
+- [ ] 롤백 경로: 환경변수 되돌리기 + 301 제거
+
+---
+
 ## [TICKET-CHECKLIST] 티켓별 출국 준비 체크리스트 (2026-11-25)
 
 [참조 하네스]: AGENTS.md, docs/backend.md, docs/frontend.md, docs/security.md, issue.md
