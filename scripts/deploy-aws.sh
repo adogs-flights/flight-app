@@ -46,23 +46,40 @@ test -f "$SECRETS/CONFIG_JSON"
 # 런타임 마운트(FLIGHT_SECRET_DIRECTORY)로는 실행하지 않는다.
 migration_dir=$(mktemp -d "$MIGRATION_TMP_ROOT/flight-migration.XXXXXX")
 trap 'rm -rf "$migration_dir"' EXIT
-chmod 0750 "$migration_dir"
-python3 - "$SECRETS/CONFIG_JSON" "$SECRETS/DB_MIGRATION_PASSWORD" "$migration_dir/DATABASE_URL" <<'PY'
-import json, sys, urllib.parse as up
-config_path, password_path, out_path = sys.argv[1:4]
+
+# runtime_secrets.read_generation_file은 평평한 디렉터리를 받지 않는다.
+# 발행된 세대와 똑같은 구조와 권한을 만들어야 한다.
+#   <루트>              디렉터리 · uid 0 · 0750
+#   <루트>/current      심볼릭 링크 → g-XXXXXX
+#   <루트>/g-XXXXXX     디렉터리 · uid 0 · 루트와 같은 gid · 0750
+#   <루트>/g-XXXXXX/<파일>  일반 파일 · uid 0 · 같은 gid · 0640 · nlink 1
+# 컨테이너는 root로 실행되므로 소유권은 root:root로 통일한다.
+python3 - "$SECRETS/CONFIG_JSON" "$SECRETS/DB_MIGRATION_PASSWORD" "$migration_dir" <<'PY'
+import json, os, secrets, string, sys, urllib.parse as up
+
+config_path, password_path, root = sys.argv[1:4]
 url = json.load(open(config_path))["DATABASE_URL"]
 password = open(password_path).read().strip()
 parsed = up.urlsplit(url)
 host = parsed.hostname or "flight-db"
 port = f":{parsed.port}" if parsed.port else ""
 netloc = f"adogs-pg-mg:{up.quote(password, safe='')}@{host}{port}"
-open(out_path, "w").write(up.urlunsplit(parsed._replace(netloc=netloc)))
+migration_url = up.urlunsplit(parsed._replace(netloc=netloc))
+
+os.chmod(root, 0o750)
+name = "g-" + "".join(secrets.choice(string.ascii_letters + string.digits) for _ in range(6))
+generation = os.path.join(root, name)
+os.mkdir(generation, 0o750)
+os.chmod(generation, 0o750)
+target = os.path.join(generation, "DATABASE_URL")
+fd = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o640)
+with os.fdopen(fd, "w") as handle:
+    handle.write(migration_url)
+os.chmod(target, 0o640)
+os.symlink(name, os.path.join(root, "current"))
 PY
-chmod 0640 "$migration_dir/DATABASE_URL"
-chgrp "$FLIGHT_RUNTIME_GID" "$migration_dir/DATABASE_URL"
 
 docker run --rm --network flight-app \
-  --group-add "$FLIGHT_RUNTIME_GID" \
   -v "$migration_dir:/run/secrets/migration:ro" \
   -e FLIGHT_MIGRATION_SECRET_DIRECTORY=/run/secrets/migration \
   --entrypoint alembic \
