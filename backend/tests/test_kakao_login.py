@@ -11,7 +11,7 @@ def kakao_env(monkeypatch):
     monkeypatch.setattr(
         kakao_service,
         "KAKAO_REDIRECT_URI",
-        "https://adogs-ticket.shop/auth/kakao/callback",
+        "https://haebongticket.com/auth/kakao/callback",
     )
 
 

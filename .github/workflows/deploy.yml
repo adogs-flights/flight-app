@@ -183,5 +183,5 @@ jobs:
         run: |
           curl --fail --silent --show-error --location --max-redirs 3 \
             --retry 10 --retry-delay 3 \
-            https://adogs-ticket.shop/api/static/airlines >/dev/null
+            https://haebongticket.com/api/static/airlines >/dev/null
           echo '공개 종단 확인 완료'

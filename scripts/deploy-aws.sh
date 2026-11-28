@@ -102,7 +102,7 @@ sudo -n systemctl start haebong-runtime.service
 # 로컬 평문 종단으로 DB까지 닿는 준비 상태를 확인한다.
 for attempt in $(seq 1 40); do
   if curl --fail --silent --max-time 5 \
-       -H 'Host: adogs-ticket.shop' \
+       -H 'Host: haebongticket.com' \
        http://127.0.0.1:18091/api/static/airlines >/dev/null; then
     echo "배포 완료: $revision"
     exit 0
